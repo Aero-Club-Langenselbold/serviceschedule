@@ -1,0 +1,104 @@
+package de.ct.manager.schedule.service;
+
+import static org.mockito.Mockito.when;
+
+import static org.hamcrest.Matchers.is;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+
+import de.ct.manager.schedule.util.AbstractControllerUnitTest;
+
+@WebMvcTest(ServiceController.class)
+@Import({
+    ServiceService.class
+})
+class ServiceControllerUnitTest extends AbstractControllerUnitTest{
+
+    @MockBean
+    private ServiceRepository serviceRepository;
+
+    @Test
+    void testListParticipants() throws Exception {
+        when(serviceRepository.findAll()).thenReturn(generateListResponse());
+
+        mockMvc.perform(
+            get("/service/list")
+                .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$[0].servicename", is("Service No. 0")));
+    }
+
+    @Test
+    void testService() throws Exception {
+        when(serviceRepository.findById("4711")).thenReturn(Optional.of(generateService(0)));
+
+        mockMvc.perform(
+            get("/service/fetch/4711")
+                .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.servicename", is("Service No. 0")));
+    }
+
+    @Test
+    void testCreateService() throws Exception {
+        Service service = generateService(0);
+
+        when(serviceRepository.save(service)).thenReturn(service);
+
+        mockMvc.perform(
+            post("/service/save")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(service))
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.servicename", is("Service No. 0")));
+    }
+
+    @Test
+    void testDeleteService() throws Exception {
+        mockMvc.perform(
+            delete("/service/delete/4711")
+                .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk());
+    }
+
+    private List<Service> generateListResponse() {
+        List<Service> services = new ArrayList<>();
+
+        for (int i = 0; i < 10; i++) {
+
+            services.add(generateService(i));
+        }
+
+        return services;
+    }
+
+    private Service generateService(int index) {
+        Service service = new Service();
+        service.setServicename("Service No. " + index);
+
+        return service;
+    }
+}
