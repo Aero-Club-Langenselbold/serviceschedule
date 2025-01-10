@@ -1,6 +1,7 @@
 package de.ct.manager.schedule.plan;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.hibernate.envers.Audited;
@@ -40,5 +41,5 @@ public class Plan extends AbstractPersistentEntity {
     private Date dateUntil;
 
     @OneToMany(mappedBy = "plan", fetch = FetchType.LAZY, orphanRemoval = true)
-    private Set<PlanEntry> entries;
+    private Set<PlanEntry> entries = new HashSet<>();
 }

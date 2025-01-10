@@ -1,6 +1,7 @@
 package de.ct.manager.schedule.participant;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.hibernate.envers.Audited;
@@ -57,5 +58,5 @@ public class Participant extends AbstractPersistentEntity {
         joinColumns = @JoinColumn(name = "participant_id"),
         inverseJoinColumns = @JoinColumn(name = "service_id")
     )
-    private Set<Service> services;
+    private Set<Service> services = new HashSet<>();
 }

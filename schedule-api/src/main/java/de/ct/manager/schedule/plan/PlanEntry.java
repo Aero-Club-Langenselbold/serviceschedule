@@ -46,4 +46,14 @@ public class PlanEntry extends AbstractPersistentEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plan_id")
     private Plan plan;
+
+    @Override
+    public String toString() {
+        return "PlanEntry{" +
+            "\r\n\tstartTime=" + startTime +
+            "\r\n\tendTime=" + endTime +
+            "\r\n\tservice=" + service.getServicename() +
+            "\r\n\tparticipant=" + participant.getEmail() +
+            "\r\n}";
+    }
 }
