@@ -22,4 +22,20 @@ public class ServiceDate {
         this.service = service;
         this.mandatoryAssignees = mandatoryAssignees;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        ServiceDate that = (ServiceDate) o;
+
+        return date.equals(that.date) && service.equals(that.service);
+    }
+
+    @Override
+    public int hashCode() {
+        return date.hashCode() + service.hashCode();
+    }
 }

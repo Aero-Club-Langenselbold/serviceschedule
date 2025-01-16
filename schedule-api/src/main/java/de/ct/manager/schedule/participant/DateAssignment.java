@@ -2,31 +2,26 @@ package de.ct.manager.schedule.participant;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
-import de.ct.manager.schedule.service.Service;
+import de.ct.manager.schedule.service.ServiceDate;
 import lombok.Data;
 
 @Data
 public class DateAssignment {
-    private Date date;
-    private Service service;
+    private ServiceDate serviceDate;
     private int possibleAssignees;
-    private int mandatoryAssignees;
     private List<Participant> assignedParticipants = new ArrayList<>();
 
-    public DateAssignment(Date date, Service service, int mandatoryAssignees) {
-        if (date == null || service == null) {
+    public DateAssignment(ServiceDate serviceDate) {
+        if (serviceDate == null) {
             throw new IllegalArgumentException("Date and service must not be null");
         }
-        if (mandatoryAssignees < 1) {
+        if (serviceDate.getMandatoryAssignees() < 1) {
             throw new IllegalArgumentException("Mandatory assignees must not be less than 1");
         }
 
-        this.date = date;
-        this.service = service;
-        this.mandatoryAssignees = mandatoryAssignees;
+        this.serviceDate = serviceDate;
     }
 
     @Override
@@ -37,12 +32,12 @@ public class DateAssignment {
 
         DateAssignment that = (DateAssignment) o;
 
-        return date.equals(that.date) && service.equals(that.service);
+        return serviceDate.equals(that.serviceDate);
     }
 
     @Override
     public int hashCode() {
-        return date.hashCode() + service.hashCode();
+        return serviceDate.hashCode();
     }
 
     @Override
@@ -50,8 +45,9 @@ public class DateAssignment {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 
         return "DateAssignment{" +
-            "date=" + df.format(date) +
-            ", service=" + service.getServicename() +
+            "date=" + df.format(serviceDate.getDate()) +
+            ", service=" + serviceDate.getService().getServicename() +
+            ", mandatoryAssignees=" + serviceDate.getMandatoryAssignees() +
             ", possibleAssignees=" + possibleAssignees +
             ", assignedParticipants=" + (assignedParticipants == null ? "0" : assignedParticipants.size()) +
             '}';
