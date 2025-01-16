@@ -1,10 +1,15 @@
 package de.ct.manager.schedule.participant;
 
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.hibernate.envers.Audited;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.ct.manager.schedule.service.Service;
 import de.ct.manager.schedule.util.AbstractPersistentEntity;
@@ -59,4 +64,27 @@ public class Participant extends AbstractPersistentEntity {
         inverseJoinColumns = @JoinColumn(name = "service_id")
     )
     private Set<Service> services = new HashSet<>();
+
+    @JsonIgnore
+    public int getCurrentAge() {
+        return Period.between(dateOfBirth.toInstant().atZone(ZoneId.systemDefault()).toLocalDate(), LocalDate.now()).getYears();
+    }
+
+    @JsonIgnore
+    public int getAgeAtDate(LocalDate date) {
+        return Period.between(dateOfBirth.toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
+            date).getYears();
+    }
+
+    @Override
+    public String toString() {
+        return "Participant{" +
+            "id=" + getId() +
+            ", firstname='" + firstname + '\'' +
+            ", lastname='" + lastname + '\'' +
+            ", email='" + email + '\'' +
+            ", dateOfBirth=" + dateOfBirth +
+            ", status=" + status +
+            '}';
+    }
 }

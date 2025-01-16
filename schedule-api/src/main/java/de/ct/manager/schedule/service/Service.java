@@ -30,4 +30,12 @@ public class Service extends AbstractPersistentEntity {
 
     @ManyToMany(mappedBy = "services", fetch = FetchType.LAZY)
     private Set<Participant> participants;
+
+    @Override
+    public String toString() {
+        return "Service{" +
+            "id=" + getId() +
+            ", servicename='" + servicename + '\'' +
+            '}';
+    }
 }

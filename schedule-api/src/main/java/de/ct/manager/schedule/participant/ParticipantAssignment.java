@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Collectors;
 
 import lombok.Data;
 
@@ -38,7 +37,7 @@ public class ParticipantAssignment {
     private void moveDatesWithinThreshold(Date assignedDate) {
         List<Date> datesWithinThreshold = datesAvailable.stream()
             .filter(date -> Math.abs(date.getTime() - assignedDate.getTime()) < ASSIGNMENT_THRESHOLD)
-            .collect(Collectors.toList());
+            .toList();
         datesWithinAssignmentThreshold.addAll(datesWithinThreshold);
         datesAvailable.removeAll(datesWithinThreshold);
     }

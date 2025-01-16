@@ -6,14 +6,17 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import de.ct.manager.schedule.participant.Participant;
+import de.ct.manager.schedule.participant.DateAssignment;
 import de.ct.manager.schedule.participant.ParticipantAssignment;
 import de.ct.manager.schedule.service.Service;
+import de.ct.manager.schedule.service.ServiceDate;
+import lombok.extern.slf4j.Slf4j;
 
 @org.springframework.stereotype.Service
+@Slf4j
 public class PlanService {
 
     private final PlanRepository planRepository;
@@ -38,32 +41,29 @@ public class PlanService {
         planRepository.deleteById(id);
     }
 
-    public Plan generatePlan(String planId, List<Service> services, List<Date> assignableDates, List<ParticipantAssignment> availability) {
+    public Plan generatePlan(String planId, List<ServiceDate> serviceDates, List<ParticipantAssignment> availability) {
         Plan plan = planRepository.findById(planId).orElse(null);
 
         if (plan == null) {
             throw new IllegalArgumentException("Plan not found");
         }
-        if (services == null || services.isEmpty()) {
-            throw new IllegalArgumentException("No services provided");
+        if (serviceDates == null || serviceDates.isEmpty()) {
+            throw new IllegalArgumentException("No services and dates provided");
         }
 
         Set<PlanEntry> planEntries = new HashSet<>();
+        List<DateAssignment> dateAssignments = generateDateAssignments(serviceDates, availability);
 
-        // Generate plan entries for each service
-        for (Service service : services) {
-            List<ParticipantAssignment> availableParticipantsForService = getAvailableParticipantsForService(service, availability, plan.getEntries());
-            generatePlanEntries(service, assignableDates, availableParticipantsForService, planEntries);
-        }
-
-        for (ParticipantAssignment pa : availability) {
-            System.out.println(pa.toString());
-        }
-        List<PlanEntry> entries = planEntries.stream()
-            .sorted(Comparator.comparingLong(pa -> pa.getStartTime().toLocalDate().toEpochDay()))
-            .collect(Collectors.toList());
-        for (PlanEntry pe : entries) {
-            System.out.println(pe.toString());
+        while (dateAssignments.stream().anyMatch(da -> da.getPossibleAssignees() > 0 || da.getAssignedParticipants().size() < da.getMandatoryAssignees())) {
+            try {
+                planEntries.add(assignDate(availability, dateAssignments).orElseThrow(() ->
+                    new IllegalArgumentException("Plan Entry is empty")));
+                log.debug("Assignment made");
+                dateAssignments.forEach(da -> log.debug(da.toString()));
+            } catch (IllegalArgumentException e) {
+                log.error("No assignment possible for date: {}", e.getMessage());
+                break;
+            }
         }
 
         plan.getEntries().addAll(planEntries);
@@ -71,11 +71,77 @@ public class PlanService {
         return planRepository.save(plan);
     }
 
-    private List<ParticipantAssignment> getAvailableParticipantsForService(Service service, List<ParticipantAssignment> availability, Set<PlanEntry> assignedEntries) {
+    private Optional<PlanEntry> assignDate(List<ParticipantAssignment> availability, List<DateAssignment> dateAssignments) {
+        PlanEntry pe = null;
+
+        // get the smallest number > 0 of possible assignees
+        Optional<DateAssignment> daMin = dateAssignments.stream()
+            .filter(da -> da.getPossibleAssignees() > 0)
+            .min(Comparator.comparingInt(DateAssignment::getPossibleAssignees));
+
+        if (!daMin.isEmpty()) {
+            DateAssignment da = daMin.get();
+            List<ParticipantAssignment> availableParticipants = getAvailableParticipantsForServiceAndDate(da.getService(), da.getDate(), availability, false);
+            pe = generatePlanEntry(da.getService(), da.getDate(), availableParticipants, da);
+        } else {
+            // if any unassigned date has no more assignable candidates, pick another one
+            daMin = dateAssignments.stream()
+                .filter(da -> da.getPossibleAssignees() == 0 && da.getAssignedParticipants().size() < da.getMandatoryAssignees())
+                .findFirst();
+            DateAssignment da = daMin.get();
+            List<ParticipantAssignment> availableParticipants = getAvailableParticipantsForServiceAndDate(da.getService(), da.getDate(), availability, true);
+            pe = generatePlanEntry(da.getService(), da.getDate(), availableParticipants, da);
+        }
+
+        // reset counters for all date assignments and recalculate
+        dateAssignments.forEach(da -> {
+            da.setPossibleAssignees(0);
+            calculateAvailability(availability, da);
+        });
+
+        if (pe == null) {
+            return Optional.empty();
+        }
+        return Optional.of(pe);
+    }
+
+    private List<DateAssignment> generateDateAssignments(List<ServiceDate> serviceDates, List<ParticipantAssignment> availability) {
+        List<DateAssignment> dateAssignments = new ArrayList<>();
+
+        for (ServiceDate serviceDate : serviceDates) {
+            DateAssignment da = new DateAssignment(serviceDate.getDate(), serviceDate.getService(), serviceDate.getMandatoryAssignees());
+
+            calculateAvailability(availability, da);
+
+            dateAssignments.add(da);
+        }
+
+        // sort list by smallest possible assigneed to assign those first
+        return dateAssignments.stream()
+            .sorted(Comparator.comparingInt(da -> da.getPossibleAssignees()))
+            .toList();
+    }
+
+    private void calculateAvailability(List<ParticipantAssignment> availability, DateAssignment da) {
+        // count all participants available at that date for that service
+        for (ParticipantAssignment pa : availability) {
+            if (pa.getDatesAvailable().contains(da.getDate()) && pa.getParticipant().getServices().contains(da.getService())) {
+                da.setPossibleAssignees(da.getPossibleAssignees() + 1);
+            }
+        }
+
+        // set available participants to zero if assignment has already been made
+        if (da.getAssignedParticipants().size() == da.getMandatoryAssignees()) {
+            da.setPossibleAssignees(0);
+        }
+    }
+
+    private List<ParticipantAssignment> getAvailableParticipantsForServiceAndDate(Service service, Date date, List<ParticipantAssignment> availability, boolean includeThreshold) {
         List<ParticipantAssignment> availableParticipants = new ArrayList<>();
 
         for (ParticipantAssignment pa : availability) {
-            if (pa.getParticipant().getServices().contains(service)) {
+            if (isParticipantAvailableForServiceAndDate(pa, service, date) ||
+                (includeThreshold && isParticipantAvailableForServiceAndDateOutsideThreshold(pa, service, date))) {
                 availableParticipants.add(pa);
             }
         }
@@ -83,68 +149,34 @@ public class PlanService {
         return availableParticipants;
     }
 
-    private void generatePlanEntries(Service service, List<Date> assignableDates,  List<ParticipantAssignment> availableParticipants, Set<PlanEntry> planEntries) {
-
-    /*   int numberOfParticipants = availableParticipants.size();
-        int numberOfDates = assignableDates.size();
-        int numberOfAssignments = numberOfDates / numberOfParticipants;*/
-
-        // sort participants by availability
-        List<ParticipantAssignment> sortedParticipants = sortList(availableParticipants);
-
-        List<Date> assignedDates = new ArrayList<>();
-        boolean ignoreThreshold = false;
-
-        while (assignedDates.size() < assignableDates.size()) {
-            int currentSize = planEntries.size();
-            // assign exactly one date for each participant in one loop
-
-            for (ParticipantAssignment pa : sortedParticipants) {
-                List<Date> participantAvailability = pa.getDatesAvailable();
-
-                for (Date date : assignableDates) {
-                    if (participantAvailability.contains(date)
-                            && !assignedDates.contains(date)) {
-                        PlanEntry planEntry = new PlanEntry();
-                        planEntry.setService(service);
-                        planEntry.setStartTime(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
-                        planEntry.setEndTime(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime().plusHours(8)); // Assuming an 8-hour service duration
-                        planEntry.setParticipant(pa.getParticipant());
-
-                        planEntries.add(planEntry);
-                        assignedDates.add(date);
-                        pa.assignDate(date);
-                        break;
-                    }
-                }
-            }
-
-            if (currentSize == planEntries.size() && ignoreThreshold) {
-                // nothing has changed during this loop and threshold is ignored, so we need to break out of the loop
-                break;
-            } else if (currentSize == planEntries.size()) {
-                // nothing has changed during this loop, so ignore threshold on next try
-                // TODO: Trade some days to see if things work better this way
-                // TODO: way to go: see if a participant has an unassigned date within their threshold. if so see if that can be traded with another participant that still has that date available
-                // TODO: if you don't understand your way of thinking by what I wrote above tomorrow, I'm very sorry - Past Christian
-                ignoreThreshold = true;
-            }
-        }
+    private boolean isParticipantAvailableForServiceAndDate(ParticipantAssignment pa, Service service, Date date) {
+        return pa.getParticipant().getServices().contains(service) && pa.getDatesAvailable().contains(date);
     }
 
-    private  List<ParticipantAssignment> sortList(List<ParticipantAssignment> availableParticipants) {
-        return availableParticipants.stream()
-            .sorted(Comparator.comparingInt(pa -> pa.getDatesAvailable().size()))
-            .toList();
+    private boolean isParticipantAvailableForServiceAndDateOutsideThreshold(ParticipantAssignment pa, Service service, Date date) {
+        return pa.getParticipant().getServices().contains(service) && (
+            pa.getDatesAvailable().contains(date) ||
+            pa.getDatesWithinAssignmentThreshold().contains(date));
     }
 
-    private boolean hasAssignmentWithinThreshold(Date date, Participant participant, Set<PlanEntry> planEntries) {
-        List<Date> participantAssignedDates = planEntries.stream()
-            .filter(e -> e.getParticipant().equals(participant))
-            .map(e -> Date.from(e.getStartTime().atZone(ZoneId.systemDefault()).toInstant()))
-            .toList();
+    private PlanEntry generatePlanEntry(Service service, Date date, List<ParticipantAssignment> possibleParticipants, DateAssignment dateAssignment) {
+        PlanEntry planEntry = new PlanEntry();
+        planEntry.setService(service);
+        planEntry.setStartTime(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+        planEntry.setEndTime(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime().plusHours(8)); // Assuming an 8-hour service duration
 
-        return participantAssignedDates.stream()
-            .anyMatch(assignedDate -> Math.abs(date.getTime() - assignedDate.getTime()) < 21L * 24 * 60 * 60 * 1000);
+        // pick the participant with the least possible assignment dates
+        // and fewest assignments so far
+        ParticipantAssignment selectedParticipant = possibleParticipants.stream()
+            .min(Comparator.comparingInt((ParticipantAssignment pa) -> pa.getDatesAssigned().size())
+                .thenComparingInt(pa -> pa.getDatesAvailable().size()))
+            .orElseThrow(() -> new IllegalArgumentException("No available participants"));
+
+        planEntry.setParticipant(selectedParticipant.getParticipant());
+
+        selectedParticipant.assignDate(date);
+        dateAssignment.getAssignedParticipants().add(selectedParticipant.getParticipant());
+
+        return planEntry;
     }
 }
