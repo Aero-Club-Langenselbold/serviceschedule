@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import de.ct.manager.schedule.service.Service;
 import lombok.Data;
 
 @Data
@@ -16,10 +17,13 @@ public class ParticipantAssignment {
     private List<Date> datesAvailable = new CopyOnWriteArrayList<>();
     private List<Date> datesAssigned = new ArrayList<>();
     private List<Date> datesWithinAssignmentThreshold = new ArrayList<>();
+    private List<Service> availableServices;
+    private int nextServiceIndex = 0;
 
     public ParticipantAssignment(Participant participant, List<Date> datesAvailable) {
         this.participant = participant;
         this.datesAvailable = new CopyOnWriteArrayList<>(datesAvailable);
+        this.availableServices = new ArrayList<>(participant.getServices());
     }
 
     public boolean assignDate(Date date) {
@@ -30,8 +34,25 @@ public class ParticipantAssignment {
         datesAssigned.add(date);
         datesAvailable.remove(date);
         moveDatesWithinThreshold(date);
+        determineNextService();
 
         return true;
+    }
+
+    public boolean canAssignService(Service service) {
+        if (availableServices.contains(service) && datesAssigned.isEmpty()) {
+            return true;
+        } else {
+            return availableServices.get(this.nextServiceIndex).equals(service);
+        }
+    }
+
+    private void determineNextService() {
+        if (nextServiceIndex + 1 >= availableServices.size()) {
+            nextServiceIndex = 0;
+        } else {
+            nextServiceIndex++;
+        }
     }
 
     private void moveDatesWithinThreshold(Date assignedDate) {

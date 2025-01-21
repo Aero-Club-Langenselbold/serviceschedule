@@ -57,6 +57,7 @@ public class PlanService {
 
         while (dateAssignments.stream().anyMatch(da -> da.getPossibleAssignees() > 0 || da.getAssignedParticipants().size() < da.getServiceDate().getMandatoryAssignees())) {
             try {
+                // assign the next date given the smallest number of possible assignees
                 planEntries.addAll(assignDate(availability, dateAssignments).orElseThrow(() ->
                     new IllegalArgumentException("Plan Entry is empty")));
                 log.debug("Assignment made");
@@ -88,7 +89,7 @@ public class PlanService {
             da = daMin.get();
             availableParticipants = getAvailableParticipantsForServiceAndDate(da, availability, false);
         } else {
-            // if any unassigned date has no more assignable candidates, pick another one
+            // if any unassigned date has no more assignable candidates, ignore threshold
             daMin = dateAssignments.stream()
                 .filter(d -> d.getPossibleAssignees() == 0 && d.getAssignedParticipants().size() < d.getServiceDate().getMandatoryAssignees())
                 .findFirst();
@@ -133,7 +134,7 @@ public class PlanService {
             dateAssignments.add(da);
         }
 
-        // sort list by smallest possible assigneed to assign those first
+        // sort list by smallest possible number of assignees
         return dateAssignments.stream()
             .sorted(Comparator.comparingInt(da -> da.getPossibleAssignees()))
             .toList();
@@ -171,7 +172,10 @@ public class PlanService {
             return false;
         }
 
-        return pa.getParticipant().getServices().contains(dateAssignment.getServiceDate().getService()) && pa.getDatesAvailable().contains(dateAssignment.getServiceDate().getDate());
+        // participant is available if: service is available, date is available, and next service to assign is the same as the service of the date
+        return pa.getParticipant().getServices().contains(dateAssignment.getServiceDate().getService()) &&
+            pa.getDatesAvailable().contains(dateAssignment.getServiceDate().getDate()) &&
+            pa.canAssignService(dateAssignment.getServiceDate().getService());
     }
 
     private boolean isParticipantAvailableForServiceAndDateOutsideThreshold(ParticipantAssignment pa, DateAssignment dateAssignment) {

@@ -131,16 +131,10 @@ class PlanServiceUnitTest {
         Plan plan = generatePlan();
 
         Assertions.assertThat(plan).isNotNull();
-
-        // TODO: Verify: Participants under the age of 18 may only be assigned to services with another adult
-        // TODO: Verify: If there are more services than participants all participants must have at least one assignment
-        // TODO: consider the date of the assignment and the current age of the participant
-        // TODO: verify that each Participant has roughly the same number of assignments for each service he is assigned to
-        // TODO: verify that on days with two participants for the same service, two participants are assigned
     }
 
     @Test
-    void testPlanHasAllDatesCovered() {
+    void testPlanHasAllDatesFullyCovered() {
         Plan plan = generatePlan();
 
         // plan has 52 assignable dates and 2 services. One Service has 2 participants on Sundays (Total of 26)
@@ -212,9 +206,10 @@ class PlanServiceUnitTest {
                 participantAssignments.put(planEntry.getParticipant(), 1);
             }
         }
-        // john dow numbers 7, 8, 15, 21, 22, 23 should have roughly the same number of assignments
+        // john dow numbers 5, 7, 8, 15, 21, 22, 23 should have roughly the same number of assignments
         Map<Participant, Integer> filteredParticipantAssignments = participantAssignments.entrySet().stream()
-            .filter(entry -> entry.getKey().getFirstname().endsWith(".7") ||
+            .filter(entry -> entry.getKey().getFirstname().endsWith(".5") ||
+                    entry.getKey().getFirstname().endsWith(".7") ||
                     entry.getKey().getFirstname().endsWith(".8") ||
                     entry.getKey().getFirstname().endsWith(".15") ||
                     entry.getKey().getFirstname().endsWith(".21") ||
@@ -238,19 +233,108 @@ class PlanServiceUnitTest {
     }
 
     @Test
-    void testMinorParticipantsNotAssignedSolo() {
+    void testMinorParticipantsNotAssignedWithoutAdult() {
         Plan plan = generatePlan();
-
-        for (PlanEntry planEntry : plan.getEntries()) {
-            System.out.println(planEntry.toString());
-        }
 
         // Verify that minors are never assigned to services alone
         for (PlanEntry planEntry : plan.getEntries()) {
-            if (planEntry.getParticipant().getAgeAtDate(planEntry.getStartTime().toLocalDate()) < 18 && !hasAdult(planEntry.getService(), planEntry.getStartTime(), plan.getEntries())) {
+            if (planEntry.getParticipant().getAgeAtDate(planEntry.getStartTime().toLocalDate()) < 18 && !hasAdult(planEntry.getService(), planEntry.getStartTime(), plan.getEntries(), planEntry.getParticipant())) {
                 Assertions.fail("Minor participant " + planEntry.getParticipant().getFirstname() + " is not assigned to a service with another an adult");
             }
         }
+    }
+
+    @Test
+    void testAgeOfParticpant() {
+        // Participant 5 will turn 18 on 2020-04-01 and may then be assigned solo. Before that it always needs to be with an adult
+        Plan plan = generatePlan();
+
+        // consider the date of the assignment and the current age of the participant
+        int soloCount = 0;
+        for (PlanEntry planEntry : plan.getEntries()) {
+            Participant participant = planEntry.getParticipant();
+            if (participant.getFirstname().endsWith(".5")) {
+                if (participant.getAgeAtDate(planEntry.getStartTime().toLocalDate()) < 18) {
+                    // Make sure there is an adult assigned with the minor
+                    if (!hasAdult(planEntry.getService(), planEntry.getStartTime(), plan.getEntries(), participant)) {
+                        Assertions.fail("Participant " + participant.getEmail() + " is not assigned to a service with an adult");
+                    }
+                } else if (!hasAdult(planEntry.getService(), planEntry.getStartTime(), plan.getEntries(), participant)) {
+                    // the participant is an adult and there is no adult needed to be assigned with him
+                    soloCount++;
+                }
+            }
+        }
+
+        // if the then adult has no assignments without adult something is off
+        if (soloCount == 0) {
+            Assertions.fail("Participant 5 is not assigned to a service without an adult");
+        }
+    }
+
+    @Test
+    void testAtLeastOneAssignmentPerParticipant() {
+        Plan plan = generatePlan();
+
+        // Verify that every participant has at least one assignment
+        List<Participant> participants = plan.getEntries().stream()
+            .map(PlanEntry::getParticipant)
+            .distinct()
+            .sorted(Comparator.comparing(Participant::getEmail))
+            .toList();
+
+        // 35 assignees, however number 4 does not have any dates available and number 2 only Saturdays
+        // but may not be assigned to single services because of being a minor
+        Assertions.assertThat(participants).hasSize(33);
+    }
+
+    @Test
+    void testEqualServiceDistribution() {
+        Plan plan = generatePlan();
+
+        // affects participants 5 - 12
+        Map<Participant, List<PlanEntry>> participantAssignments = new HashMap<>();
+        for (PlanEntry planEntry : plan.getEntries()) {
+            if (!planEntry.getParticipant().getFirstname().endsWith(".5") &&
+                    !planEntry.getParticipant().getFirstname().endsWith(".6") &&
+                    !planEntry.getParticipant().getFirstname().endsWith(".7") &&
+                    !planEntry.getParticipant().getFirstname().endsWith(".8") &&
+                    !planEntry.getParticipant().getFirstname().endsWith(".9") &&
+                    !planEntry.getParticipant().getFirstname().endsWith(".10") &&
+                    !planEntry.getParticipant().getFirstname().endsWith(".11") &&
+                    !planEntry.getParticipant().getFirstname().endsWith(".12")) {
+                continue;
+            }
+            if (participantAssignments.containsKey(planEntry.getParticipant())) {
+                participantAssignments.get(planEntry.getParticipant()).add(planEntry);
+            } else {
+                List<PlanEntry> entries = new ArrayList<>();
+                entries.add(planEntry);
+                participantAssignments.put(planEntry.getParticipant(), entries);
+            }
+        }
+
+        // verify that participants eligible for multiple services have roughly the same number of assignments for each service
+        participantAssignments.forEach((participant, entries) -> {
+            Map<Service, Integer> serviceAssignments = new HashMap<>();
+            for (PlanEntry entry : entries) {
+                if (serviceAssignments.containsKey(entry.getService())) {
+                    serviceAssignments.put(entry.getService(), serviceAssignments.get(entry.getService()) + 1);
+                } else {
+                    serviceAssignments.put(entry.getService(), 1);
+                }
+            }
+
+            int totalAssignments = serviceAssignments.values().stream().mapToInt(Integer::intValue).sum();
+            int numberOfServices = serviceAssignments.size();
+            double averageAssignments = (double) totalAssignments / numberOfServices;
+
+            // Verify that each service's assignment count is within +/-1 of the average
+            serviceAssignments.forEach((service, count) -> {
+                Assertions.assertThat(count).isBetween((int) Math.floor(averageAssignments) - 1, (int) Math.ceil(averageAssignments) + 1);
+            });
+        });
+
     }
 
     private Plan generatePlan() {
@@ -279,9 +363,12 @@ class PlanServiceUnitTest {
         return plans;
     }
 
-    private boolean hasAdult(Service service, LocalDateTime date, Set<PlanEntry> entries) {
+    private boolean hasAdult(Service service, LocalDateTime date, Set<PlanEntry> entries, Participant participantToIgnore) {
         for (PlanEntry entry : entries) {
-            if (entry.getStartTime().equals(date) && entry.getService().equals(service) && entry.getParticipant().getAgeAtDate(date.toLocalDate()) >= 18) {
+            if (entry.getStartTime().equals(date) &&
+                    entry.getService().equals(service) &&
+                    entry.getParticipant().getAgeAtDate(date.toLocalDate()) >= 18 &&
+                    !entry.getParticipant().equals(participantToIgnore)) {
                 return true;
             }
         }
@@ -376,7 +463,7 @@ class PlanServiceUnitTest {
                 participant.setStatus(Status.ACTIVE);
                 participant.setEmail("john.doe." + i + "@funwithflags.com");
                 // create 5 minors (under the age of 18): Birthyear starting 13 years before 2020 increasing by 1 year each loop
-                participant.setDateOfBirth(Date.from(LocalDate.of(2020, Month.MARCH, 1).minusYears(13 + i).atStartOfDay(ZoneId.systemDefault()).toInstant()));
+                participant.setDateOfBirth(Date.from(LocalDate.of(2020, Month.APRIL, 1).minusYears(13 + i).atStartOfDay(ZoneId.systemDefault()).toInstant()));
                 participants.add(participant);
             }
 
@@ -422,7 +509,7 @@ class PlanServiceUnitTest {
             participantAvailability.add(new ParticipantAssignment(participants.get(0), assignableDates)); // particiant 0 can cover all dates
             participantAvailability.add(new ParticipantAssignment(participants.get(1), assignableSundays)); // particiant 1 can cover every sunday
             participantAvailability.add(new ParticipantAssignment(participants.get(2), assignableSaturdays)); // particiant 2 can cover every saturday
-            participantAvailability.add(new ParticipantAssignment(participants.get(3), assignableSaturdays.subList(0, 3))); // particiant 3 can cover 3 saturdays
+            participantAvailability.add(new ParticipantAssignment(participants.get(3), assignableSundays.subList(0, 3))); // particiant 3 can cover 3 sundays
             participantAvailability.add(new ParticipantAssignment(participants.get(4), new ArrayList<>())); // particiant 4 cannot cover anything
 
             participantAvailability.add(new ParticipantAssignment(participants.get(5), assignableDates)); // particiant 5 can cover all dates
