@@ -13,6 +13,7 @@ import org.springframework.test.context.jdbc.Sql;
 
 import de.ct.manager.schedule.util.AbstractIntegrationTest;
 
+@SuppressWarnings("null") // null warnings in assertions are false-positives
 class ServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Test

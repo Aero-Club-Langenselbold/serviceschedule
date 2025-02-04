@@ -3,8 +3,10 @@ package de.ct.manager.schedule.service;
 import java.util.Date;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class ServiceDate {
     private Date date;
     private Service service;

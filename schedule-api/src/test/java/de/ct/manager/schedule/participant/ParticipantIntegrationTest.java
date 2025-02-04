@@ -15,6 +15,7 @@ import org.springframework.test.context.jdbc.Sql;
 import de.ct.manager.schedule.util.AbstractIntegrationTest;
 import de.ct.manager.schedule.util.RestPageImpl;
 
+@SuppressWarnings("null") // null warnings in assertions are false-positives
 class ParticipantIntegrationTest extends AbstractIntegrationTest {
 
     @Test

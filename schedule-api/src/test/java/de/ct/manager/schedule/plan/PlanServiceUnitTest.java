@@ -3,6 +3,7 @@ package de.ct.manager.schedule.plan;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -334,7 +335,15 @@ class PlanServiceUnitTest {
                 Assertions.assertThat(count).isBetween((int) Math.floor(averageAssignments) - 1, (int) Math.ceil(averageAssignments) + 1);
             });
         });
+    }
 
+    @Test
+    void testGeneratePlanPDF() {
+        Plan plan = generatePlan();
+
+        File file = planService.generatePlanPDF(plan.getId());
+
+        Assertions.assertThat(file).isNotNull().exists();
     }
 
     private Plan generatePlan() {

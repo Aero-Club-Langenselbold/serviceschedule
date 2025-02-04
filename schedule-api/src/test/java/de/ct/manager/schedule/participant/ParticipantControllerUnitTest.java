@@ -15,9 +15,9 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -31,14 +31,14 @@ import de.ct.manager.schedule.util.AbstractControllerUnitTest;
 })
 class ParticipantControllerUnitTest extends AbstractControllerUnitTest{
 
-    @MockBean
-    private ParticipantRepository participentRepository;
+    @MockitoBean
+    private ParticipantRepository participantRepository;
 
     @Test
     void testPageParticipants() throws Exception {
         PageRequest pr = PageRequest.of(2, 10, Direction.DESC, "name");
 
-        when(participentRepository.findAll(pr)).thenReturn(generatePageResponse());
+        when(participantRepository.findAll(pr)).thenReturn(generatePageResponse());
 
         mockMvc.perform(
             get("/participant/page")
@@ -57,7 +57,7 @@ class ParticipantControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testListParticipants() throws Exception {
-        when(participentRepository.findAll()).thenReturn(generateListResponse());
+        when(participantRepository.findAll()).thenReturn(generateListResponse());
 
         mockMvc.perform(
             get("/participant/list")
@@ -71,7 +71,7 @@ class ParticipantControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testParticipant() throws Exception {
-        when(participentRepository.findById("4711")).thenReturn(Optional.of(generateParticipant(0)));
+        when(participantRepository.findById("4711")).thenReturn(Optional.of(generateParticipant(0)));
 
         mockMvc.perform(
             get("/participant/fetch/4711")
@@ -88,7 +88,7 @@ class ParticipantControllerUnitTest extends AbstractControllerUnitTest{
     void testCreateParticipant() throws Exception {
         Participant participant = generateParticipant(0);
 
-        when(participentRepository.save(participant)).thenReturn(participant);
+        when(participantRepository.save(participant)).thenReturn(participant);
 
         mockMvc.perform(
             post("/participant/save")

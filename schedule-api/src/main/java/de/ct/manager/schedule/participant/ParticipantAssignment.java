@@ -7,8 +7,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import de.ct.manager.schedule.service.Service;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class ParticipantAssignment {
 
     private static final long ASSIGNMENT_THRESHOLD = 21L * 24 * 60 * 60 * 1000; // 21 days

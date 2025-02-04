@@ -1,17 +1,30 @@
 package de.ct.manager.schedule.plan;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+
 import de.ct.manager.schedule.participant.DateAssignment;
 import de.ct.manager.schedule.participant.ParticipantAssignment;
+import de.ct.manager.schedule.service.Service;
 import de.ct.manager.schedule.service.ServiceDate;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 @org.springframework.stereotype.Service
@@ -42,6 +55,63 @@ public class PlanService {
         planRepository.deleteById(id);
     }
 
+    public File generatePlanPDF(String id) {
+        Plan plan = planRepository.findById(id).orElse(null);
+
+        if (plan == null) {
+            throw new IllegalArgumentException("Plan not found");
+        }
+
+        // create PDF from plan
+        try {
+            PdfWriter writer = new PdfWriter("plan_" + id + ".pdf");
+            PdfDocument pdf = new PdfDocument(writer);
+            Document document = new Document(pdf);
+
+            Table table = new Table(plan.getAllServices().size() + 1);
+
+            // add service headers
+            table.addHeaderCell(new Cell().add(new Paragraph("Datum")));
+            for (Service service : plan.getAllServices()) {
+                table.addHeaderCell(new Cell().add(new Paragraph(service.getServicename())));
+            }
+
+            // add date rows and contents
+            SimpleDateFormat df = new SimpleDateFormat("EE, dd.MM.yyyy", Locale.GERMAN);
+            for (Date date : plan.getAllDates()) {
+                table.addCell(new Cell().add(new Paragraph(df.format(date))));
+                for (Service service : plan.getAllServices()) {
+                    // Find the PlanEntry with the matching service and start date
+                    List<PlanEntry> matchingEntries = plan.getEntries().stream()
+                        .filter(entry -> entry.getService().equals(service) &&
+                                Date.from(entry.getStartTime().atZone(ZoneId.systemDefault()).toInstant()).equals(date))
+                        .toList();
+
+                    // Add service data cell (you can customize this as needed)
+                    if (matchingEntries != null) {
+                        StringBuilder participantNames = new StringBuilder();
+                        for (PlanEntry e : matchingEntries) {
+                            participantNames.append(e.getParticipant().getLastname() + ", " + e.getParticipant().getFirstname() + "\r\n");
+                        }
+                        table.addCell(new Cell().add(new Paragraph(participantNames.toString())));
+                    } else {
+                        table.addCell(new Cell().add(new Paragraph("-")));
+                    }
+                }
+            }
+
+            document.add(table);
+            document.close();
+        } catch (Exception e) {
+            log.error("Error creating PDF: {}", e.getMessage());
+        }
+
+        return new File("plan_" + id + ".pdf");
+    }
+
+
+
+    @Transactional
     public Plan generatePlan(String planId, List<ServiceDate> serviceDates, List<ParticipantAssignment> availability) {
         Plan plan = planRepository.findById(planId).orElse(null);
 

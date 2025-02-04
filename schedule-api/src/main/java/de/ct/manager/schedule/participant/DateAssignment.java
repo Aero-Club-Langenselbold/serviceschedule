@@ -6,8 +6,10 @@ import java.util.List;
 
 import de.ct.manager.schedule.service.ServiceDate;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class DateAssignment {
     private ServiceDate serviceDate;
     private int possibleAssignees;

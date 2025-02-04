@@ -38,6 +38,12 @@ public class PlanController {
         return ResponseEntity.ok(planService.createOrUpdatePlan(plan));
     }
 
+    @PostMapping("/generate/{id}")
+    public ResponseEntity<Plan> generatePlan(@PathVariable String id, @RequestBody PlanDetails planDetails) {
+        return ResponseEntity.ok(planService.generatePlan(id, planDetails.getServiceDates(), planDetails.getAvailability()));
+    }
+
+
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deletePlan(@PathVariable String id) {
         planService.deletePlan(id);

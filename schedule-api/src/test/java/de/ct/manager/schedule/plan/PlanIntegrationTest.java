@@ -1,6 +1,8 @@
 package de.ct.manager.schedule.plan;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -15,9 +17,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.jdbc.Sql;
 
 import de.ct.manager.schedule.participant.Participant;
+import de.ct.manager.schedule.participant.ParticipantAssignment;
 import de.ct.manager.schedule.service.Service;
+import de.ct.manager.schedule.service.ServiceDate;
 import de.ct.manager.schedule.util.AbstractIntegrationTest;
 
+@SuppressWarnings("null") // null warnings in assertions are false-positives
 class PlanIntegrationTest extends AbstractIntegrationTest {
 
     @Test
@@ -199,5 +204,79 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
         Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         Assertions.assertThat(response.getBody()).isNotNull();
         Assertions.assertThat(response.getBody().getName()).isEqualTo("Universe Domination tour");
+    }
+
+    @Test
+    @Sql(scripts = { "classpath:scripts/test-services.sql", "classpath:scripts/test-participants.sql" }, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(scripts = "classpath:scripts/delete-test-plans.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void testGeneratePlan() throws Exception {
+        // create new plan
+        Plan newby = new Plan();
+        newby.setName("Anger Management");
+        newby.setDescription("What the world could look like if we all just got along.");
+        newby.setDateFrom(new Date());
+        newby.setDateUntil(new Date());
+
+        HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(newby), createHeaders());
+
+        ResponseEntity<Plan> plan = restTemplate.exchange(
+            createURLWithPort("plan/") + "save",
+            HttpMethod.POST,
+            entity,
+            new ParameterizedTypeReference<Plan>() {});
+
+        Assertions.assertThat(plan.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(plan.getBody()).isNotNull();
+
+        // get particpants and services
+        ResponseEntity<List<Service>> serviceResponse = restTemplate.exchange(
+            createURLWithPort("service/") + "list",
+            HttpMethod.GET,
+            entity,
+            new ParameterizedTypeReference<List<Service>>() {});
+
+        Assertions.assertThat(serviceResponse).isNotNull();
+        Assertions.assertThat(serviceResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(serviceResponse.getBody()).isNotEmpty();
+
+        ResponseEntity<List<Participant>> participantResponse = restTemplate.exchange(
+            createURLWithPort("participant/") + "list",
+            HttpMethod.GET,
+            entity,
+            new ParameterizedTypeReference<List<Participant>>() {});
+
+        Assertions.assertThat(participantResponse).isNotNull();
+        Assertions.assertThat(participantResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(participantResponse.getBody()).isNotEmpty();
+
+        List<Service> services = serviceResponse.getBody();
+        List<Participant> participants = participantResponse.getBody();
+
+        for (Participant p : participants) {
+            p.getServices().addAll(services);
+        }
+
+        // generate plan entries
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(2020, 01, 01, 0, 0, 0);
+        PlanDetails pd = new PlanDetails();
+        for (Service s : services) {
+            pd.getServiceDates().add(new ServiceDate(calendar.getTime(), s, 1));
+        }
+        for (Participant p : participants) {
+            pd.getAvailability().add(new ParticipantAssignment(p, new ArrayList<>(List.of(calendar.getTime()))));
+        }
+
+        entity = new HttpEntity<>(objectMapper.writeValueAsString(pd), createHeaders());
+
+        plan = restTemplate.exchange(
+            createURLWithPort("plan/") + "generate/" + plan.getBody().getId(),
+            HttpMethod.POST,
+            entity,
+            new ParameterizedTypeReference<Plan>() {});
+
+        Assertions.assertThat(plan.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(plan.getBody()).isNotNull();
+        Assertions.assertThat(plan.getBody().getEntries()).hasSize(5);
     }
 }

@@ -1,12 +1,16 @@
 package de.ct.manager.schedule.plan;
 
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.hibernate.envers.Audited;
 
+import de.ct.manager.schedule.service.Service;
 import de.ct.manager.schedule.util.AbstractPersistentEntity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -40,6 +44,22 @@ public class Plan extends AbstractPersistentEntity {
     @NotNull
     private Date dateUntil;
 
-    @OneToMany(mappedBy = "plan", fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToMany(mappedBy = "plan", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
     private Set<PlanEntry> entries = new HashSet<>();
+
+    public List<Service> getAllServices() {
+        return entries.stream()
+            .map(PlanEntry::getService)
+            .distinct()
+            .toList();
+    }
+
+    public List<Date> getAllDates() {
+        return entries.stream()
+            .map(entry -> entry.getStartTime().toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant())
+            .map(Date::from)
+            .distinct()
+            .sorted()
+            .toList();
+    }
 }
