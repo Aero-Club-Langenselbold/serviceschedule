@@ -346,6 +346,8 @@ class PlanServiceUnitTest {
         Assertions.assertThat(file).isNotNull().exists();
     }
 
+    // TODO: some people want specific dates fixed for them
+
     private Plan generatePlan() {
         PlanDummyData dummyData = new PlanDummyData();
 
