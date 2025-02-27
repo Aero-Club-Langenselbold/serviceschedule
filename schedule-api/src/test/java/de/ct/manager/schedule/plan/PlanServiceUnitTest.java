@@ -108,7 +108,7 @@ class PlanServiceUnitTest {
     @Test
     void testGeneratePlanWithoutParticipants() {
         // result should be an empty plan
-        PlanDummyData dummyData = new PlanDummyData();
+        PlanDummyData dummyData = new PlanDummyData(false);
 
         when(planRepository.findById(dummyData.getPlan().getId())).thenReturn(Optional.of(dummyData.getPlan()));
         when(planRepository.save(any(Plan.class))).thenAnswer(i -> i.getArgument(0));
@@ -346,10 +346,29 @@ class PlanServiceUnitTest {
         Assertions.assertThat(file).isNotNull().exists();
     }
 
-    // TODO: some people want specific dates fixed for them
+    @Test
+    void testSpecialRequestsAreFulfilled() {
+        Plan plan = generatePlan(true);
+
+        for (PlanEntry entry : plan.getEntries()) {
+            LocalDate date = entry.getStartTime().toLocalDate();
+            if (date.equals(LocalDate.of(2020, 1, 19)) && entry.getService().getServicename().equals("Fancy Funky Service")) {
+                // sunday with two asignees for this service
+                Assertions.assertThat(entry.getParticipant().getEmail()).isIn("john.doe.18@funwithflags.com", "john.doe.14@funwithflags.com");
+            } else if (date.equals(LocalDate.of(2020, 1, 25)) && entry.getService().getServicename().equals("Fancy Funky Service")) {
+                Assertions.assertThat(entry.getParticipant().getEmail()).isEqualTo("john.doe.14@funwithflags.com");
+            } else if (date.equals(LocalDate.of(2020, 1, 26)) && entry.getService().getServicename().equals("Not so Funky Service")) {
+                Assertions.assertThat(entry.getParticipant().getEmail()).isEqualTo("john.doe.29@funwithflags.com");
+            }
+        }
+    }
 
     private Plan generatePlan() {
-        PlanDummyData dummyData = new PlanDummyData();
+        return generatePlan(false);
+    }
+
+    private Plan generatePlan(boolean withSpecialRequestDates) {
+        PlanDummyData dummyData = new PlanDummyData(withSpecialRequestDates);
 
         when(planRepository.findById(dummyData.getPlan().getId())).thenReturn(Optional.of(dummyData.getPlan()));
         when(planRepository.save(any(Plan.class))).thenAnswer(i -> i.getArgument(0));
@@ -394,17 +413,17 @@ class PlanServiceUnitTest {
         private List<Date> assignableDates;
         private List<ParticipantAssignment> participantAvailability;
 
-        public PlanDummyData() {
-            generateDummyData();
+        public PlanDummyData(boolean withSpecialRequestDates) {
+            generateDummyData(withSpecialRequestDates);
         }
 
-        private void generateDummyData() {
+        private void generateDummyData(boolean withSpecialRequestDates) {
             generateDummyPlan();
             generateDummyServices();
             generateDummyDates();
             generateDummyServiceDates();
 
-            assignDummyAvailabilities(generateDummyParticipants());
+            assignDummyAvailabilities(generateDummyParticipants(), withSpecialRequestDates);
         }
 
         private void generateDummyPlan() {
@@ -481,7 +500,7 @@ class PlanServiceUnitTest {
             return participants;
         }
 
-        private void assignDummyAvailabilities(List<Participant> participants) {
+        private void assignDummyAvailabilities(List<Participant> participants, boolean withSpecialRequestDates) {
             // NOTE: For deterministic test results no random assignments are made
             participantAvailability = new ArrayList<>();
 
@@ -516,6 +535,7 @@ class PlanServiceUnitTest {
             Assertions.assertThat(assignableSaturdays).hasSize(26);
 
             // REMINDER: participants 0 - 4 are minors
+            // If special request dates are allowed, Participants 14, 18 and 29 have special requests
             // assign dates to participants
             participantAvailability.add(new ParticipantAssignment(participants.get(0), assignableDates)); // particiant 0 can cover all dates
             participantAvailability.add(new ParticipantAssignment(participants.get(1), assignableSundays)); // particiant 1 can cover every sunday
@@ -532,11 +552,11 @@ class PlanServiceUnitTest {
             participantAvailability.add(new ParticipantAssignment(participants.get(11), assignableDates.subList(0, 20))); // particiant 11 can cover the first 20 dates
             participantAvailability.add(new ParticipantAssignment(participants.get(12), assignableDates.subList(15, 43))); // particiant 12 can cover lots of dates
             participantAvailability.add(new ParticipantAssignment(participants.get(13), assignableDates.subList(10, 50))); // particiant 13 can cover lots of dates
-            participantAvailability.add(new ParticipantAssignment(participants.get(14), assignableDates.subList(5, 30))); // particiant 14 can cover lots of dates
+            participantAvailability.add(new ParticipantAssignment(participants.get(14), assignableDates.subList(5, 30), withSpecialRequestDates ? assignableDates.subList(5, 7) : null)); // particiant 14 can cover lots of dates
             participantAvailability.add(new ParticipantAssignment(participants.get(15), assignableDates)); // particiant 15 can cover all dates
             participantAvailability.add(new ParticipantAssignment(participants.get(16), assignableDates.subList(10, 11))); // particiant 16 can cover only one date
             participantAvailability.add(new ParticipantAssignment(participants.get(17), assignableDates.subList(19, 20))); // particiant 17 can cover only one date
-            participantAvailability.add(new ParticipantAssignment(participants.get(18), assignableDates.subList(5, 6))); // particiant 18 can cover only one date
+            participantAvailability.add(new ParticipantAssignment(participants.get(18), assignableDates.subList(5, 6), withSpecialRequestDates ? assignableDates.subList(5, 6) : null)); // particiant 18 can cover only one date
             participantAvailability.add(new ParticipantAssignment(participants.get(19), assignableDates.subList(42, 43))); // particiant 19 can cover only one date
             participantAvailability.add(new ParticipantAssignment(participants.get(20), assignableDates.subList(38, 41))); // particiant 20 can cover only 3 dates
             participantAvailability.add(new ParticipantAssignment(participants.get(21), assignableSundays)); // particiant 21 can cover every sunday
@@ -547,7 +567,7 @@ class PlanServiceUnitTest {
             participantAvailability.add(new ParticipantAssignment(participants.get(26), assignableDates.subList(32, 52))); // particiant 26 can cover lots of dates
             participantAvailability.add(new ParticipantAssignment(participants.get(27), assignableDates.subList(8, 27))); // particiant 27 can cover lots of dates
             participantAvailability.add(new ParticipantAssignment(participants.get(28), assignableDates.subList(40, 45))); // particiant 28 can cover some dates
-            participantAvailability.add(new ParticipantAssignment(participants.get(29), assignableDates.subList(3, 16))); // particiant 29 can cover lots of dates
+            participantAvailability.add(new ParticipantAssignment(participants.get(29), assignableDates.subList(3, 16), withSpecialRequestDates ? assignableDates.subList(6, 8) : null)); // particiant 29 can cover lots of dates
             participantAvailability.add(new ParticipantAssignment(participants.get(30), assignableDates)); // particiant 30 can cover all dates
             participantAvailability.add(new ParticipantAssignment(participants.get(31), assignableSundays)); // particiant 31 can cover every sunday
             participantAvailability.add(new ParticipantAssignment(participants.get(32), assignableSaturdays)); // particiant 32 can cover every saturday

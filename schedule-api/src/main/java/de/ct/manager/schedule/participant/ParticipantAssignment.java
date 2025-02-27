@@ -16,6 +16,7 @@ public class ParticipantAssignment {
     private static final long ASSIGNMENT_THRESHOLD = 21L * 24 * 60 * 60 * 1000; // 21 days
 
     private Participant participant;
+    private List<Date> datesRequested = new CopyOnWriteArrayList<>();
     private List<Date> datesAvailable = new CopyOnWriteArrayList<>();
     private List<Date> datesAssigned = new ArrayList<>();
     private List<Date> datesWithinAssignmentThreshold = new ArrayList<>();
@@ -23,8 +24,16 @@ public class ParticipantAssignment {
     private int nextServiceIndex = 0;
 
     public ParticipantAssignment(Participant participant, List<Date> datesAvailable) {
+        this(participant, datesAvailable, null);
+    }
+
+    public ParticipantAssignment(Participant participant, List<Date> datesAvailable, List<Date> datesRequested) {
         this.participant = participant;
         this.datesAvailable = new CopyOnWriteArrayList<>(datesAvailable);
+        if (datesRequested != null) {
+            this.datesRequested = new CopyOnWriteArrayList<>(datesRequested);
+            this.datesAvailable.removeAll(datesRequested);
+        }
         this.availableServices = new ArrayList<>(participant.getServices());
     }
 
@@ -34,6 +43,7 @@ public class ParticipantAssignment {
         }
 
         datesAssigned.add(date);
+        datesRequested.remove(date);
         datesAvailable.remove(date);
         moveDatesWithinThreshold(date);
         determineNextService();

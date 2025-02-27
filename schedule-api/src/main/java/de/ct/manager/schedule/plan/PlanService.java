@@ -213,7 +213,9 @@ public class PlanService {
     private void calculateAvailability(List<ParticipantAssignment> availability, DateAssignment da) {
         // count all participants available at that date for that service
         for (ParticipantAssignment pa : availability) {
-            if (pa.getDatesAvailable().contains(da.getServiceDate().getDate()) && pa.getParticipant().getServices().contains(da.getServiceDate().getService())) {
+            if ((pa.getDatesAvailable().contains(da.getServiceDate().getDate())
+                || pa.getDatesRequested().contains(da.getServiceDate().getDate()))
+                && pa.getParticipant().getServices().contains(da.getServiceDate().getService())) {
                 da.setPossibleAssignees(da.getPossibleAssignees() + 1);
             }
         }
@@ -244,7 +246,8 @@ public class PlanService {
 
         // participant is available if: service is available, date is available, and next service to assign is the same as the service of the date
         return pa.getParticipant().getServices().contains(dateAssignment.getServiceDate().getService()) &&
-            pa.getDatesAvailable().contains(dateAssignment.getServiceDate().getDate()) &&
+            (pa.getDatesAvailable().contains(dateAssignment.getServiceDate().getDate()) ||
+            pa.getDatesRequested().contains(dateAssignment.getServiceDate().getDate())) &&
             pa.canAssignService(dateAssignment.getServiceDate().getService());
     }
 
@@ -255,6 +258,7 @@ public class PlanService {
 
         return pa.getParticipant().getServices().contains(dateAssignment.getServiceDate().getService()) && (
             pa.getDatesAvailable().contains(dateAssignment.getServiceDate().getDate()) ||
+            pa.getDatesRequested().contains(dateAssignment.getServiceDate().getDate()) ||
             pa.getDatesWithinAssignmentThreshold().contains(dateAssignment.getServiceDate().getDate()));
     }
 
@@ -282,12 +286,20 @@ public class PlanService {
         planEntry.setStartTime(serviceDate.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
         planEntry.setEndTime(serviceDate.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime().plusHours(8)); // Assuming an 8-hour service duration
 
+        // pick candidates with special requests for this date first
+        ParticipantAssignment selectedParticipant = possibleParticipants.stream()
+            .filter(pa -> pa.getDatesRequested().size() > 0 && pa.getDatesRequested().contains(serviceDate.getDate()))
+            .min(Comparator.comparingInt(pa -> pa.getDatesRequested().size()))
+            .orElse(null);
+
         // pick the participant with the least possible assignment dates
         // and fewest assignments so far
-        ParticipantAssignment selectedParticipant = possibleParticipants.stream()
-            .min(Comparator.comparingInt((ParticipantAssignment pa) -> pa.getDatesAssigned().size())
-                .thenComparingInt(pa -> pa.getDatesAvailable().size()))
-            .orElseThrow(() -> new IllegalArgumentException("No available participants"));
+        if (selectedParticipant == null) {
+            selectedParticipant = possibleParticipants.stream()
+                .min(Comparator.comparingInt((ParticipantAssignment pa) -> pa.getDatesAssigned().size())
+                    .thenComparingInt(pa -> pa.getDatesAvailable().size()))
+                .orElseThrow(() -> new IllegalArgumentException("No available participants"));
+        }
 
         planEntry.setParticipant(selectedParticipant.getParticipant());
 
