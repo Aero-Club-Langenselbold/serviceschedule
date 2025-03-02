@@ -3,10 +3,24 @@ export default defineI18nConfig(() => ({
   locale: 'en',
   messages: {
     en: {
-      welcome: 'Welcome'
+      login: {
+        title: 'Login',
+        username: 'Username',
+        password: 'Password',
+        submit: 'Login',
+        register: 'Register',
+        forgot: 'Forgot password?'
+      }
     },
     de: {
-      welcome: 'Hallo'
+      login: {
+        title: 'Anmelden',
+        username: 'Benutzername',
+        password: 'Passwort',
+        submit: 'Anmelden',
+        register: 'Registrieren',
+        forgot: 'Password vergessen?'
+      }
     }
   }
 }))

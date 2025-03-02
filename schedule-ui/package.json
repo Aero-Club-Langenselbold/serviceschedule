@@ -10,9 +10,11 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@iconify-json/heroicons": "^1.2.2",
     "@nuxtjs/i18n": "9.0.0-rc.2",
     "nuxt": "^3.15.4",
     "nuxt-app": "file:",
+    "nuxt-auth-utils": "^0.5.16",
     "vue": "latest",
     "vue-router": "latest"
   },
@@ -21,7 +23,7 @@
     "@nuxt/icon": "^1.10.3",
     "@nuxt/ui": "3.0.0-alpha.13",
     "@nuxtjs/color-mode": "^3.5.2",
-    "@tailwindcss/vite": "^4.0.9",
-    "tailwindcss": "^4.0.9"
+    "@tailwindcss/vite": "^4.0.8",
+    "tailwindcss": "^4.0.8"
   }
 }

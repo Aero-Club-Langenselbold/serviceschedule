@@ -3,6 +3,7 @@ package de.ct.manager.schedule.service;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,21 +25,25 @@ public class ServiceController {
     }
 
     @GetMapping("/list")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Service>> listServices() {
         return ResponseEntity.ok(serviceService.listServices());
     }
 
     @GetMapping("/fetch/{id}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Service> getService(@PathVariable String id) {
         return ResponseEntity.ok(serviceService.getService(id));
     }
 
     @PostMapping("/save")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Service> createOrUpdateService(@RequestBody Service service) {
         return ResponseEntity.ok(serviceService.createOrUpdateService(service));
     }
 
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteService(@PathVariable String id) {
         serviceService.deleteService(id);
         return ResponseEntity.ok().build();

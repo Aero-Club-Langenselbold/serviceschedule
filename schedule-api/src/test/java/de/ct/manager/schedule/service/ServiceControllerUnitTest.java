@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import de.ct.manager.schedule.user.UserRole;
 import de.ct.manager.schedule.util.AbstractControllerUnitTest;
 
 @WebMvcTest(ServiceController.class)
@@ -31,11 +32,14 @@ class ServiceControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testListParticipants() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_USER);
+
         when(serviceRepository.findAll()).thenReturn(generateListResponse());
 
         mockMvc.perform(
             get("/service/list")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
             )
             .andDo(print())
             .andExpect(status().isOk())
@@ -45,11 +49,14 @@ class ServiceControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testService() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_USER);
+
         when(serviceRepository.findById("4711")).thenReturn(Optional.of(generateService(0)));
 
         mockMvc.perform(
             get("/service/fetch/4711")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
             )
             .andDo(print())
             .andExpect(status().isOk())
@@ -59,6 +66,8 @@ class ServiceControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testCreateService() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_USER);
+
         Service service = generateService(0);
 
         when(serviceRepository.save(service)).thenReturn(service);
@@ -67,6 +76,7 @@ class ServiceControllerUnitTest extends AbstractControllerUnitTest{
             post("/service/save")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(service))
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
             )
             .andDo(print())
             .andExpect(status().isOk())
@@ -76,9 +86,12 @@ class ServiceControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testDeleteService() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_USER);
+        
         mockMvc.perform(
             delete("/service/delete/4711")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
             )
             .andDo(print())
             .andExpect(status().isOk());

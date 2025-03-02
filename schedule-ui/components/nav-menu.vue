@@ -1,11 +1,17 @@
 <template>
+  <div>
+    <div class="flex items-center justify-between p-4">
+      <UIcon name="i-heroicons-home" />
+      <div class="flex space-x-4">
+        <button @click="setLocale('en')">en</button>
+        <button @click="setLocale('de')">de</button>
+      </div>
+    </div>
+
+  </div>
   <UContainer>
     <!--<UHorizontalNavigation :links="links" class="border-b border-gray-200 dark:border-gray-800" />-->
   </UContainer>
-  <div>
-    <button @click="setLocale('en')">en</button>
-    <button @click="setLocale('de')">de</button>
-  </div>
 </template>
 
 <script lang="ts" setup>

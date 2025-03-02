@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.jdbc.Sql;
 
+import de.ct.manager.schedule.user.UserRole;
 import de.ct.manager.schedule.util.AbstractIntegrationTest;
 
 @SuppressWarnings("null") // null warnings in assertions are false-positives
@@ -20,7 +21,7 @@ class ServiceIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-services.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM service", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testListServices() {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeaders());
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
 
         ResponseEntity<List<Service>> response = restTemplate.exchange(
             createURLWithPort("service/") + "list",
@@ -39,7 +40,7 @@ class ServiceIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-services.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM service", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testFetchService() {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeaders());
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
 
         ResponseEntity<Service> response = restTemplate.exchange(
             createURLWithPort("service/") + "fetch/5111",
@@ -57,7 +58,7 @@ class ServiceIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-services.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM service", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testDeleteService() {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeaders());
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
 
         restTemplate.exchange(
             createURLWithPort("service/") + "delete/5111",
@@ -85,7 +86,7 @@ class ServiceIntegrationTest extends AbstractIntegrationTest {
         Service newby = new Service();
         newby.setServicename("Nullpointer service");
 
-        HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(newby), createHeaders());
+        HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(newby), createHeadersWithToken(UserRole.ROLE_USER));
 
         ResponseEntity<Service> service = restTemplate.exchange(
             createURLWithPort("service/") + "save",
@@ -114,7 +115,7 @@ class ServiceIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-services.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM service", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testUpdateService() throws Exception {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeaders());
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
 
         // fetch funky service
         ResponseEntity<Service> response = restTemplate.exchange(
@@ -132,7 +133,7 @@ class ServiceIntegrationTest extends AbstractIntegrationTest {
         Service service = response.getBody();
         service.setServicename("Even funkier Service");
 
-        entity = new HttpEntity<>(objectMapper.writeValueAsString(service), createHeaders());
+        entity = new HttpEntity<>(objectMapper.writeValueAsString(service), createHeadersWithToken(UserRole.ROLE_USER));
 
         response = restTemplate.exchange(
             createURLWithPort("service/") + "save",

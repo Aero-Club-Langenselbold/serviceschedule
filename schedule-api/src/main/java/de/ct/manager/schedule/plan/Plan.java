@@ -8,6 +8,8 @@ import java.util.Set;
 
 import org.hibernate.envers.Audited;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import de.ct.manager.schedule.service.Service;
 import de.ct.manager.schedule.util.AbstractPersistentEntity;
 import jakarta.persistence.CascadeType;
@@ -47,6 +49,7 @@ public class Plan extends AbstractPersistentEntity {
     @OneToMany(mappedBy = "plan", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
     private Set<PlanEntry> entries = new HashSet<>();
 
+    @JsonIgnore
     public List<Service> getAllServices() {
         return entries.stream()
             .map(PlanEntry::getService)
@@ -54,6 +57,7 @@ public class Plan extends AbstractPersistentEntity {
             .toList();
     }
 
+    @JsonIgnore
     public List<Date> getAllDates() {
         return entries.stream()
             .map(entry -> entry.getStartTime().toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant())

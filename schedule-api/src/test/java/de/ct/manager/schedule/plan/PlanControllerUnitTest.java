@@ -27,6 +27,7 @@ import de.ct.manager.schedule.participant.ParticipantRepository;
 import de.ct.manager.schedule.service.Service;
 import de.ct.manager.schedule.service.ServiceDate;
 import de.ct.manager.schedule.service.ServiceRepository;
+import de.ct.manager.schedule.user.UserRole;
 import de.ct.manager.schedule.util.AbstractControllerUnitTest;
 
 @WebMvcTest(PlanController.class)
@@ -46,11 +47,14 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testListPlans() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_USER);
+
         when(planRepository.findAll()).thenReturn(generateListResponse());
 
         mockMvc.perform(
             get("/plan/list")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
             )
             .andDo(print())
             .andExpect(status().isOk())
@@ -60,11 +64,14 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testPlan() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_USER);
+
         when(planRepository.findById("4711")).thenReturn(Optional.of(generatePlan(0)));
 
         mockMvc.perform(
             get("/plan/fetch/4711")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
             )
             .andDo(print())
             .andExpect(status().isOk())
@@ -74,6 +81,8 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testCreatePlan() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_USER);
+
         Plan plan = generatePlan(0);
 
         when(planRepository.save(plan)).thenReturn(plan);
@@ -82,6 +91,7 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
             post("/plan/save")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(plan))
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
             )
             .andDo(print())
             .andExpect(status().isOk())
@@ -91,6 +101,8 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testGeneratePlan() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_USER);
+
         when(planRepository.findById("4711")).thenReturn(Optional.of(generatePlan(0)));
         when(serviceRepository.findById("4712")).thenReturn(Optional.of(generateService(0)));
         when(serviceRepository.findById("4713")).thenReturn(Optional.of(generateService(1)));
@@ -104,6 +116,7 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
             post("/plan/generate/4711")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(generatePlanDetails()))
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
             )
             .andDo(print())
             .andExpect(status().isOk())
@@ -114,9 +127,12 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testDeletePlan() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_USER);
+        
         mockMvc.perform(
             delete("/plan/delete/4711")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
             )
             .andDo(print())
             .andExpect(status().isOk());

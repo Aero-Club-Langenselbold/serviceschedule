@@ -23,19 +23,21 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort.Direction;
 
+import de.ct.manager.schedule.user.UserRole;
 import de.ct.manager.schedule.util.AbstractControllerUnitTest;
 
 @WebMvcTest(ParticipantController.class)
 @Import({
     ParticipantService.class
 })
-class ParticipantControllerUnitTest extends AbstractControllerUnitTest{
+class ParticipantControllerUnitTest extends AbstractControllerUnitTest {
 
     @MockitoBean
     private ParticipantRepository participantRepository;
 
     @Test
     void testPageParticipants() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_USER);
         PageRequest pr = PageRequest.of(2, 10, Direction.DESC, "name");
 
         when(participantRepository.findAll(pr)).thenReturn(generatePageResponse());
@@ -46,6 +48,7 @@ class ParticipantControllerUnitTest extends AbstractControllerUnitTest{
                 .param("size", "10")
                 .param("sort", "name,desc")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
             )
             .andDo(print())
             .andExpect(status().isOk())
@@ -57,11 +60,13 @@ class ParticipantControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testListParticipants() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_USER);
         when(participantRepository.findAll()).thenReturn(generateListResponse());
 
         mockMvc.perform(
             get("/participant/list")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
             )
             .andDo(print())
             .andExpect(status().isOk())
@@ -71,11 +76,13 @@ class ParticipantControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testParticipant() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_USER);
         when(participantRepository.findById("4711")).thenReturn(Optional.of(generateParticipant(0)));
 
         mockMvc.perform(
             get("/participant/fetch/4711")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
             )
             .andDo(print())
             .andExpect(status().isOk())
@@ -86,6 +93,7 @@ class ParticipantControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testCreateParticipant() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_USER);
         Participant participant = generateParticipant(0);
 
         when(participantRepository.save(participant)).thenReturn(participant);
@@ -94,6 +102,7 @@ class ParticipantControllerUnitTest extends AbstractControllerUnitTest{
             post("/participant/save")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(participant))
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
             )
             .andDo(print())
             .andExpect(status().isOk())
@@ -104,9 +113,11 @@ class ParticipantControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testDeleteParticipant() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_USER);
         mockMvc.perform(
             delete("/participant/delete/4711")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
             )
             .andDo(print())
             .andExpect(status().isOk());

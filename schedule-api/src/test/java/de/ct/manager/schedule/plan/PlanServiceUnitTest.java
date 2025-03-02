@@ -344,6 +344,9 @@ class PlanServiceUnitTest {
         File file = planService.generatePlanPDF(plan.getId());
 
         Assertions.assertThat(file).isNotNull().exists();
+
+        // cleanup
+        file.delete();
     }
 
     @Test
