@@ -2,6 +2,7 @@ package de.ct.manager.schedule.plan;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -84,10 +85,10 @@ public class PlanService {
                     // Find the PlanEntry with the matching service and start date
                     List<PlanEntry> matchingEntries = plan.getEntries().stream()
                         .filter(entry -> entry.getService().equals(service) &&
-                                Date.from(entry.getStartTime().atZone(ZoneId.systemDefault()).toInstant()).equals(date))
+                                entry.getStartTime().toLocalDate().equals(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()))
                         .toList();
 
-                    // Add service data cell (you can customize this as needed)
+                    // Add service data cell
                     if (matchingEntries != null) {
                         StringBuilder participantNames = new StringBuilder();
                         for (PlanEntry e : matchingEntries) {
@@ -283,8 +284,11 @@ public class PlanService {
     private PlanEntry generatePlanEntry(ServiceDate serviceDate, List<ParticipantAssignment> possibleParticipants, DateAssignment dateAssignment) {
         PlanEntry planEntry = new PlanEntry();
         planEntry.setService(serviceDate.getService());
-        planEntry.setStartTime(serviceDate.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
-        planEntry.setEndTime(serviceDate.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime().plusHours(8)); // Assuming an 8-hour service duration
+
+        LocalDate localDate = serviceDate.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+        planEntry.setStartTime(localDate.atTime(serviceDate.getStartTime()));
+        planEntry.setEndTime(localDate.atTime(serviceDate.getEndTime()));
 
         // pick candidates with special requests for this date first
         ParticipantAssignment selectedParticipant = possibleParticipants.stream()

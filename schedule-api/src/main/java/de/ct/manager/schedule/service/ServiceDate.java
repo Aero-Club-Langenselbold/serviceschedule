@@ -1,5 +1,6 @@
 package de.ct.manager.schedule.service;
 
+import java.time.LocalTime;
 import java.util.Date;
 
 import lombok.Data;
@@ -12,7 +13,10 @@ public class ServiceDate {
     private Service service;
     private int mandatoryAssignees;
 
-    public ServiceDate(Date date, Service service, int mandatoryAssignees) {
+    private LocalTime startTime;
+    private LocalTime endTime;
+
+    public ServiceDate(Date date, Service service, int mandatoryAssignees, LocalTime startTime, LocalTime endTime) {
         if (date == null || service == null) {
             throw new IllegalArgumentException("Date and service must not be null");
         }
@@ -23,6 +27,8 @@ public class ServiceDate {
         this.date = date;
         this.service = service;
         this.mandatoryAssignees = mandatoryAssignees;
+        this.startTime = startTime;
+        this.endTime = endTime;
     }
 
     @Override

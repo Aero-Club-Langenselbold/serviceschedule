@@ -1,5 +1,6 @@
 CREATE TABLE auth_user (
     id character varying(36) NOT NULL,
+    version int4 DEFAULT 0 NOT NULL,
     username character varying(50),
     user_role character varying(20),
     "password" character varying(128)

@@ -1,6 +1,7 @@
 package de.ct.manager.schedule.plan;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -262,7 +263,7 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
         calendar.set(2020, 01, 01, 0, 0, 0);
         PlanDetails pd = new PlanDetails();
         for (Service s : services) {
-            pd.getServiceDates().add(new ServiceDate(calendar.getTime(), s, 1));
+            pd.getServiceDates().add(new ServiceDate(calendar.getTime(), s, 1, LocalTime.of(10, 0), LocalTime.of(12, 0)));
         }
         for (Participant p : participants) {
             pd.getAvailability().add(new ParticipantAssignment(p, new ArrayList<>(List.of(calendar.getTime()))));

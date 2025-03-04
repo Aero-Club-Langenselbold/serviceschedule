@@ -1,0 +1,4 @@
+CREATE USER schedule WITH PASSWORD 'password';
+ALTER USER schedule WITH SUPERUSER;
+CREATE DATABASE "schedule";
+GRANT ALL PRIVILEGES ON DATABASE schedule TO schedule;

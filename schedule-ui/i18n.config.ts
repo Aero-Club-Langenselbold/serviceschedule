@@ -10,6 +10,14 @@ export default defineI18nConfig(() => ({
         submit: 'Login',
         register: 'Register',
         forgot: 'Forgot password?'
+      },
+      nav: {
+        home: 'Home',
+        about: 'About',
+        contact: 'Contact'
+      },
+      error: {
+        credentials: 'Invalid credentials'
       }
     },
     de: {
@@ -20,6 +28,14 @@ export default defineI18nConfig(() => ({
         submit: 'Anmelden',
         register: 'Registrieren',
         forgot: 'Password vergessen?'
+      },
+      nav: {
+        home: 'Home',
+        about: 'About',
+        contact: 'Kontakt'
+      },
+      error: {
+        credentials: 'Ungültige Anmeldeinformationen'
       }
     }
   }

@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -128,7 +129,7 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
     @Test
     void testDeletePlan() throws Exception {
         mockValidAuthentication(UserRole.ROLE_USER);
-        
+
         mockMvc.perform(
             delete("/plan/delete/4711")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -160,9 +161,9 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
         Calendar calendar = Calendar.getInstance();
         calendar.set(2020, 01, 01, 0, 0, 0);
 
-        ServiceDate serviceDate1 = new ServiceDate(calendar.getTime(), s1, 1);
+        ServiceDate serviceDate1 = new ServiceDate(calendar.getTime(), s1, 1, LocalTime.of(10, 0), LocalTime.of(12, 0));
         calendar.add(Calendar.DAY_OF_MONTH, 1);
-        ServiceDate serviceDate2 = new ServiceDate(calendar.getTime(), s2, 1);
+        ServiceDate serviceDate2 = new ServiceDate(calendar.getTime(), s2, 1, LocalTime.of(10, 0), LocalTime.of(12, 0));
 
         planDetails.getServiceDates().add(serviceDate1);
         planDetails.getServiceDates().add(serviceDate2);

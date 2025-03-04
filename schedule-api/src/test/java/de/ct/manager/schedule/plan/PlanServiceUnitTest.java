@@ -7,6 +7,7 @@ import java.io.File;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.Month;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -132,6 +133,12 @@ class PlanServiceUnitTest {
         Plan plan = generatePlan();
 
         Assertions.assertThat(plan).isNotNull();
+
+        // make sure each plan entry has the correct start and end time
+        for (PlanEntry entry : plan.getEntries()) {
+            Assertions.assertThat(entry.getStartTime().toLocalTime().equals(LocalTime.of(10, 0)));
+            Assertions.assertThat(entry.getEndTime().toLocalTime().equals(LocalTime.of(12, 0)));
+        }
     }
 
     @Test
@@ -444,9 +451,9 @@ class PlanServiceUnitTest {
                 for (Service service : this.services) {
                     // the "fancy funky service" requires 2 participants on sundays
                     if (service.getServicename().equals("Fancy Funky Service") && date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate().getDayOfWeek() == DayOfWeek.SUNDAY) {
-                        this.serviceDates.add(new ServiceDate(date, service, 2));
+                        this.serviceDates.add(new ServiceDate(date, service, 2, LocalTime.of(10, 0), LocalTime.of(12, 0)));
                     } else {
-                        this.serviceDates.add(new ServiceDate(date, service, 1));
+                        this.serviceDates.add(new ServiceDate(date, service, 1, LocalTime.of(10, 0), LocalTime.of(12, 0)));
                     }
                 }
             }
