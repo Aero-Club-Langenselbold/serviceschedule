@@ -7,13 +7,11 @@ export default defineNuxtConfig({
     '@nuxtjs/i18n',
     'nuxt-auth-utils',
     '@nuxt/icon',
-    '@pinia/nuxt'
+    '@pinia/nuxt',
+    '@nuxt/test-utils/module'
   ],
   i18n: {
     vueI18n: './i18n.config.ts'
-  },
-  vite: {
-
   },
   css: ['~/assets/css/main.css'],
   ssr: false

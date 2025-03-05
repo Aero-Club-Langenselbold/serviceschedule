@@ -1,6 +1,5 @@
 <template>
   <UNavigationMenu orientation="horizontal" content-orientation="vertical" :items="items" class="data-[orientation=horizontal]:border-b border-(--ui-border) data-[orientation=horizontal]:w-full data-[orientation=vertical]:w-48" />
-  <pre>{{ {user} }}</pre>
 </template>
 
 <script lang="ts" setup>
