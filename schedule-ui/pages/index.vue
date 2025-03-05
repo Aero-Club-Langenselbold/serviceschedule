@@ -8,7 +8,8 @@
 </template>
 
 <script setup lang="ts">
-const { loggedIn, user, fetch: refreshSession } = useUserSession()
+const userStore = useUserStore()
+const { user } = userStore
 
 definePageMeta({
     middleware: ['authenticated']

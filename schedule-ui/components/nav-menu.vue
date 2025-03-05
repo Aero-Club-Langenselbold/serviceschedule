@@ -1,14 +1,17 @@
 <template>
   <UNavigationMenu orientation="horizontal" :items="items" class="data-[orientation=horizontal]:border-b border-(--ui-border) data-[orientation=horizontal]:w-full data-[orientation=vertical]:w-48" />
+  <pre>{{ {user} }}</pre>
 </template>
 
 <script lang="ts" setup>
 const { t, setLocale } = useI18n()
-const { loggedIn, user, fetch: refreshSession, clear: clearSession } = useUserSession()
+const userStore = useUserStore()
+const { logout, user } = userStore
+const { isLoggedIn } = storeToRefs(userStore)
 
 const menu = computed(() => {
   const items = []
-  if (loggedIn.value) {
+  if (isLoggedIn.value) {
     items.push({
       label: computed(() => t('nav.home')),
       icon: 'i-heroicons-home',
@@ -120,16 +123,16 @@ const components = {
 }
 const sessionInfo = computed(() => {
   const items = []
-  if (loggedIn.value) {
+  if (isLoggedIn.value) {
     items.push({
-      label: user.value?.username,
+      label: user?.username,
       icon: 'i-lucide-user'
     })
     items.push({
       label: 'Logout',
       icon: 'i-lucide-log-out',
       onSelect: async () => {
-        await clearSession()
+        await logout()
         navigateTo('/login')
       }
     })

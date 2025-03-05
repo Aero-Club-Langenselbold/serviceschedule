@@ -5,7 +5,7 @@
   <div class="flex items-center justify-center min-h-screen">
     <div class="bg-white p-8 rounded-4xl shadow-md w-full max-w-md">
       <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('login.title') }}</h2>
-      <form @submit.prevent="login">
+      <form @submit.prevent="onSubmit">
         <div class="mb-4">
           <label class="block text-gray-700 text-sm font-bold mb-2">
             {{ $t('login.username') }}
@@ -47,51 +47,30 @@
 </template>
 
 <script setup lang="ts">
-const show = ref(false)
-const { t } = useI18n()
-const { fetch: refreshSession } = useUserSession()
-const loginError = ref<string | null>(null)
+const userStore = useUserStore()
+const { login } = userStore
+const { isLoggedIn } = storeToRefs(userStore)
+
 const credentials = reactive({
   username: ref<string | number>(''),
   password: ref<string | number>('')
 })
-async function login() {
-  await useAPI('/auth/signin', {
-    method: 'POST',
-    body: credentials
-  })
-  .then(async (response) => {
-    const r = (response.data.value as any)
-    const userResponse = {
-      user: {
-        id: r.id,
-        username: r.username,
-        roles: r.roles
-      },
-      session: {
-        token: r.token,
-        type: r.type
-      },
-      loggedIn: true
-    }
-    // pretty dirty hack: send user response to the nuxt server to store in session
-    $fetch('/api/login', {
-      method: 'POST',
-      body: userResponse
-    })
-    .then(async () => {
-      // Refresh the session on client-side and redirect to the home page
-      await refreshSession()
+
+const onSubmit = async () => {
+  await login(credentials)
+  .then(async () => {
+    if (isLoggedIn.value) {
       await navigateTo('/')
-    })
-    .catch((error) => {
-      console.error(error)
-    })
+    }
   })
   .catch(() => {
     loginError.value = t('error.credentials')
   })
 }
+
+const show = ref(false)
+const { t } = useI18n()
+const loginError = ref<string | null>(null)
 </script>
 
 

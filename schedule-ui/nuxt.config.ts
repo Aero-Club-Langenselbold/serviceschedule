@@ -15,5 +15,6 @@ export default defineNuxtConfig({
   vite: {
 
   },
-  css: ['~/assets/css/main.css']
+  css: ['~/assets/css/main.css'],
+  ssr: false
 })
