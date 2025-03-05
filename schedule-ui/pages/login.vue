@@ -49,7 +49,7 @@
 <script setup lang="ts">
 const show = ref(false)
 const { t } = useI18n()
-const sessionStore = useUserSessionStore()
+const { fetch: refreshSession } = useUserSession()
 const loginError = ref<string | null>(null)
 const credentials = reactive({
   username: ref<string | number>(''),
@@ -61,9 +61,32 @@ async function login() {
     body: credentials
   })
   .then(async (response) => {
-    // Refresh the session on client-side and redirect to the home page
-    await sessionStore.fetch(response.data.value)
-    await navigateTo('/')
+    const r = (response.data.value as any)
+    const userResponse = {
+      user: {
+        id: r.id,
+        username: r.username,
+        roles: r.roles
+      },
+      session: {
+        token: r.token,
+        type: r.type
+      },
+      loggedIn: true
+    }
+    // pretty dirty hack: send user response to the nuxt server to store in session
+    $fetch('/api/login', {
+      method: 'POST',
+      body: userResponse
+    })
+    .then(async () => {
+      // Refresh the session on client-side and redirect to the home page
+      await refreshSession()
+      await navigateTo('/')
+    })
+    .catch((error) => {
+      console.error(error)
+    })
   })
   .catch(() => {
     loginError.value = t('error.credentials')

@@ -4,11 +4,11 @@
 
 <script lang="ts" setup>
 const { t, setLocale } = useI18n()
-const sessionStore = useUserSessionStore()
+const { loggedIn, user, fetch: refreshSession, clear: clearSession } = useUserSession()
 
 const menu = computed(() => {
   const items = []
-  if (sessionStore.loggedIn) {
+  if (loggedIn.value) {
     items.push({
       label: computed(() => t('nav.home')),
       icon: 'i-heroicons-home',
@@ -120,15 +120,18 @@ const components = {
 }
 const sessionInfo = computed(() => {
   const items = []
-  if (sessionStore.loggedIn) {
+  if (loggedIn.value) {
     items.push({
-      label: sessionStore.user?.username,
+      label: user.value?.username,
       icon: 'i-lucide-user'
     })
     items.push({
       label: 'Logout',
       icon: 'i-lucide-log-out',
-      onSelect: () => sessionStore.clear()
+      onSelect: async () => {
+        await clearSession()
+        navigateTo('/login')
+      }
     })
   }
   items.push({
@@ -145,4 +148,5 @@ const items = ref([
   menu.value,
   sessionInfo.value,
 ])
+
 </script>
