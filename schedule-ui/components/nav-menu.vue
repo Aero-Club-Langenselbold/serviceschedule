@@ -4,6 +4,8 @@
 
 <script lang="ts" setup>
 const { t, setLocale } = useI18n()
+const localeStore = useLocaleStore()
+const { setUserLocale } = localeStore
 const userStore = useUserStore()
 const { logout, user } = userStore
 const { isLoggedIn } = storeToRefs(userStore)
@@ -24,7 +26,7 @@ const menu = computed(() => {
         {
           label: computed(() => t('nav.participants.list')),
           icon: 'i-lucide-list',
-          to: '/participants'
+          to: '/participants/list'
         },
         {
           label: computed(() => t('nav.participants.add')),
@@ -40,7 +42,7 @@ const menu = computed(() => {
         {
           label: computed(() => t('nav.service.list')),
           icon: 'i-lucide-list',
-          to: '/service'
+          to: '/service/list'
         },
         {
           label: computed(() => t('nav.service.add')),
@@ -56,7 +58,7 @@ const menu = computed(() => {
         {
           label: computed(() => t('nav.plan.list')),
           icon: 'i-lucide-list',
-          to: '/plan'
+          to: '/plan/list'
         },
         {
           label: computed(() => t('nav.plan.add')),
@@ -89,11 +91,17 @@ const sessionInfo = computed(() => {
   }
   items.push({
     icon: 'circle-flags:de',
-    onSelect: () => setLocale('de')
+    onSelect: () => {
+      setUserLocale('de')
+      setLocale('de')
+    }
   })
   items.push({
     icon: 'circle-flags:us',
-    onSelect: () => setLocale('en')
+    onSelect: () => {
+      setUserLocale('en')
+      setLocale('en')
+    }
   })
   return items;
 })

@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
+
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -30,31 +32,37 @@ public class ParticipantController {
     }
 
     @GetMapping("/list")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<List<Participant>> listParticipants() {
         return ResponseEntity.ok(participantService.listParticipants());
     }
 
     @GetMapping("/page")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<Page<Participant>> listCompanies(@SortDefault(sort = "lastname") @PageableDefault(size = 20) final Pageable pageable) {
         return ResponseEntity.ok(participantService.listParticipants(pageable));
     }
 
     @GetMapping("/fetch/{id}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<Participant> getParticipant(@PathVariable String id) {
         return ResponseEntity.ok(participantService.getParticipant(id));
     }
 
+    @GetMapping("/fetchByMail/{email:.+}")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<Participant> getParticipantByEmail(@PathVariable String email) {
+        return ResponseEntity.ok(participantService.getParticipantByEmail(email));
+    }
+
     @PostMapping("/save")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Participant> createOrUpdateParticipant(@RequestBody Participant participant) {
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<Participant> createOrUpdateParticipant(@RequestBody @Valid Participant participant) {
         return ResponseEntity.ok(participantService.createOrUpdateParticipant(participant));
     }
 
     @DeleteMapping("/delete/{id}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<Void> deleteParticipant(@PathVariable String id) {
         participantService.deleteParticipant(id);
         return ResponseEntity.ok().build();

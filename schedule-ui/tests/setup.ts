@@ -10,7 +10,7 @@ mockNuxtImport('useAPI', () => {
                     value: {
                         id: '1',
                         username: options.body.username,
-                        roles: ['ROLE_USER'],
+                        roles: options.body.username === 'testadmin' ? ['ROLE_ADMIN'] : ['ROLE_USER'],
                         token: 'testtoken',
                         type: 'Bearer'
                     }

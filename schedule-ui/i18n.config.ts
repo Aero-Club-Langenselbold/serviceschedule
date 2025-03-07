@@ -31,6 +31,28 @@ export default defineI18nConfig(() => ({
           add: 'Add Service Plan'
         }
       },
+      app: {
+        dateLocale: 'en-US',
+        name: 'Schedule Manager V1.0',
+        welcome: 'Welcome to the Schedule Manager',
+        user: {
+          participantWelcome: 'You are logged in as a user and can therefore view service plans and enter your own availability.',
+          userWelcome: 'You are logged in as a user, but no participant has been assigned to you yet. Please contact the administrator.',
+          adminWelcome: 'You are logged in as an administrator and can therefore use all functions of the schedule manager.'
+        }
+      },
+      participants: {
+          add: 'Add new Participant',
+          firstname: 'First Name',
+          lastname: 'Last Name',
+          email: 'Email',
+          dateOfBirth: 'Date of Birth',
+          status: 'Status',
+          save: 'Save',
+          success: 'Participant saved successfully',
+          error: 'Error saving participant',
+          exists: 'Participant already exists'
+      },
       error: {
         credentials: 'Invalid credentials'
       }
@@ -63,6 +85,28 @@ export default defineI18nConfig(() => ({
           list: 'Dienstpläne anzeigen',
           add: 'Dienstplan hinzufügen'
         }
+      },
+      app: {
+        dateLocale: 'de-DE',
+        name: 'Dienstplanmanager V1.0',
+        welcome: 'Herzlich willkommen beim Dienstplanmanager',
+        user: {
+          participantWelcome: 'Du bist in der Rolle als Benutzer angemeldet und kannst daher Dienstpläne einsehen und deine eigenen Verfügbarkeiten eintragen.',
+          userWelcome: 'Du bist in der Rolle als Benutzer angemeldet, dir ist aber noch kein Teilnehmer zugeordnet. Bitte wende dich an den Administrator.',
+          adminWelcome: 'Du bist in der Rolle als Administrator angemeldet und kannst daher alle Funktionen des Dienstplanmanagers nutzen.'
+        }
+      },
+      participants: {
+          add: 'Neuen Teilnehmer hinzufügen',
+          firstname: 'Vorname',
+          lastname: 'Nachname',
+          email: 'Email',
+          dateOfBirth: 'Geburtsdatum',
+          status: 'Status',
+          save: 'Speichern',
+          success: 'Teilnehmer erfolgreich gespeichert',
+          error: 'Fehler beim Speichern des Teilnehmers',
+          exists: 'Teilnehmer existiert bereits'
       },
       error: {
         credentials: 'Ungültige Anmeldeinformationen'

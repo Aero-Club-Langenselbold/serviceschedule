@@ -26,6 +26,10 @@ public class ParticipantService {
         return participantRepository.findById(id).orElse(null);
     }
 
+    public Participant getParticipantByEmail(String email) {
+        return participantRepository.findByEmail(email).orElse(null);
+    }
+
     public Participant createOrUpdateParticipant(Participant participant) {
         return participantRepository.save(participant);
     }

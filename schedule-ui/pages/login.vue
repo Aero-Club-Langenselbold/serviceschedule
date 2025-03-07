@@ -6,6 +6,7 @@
     <div class="p-8 rounded-4xl shadow-md w-full max-w-md border-2">
       <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('login.title') }}</h2>
       <form @submit.prevent="onSubmit">
+        <Messages :errorMessage="loginError" :successMessage="successMessage" />
         <div class="mb-4">
           <label class="block text-sm font-bold mb-2">
             {{ $t('login.username') }}
@@ -30,9 +31,6 @@
               />
             </template>
           </UInput>
-        </div>
-        <div v-if="loginError" class="mb-4 text-sm text-error-700 text-center">
-          {{ loginError }}
         </div>
         <div class="mb-6 text-right">
           <ULink to="#" >{{ $t('login.forgot') }}</ULink>
@@ -71,6 +69,7 @@ const onSubmit = async () => {
 const show = ref(false)
 const { t } = useI18n()
 const loginError = ref<string | null>(null)
+const successMessage = ref<string | null>(null)
 </script>
 
 
