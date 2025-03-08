@@ -34,6 +34,7 @@ import de.ct.manager.schedule.participant.ParticipantRepository;
 import de.ct.manager.schedule.participant.Status;
 import de.ct.manager.schedule.service.Service;
 import de.ct.manager.schedule.service.ServiceDate;
+import de.ct.manager.schedule.service.ServiceDateRepository;
 import de.ct.manager.schedule.service.ServiceRepository;
 import lombok.Data;
 
@@ -45,6 +46,9 @@ class PlanServiceUnitTest {
 
     @Mock
     ServiceRepository serviceRepository;
+
+    @Mock
+    ServiceDateRepository serviceDateRepository;
 
     @Mock
     ParticipantRepository participantRepository;
@@ -113,6 +117,7 @@ class PlanServiceUnitTest {
 
         when(planRepository.findById(dummyData.getPlan().getId())).thenReturn(Optional.of(dummyData.getPlan()));
         when(planRepository.save(any(Plan.class))).thenAnswer(i -> i.getArgument(0));
+        when(serviceDateRepository.findByPlan(dummyData.getPlan())).thenReturn(Optional.of(dummyData.getServiceDates()));
 
         // participants without availabilities
         List<ParticipantAssignment> participantAvailability = new ArrayList<>();
@@ -121,7 +126,6 @@ class PlanServiceUnitTest {
         }
 
         Plan plan = planService.generatePlan(dummyData.getPlan().getId(),
-            dummyData.getServiceDates(),
             participantAvailability);
 
         Assertions.assertThat(plan).isNotNull();
@@ -382,9 +386,9 @@ class PlanServiceUnitTest {
 
         when(planRepository.findById(dummyData.getPlan().getId())).thenReturn(Optional.of(dummyData.getPlan()));
         when(planRepository.save(any(Plan.class))).thenAnswer(i -> i.getArgument(0));
+        when(serviceDateRepository.findByPlan(dummyData.getPlan())).thenReturn(Optional.of(dummyData.getServiceDates()));
 
         return planService.generatePlan(dummyData.getPlan().getId(),
-            dummyData.getServiceDates(),
             dummyData.getParticipantAvailability());
     }
 

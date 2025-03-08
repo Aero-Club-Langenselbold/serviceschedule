@@ -25,6 +25,7 @@ import de.ct.manager.schedule.participant.DateAssignment;
 import de.ct.manager.schedule.participant.ParticipantAssignment;
 import de.ct.manager.schedule.service.Service;
 import de.ct.manager.schedule.service.ServiceDate;
+import de.ct.manager.schedule.service.ServiceDateRepository;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,9 +36,11 @@ public class PlanService {
     private static final int ADULT_AGE = 18;
 
     private final PlanRepository planRepository;
+    private final ServiceDateRepository serviceDateRepository;
 
-    public PlanService(PlanRepository planRepository) {
+    public PlanService(PlanRepository planRepository, ServiceDateRepository serviceDateRepository) {
         this.planRepository = planRepository;
+        this.serviceDateRepository = serviceDateRepository;
     }
 
     public List<Plan> listPlans() {
@@ -54,6 +57,31 @@ public class PlanService {
 
     public void deletePlan(String id) {
         planRepository.deleteById(id);
+    }
+
+    public List<ServiceDate> addServiceDates(String planId, List<ServiceDate> serviceDates) {
+        Plan plan = planRepository.findById(planId).orElse(null);
+
+        if (plan == null) {
+            throw new IllegalArgumentException("Plan not found");
+        }
+
+        serviceDates.forEach(sd -> sd.setPlan(plan));
+        return serviceDateRepository.saveAll(serviceDates);
+    }
+
+    public void deleteServiceDate(String id) {
+        serviceDateRepository.deleteById(id);
+    }
+
+    public List<ServiceDate> listServiceDatesByPlan(String planId) {
+        Plan plan = planRepository.findById(planId).orElse(null);
+
+        if (plan == null) {
+            throw new IllegalArgumentException("Plan not found");
+        }
+
+        return serviceDateRepository.findByPlan(plan).orElse(new ArrayList<>());
     }
 
     public File generatePlanPDF(String id) {
@@ -113,12 +141,15 @@ public class PlanService {
 
 
     @Transactional
-    public Plan generatePlan(String planId, List<ServiceDate> serviceDates, List<ParticipantAssignment> availability) {
+    public Plan generatePlan(String planId, List<ParticipantAssignment> availability) {
         Plan plan = planRepository.findById(planId).orElse(null);
 
         if (plan == null) {
             throw new IllegalArgumentException("Plan not found");
         }
+
+        List<ServiceDate> serviceDates = serviceDateRepository.findByPlan(plan).orElse(new ArrayList<>());
+
         if (serviceDates == null || serviceDates.isEmpty()) {
             throw new IllegalArgumentException("No services and dates provided");
         }
@@ -214,8 +245,14 @@ public class PlanService {
     private void calculateAvailability(List<ParticipantAssignment> availability, DateAssignment da) {
         // count all participants available at that date for that service
         for (ParticipantAssignment pa : availability) {
-            if ((pa.getDatesAvailable().contains(da.getServiceDate().getDate())
-                || pa.getDatesRequested().contains(da.getServiceDate().getDate()))
+            LocalDate serviceDate = da.getServiceDate().getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            boolean isAvailable = pa.getDatesAvailable().stream()
+                .map(date -> date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
+                .anyMatch(date -> date.equals(serviceDate));
+            boolean isRequested = pa.getDatesRequested().stream()
+                .map(date -> date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
+                .anyMatch(date -> date.equals(serviceDate));
+            if ((isAvailable || isRequested)
                 && pa.getParticipant().getServices().contains(da.getServiceDate().getService())) {
                 da.setPossibleAssignees(da.getPossibleAssignees() + 1);
             }
@@ -245,10 +282,17 @@ public class PlanService {
             return false;
         }
 
+        LocalDate serviceDate = dateAssignment.getServiceDate().getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        boolean isAvailable = pa.getDatesAvailable().stream()
+            .map(date -> date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
+            .anyMatch(date -> date.equals(serviceDate));
+        boolean isRequested = pa.getDatesRequested().stream()
+            .map(date -> date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
+            .anyMatch(date -> date.equals(serviceDate));
+
         // participant is available if: service is available, date is available, and next service to assign is the same as the service of the date
         return pa.getParticipant().getServices().contains(dateAssignment.getServiceDate().getService()) &&
-            (pa.getDatesAvailable().contains(dateAssignment.getServiceDate().getDate()) ||
-            pa.getDatesRequested().contains(dateAssignment.getServiceDate().getDate())) &&
+            (isAvailable || isRequested) &&
             pa.canAssignService(dateAssignment.getServiceDate().getService());
     }
 
@@ -257,10 +301,19 @@ public class PlanService {
             return false;
         }
 
+        LocalDate serviceDate = dateAssignment.getServiceDate().getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        boolean isAvailable = pa.getDatesAvailable().stream()
+            .map(date -> date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
+            .anyMatch(date -> date.equals(serviceDate));
+        boolean isRequested = pa.getDatesRequested().stream()
+            .map(date -> date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
+            .anyMatch(date -> date.equals(serviceDate));
+        boolean isInThreshold = pa.getDatesWithinAssignmentThreshold().stream()
+            .map(date -> date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
+            .anyMatch(date -> date.equals(serviceDate));
+
         return pa.getParticipant().getServices().contains(dateAssignment.getServiceDate().getService()) && (
-            pa.getDatesAvailable().contains(dateAssignment.getServiceDate().getDate()) ||
-            pa.getDatesRequested().contains(dateAssignment.getServiceDate().getDate()) ||
-            pa.getDatesWithinAssignmentThreshold().contains(dateAssignment.getServiceDate().getDate()));
+            isAvailable || isRequested || isInThreshold);
     }
 
     private boolean mayAssignMinor(ParticipantAssignment pa, DateAssignment dateAssignment) {

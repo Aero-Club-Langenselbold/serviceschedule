@@ -16,13 +16,11 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 @Entity
 @Audited
 @Table(name = "service")
 @Data
-@EqualsAndHashCode(callSuper = true)
 public class Service extends AbstractPersistentEntity {
 
     @Column(length = 150)
@@ -33,6 +31,24 @@ public class Service extends AbstractPersistentEntity {
     @JsonIgnore
     @ManyToMany(mappedBy = "services", fetch = FetchType.LAZY)
     private Set<Participant> participants;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        Service service = (Service) o;
+
+        return servicename.equals(service.servicename) && getId().equals(service.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + servicename.hashCode();
+        return result;
+    }
 
     @Override
     public String toString() {

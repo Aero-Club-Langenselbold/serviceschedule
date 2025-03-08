@@ -3,17 +3,48 @@ package de.ct.manager.schedule.service;
 import java.time.LocalTime;
 import java.util.Date;
 
+import org.hibernate.envers.Audited;
+
+import de.ct.manager.schedule.plan.Plan;
+import de.ct.manager.schedule.util.AbstractPersistentEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Entity
+@Audited
+@Table(name = "service_date")
 @Data
 @NoArgsConstructor
-public class ServiceDate {
+public class ServiceDate extends AbstractPersistentEntity {
+    @Column
+    @NotNull
     private Date date;
-    private Service service;
-    private int mandatoryAssignees;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "service_id")
+    private Service service;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "plan_id")
+    private Plan plan;
+
+    @Column
+    @NotNull
+    private int mandatoryAssignees = 1;
+
+    @Column
+    @NotNull
     private LocalTime startTime;
+
+    @Column
+    @NotNull
     private LocalTime endTime;
 
     public ServiceDate(Date date, Service service, int mandatoryAssignees, LocalTime startTime, LocalTime endTime) {

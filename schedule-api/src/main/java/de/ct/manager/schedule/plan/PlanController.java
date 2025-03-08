@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.ct.manager.schedule.service.ServiceDate;
+
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/plan")
@@ -45,7 +47,7 @@ public class PlanController {
     @PostMapping("/generate/{id}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Plan> generatePlan(@PathVariable String id, @RequestBody PlanDetails planDetails) {
-        return ResponseEntity.ok(planService.generatePlan(id, planDetails.getServiceDates(), planDetails.getAvailability()));
+        return ResponseEntity.ok(planService.generatePlan(id, planDetails.getAvailability()));
     }
 
 
@@ -55,4 +57,19 @@ public class PlanController {
         planService.deletePlan(id);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/serviceDates/save/{id}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<ServiceDate>> createOrUpdateServiceDate(@PathVariable String id, @RequestBody List<ServiceDate> serviceDates) {
+        return ResponseEntity.ok(planService.addServiceDates(id, serviceDates));
+    }
+
+    @DeleteMapping("/serviceDates/delete/{id}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> deleteServiceDate(@PathVariable String id) {
+        planService.deleteServiceDate(id);
+        return ResponseEntity.ok().build();
+    }
+
+
 }

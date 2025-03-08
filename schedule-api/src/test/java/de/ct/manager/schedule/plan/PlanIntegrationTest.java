@@ -263,7 +263,16 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
         calendar.set(2020, 01, 01, 0, 0, 0);
         PlanDetails pd = new PlanDetails();
         for (Service s : services) {
-            pd.getServiceDates().add(new ServiceDate(calendar.getTime(), s, 1, LocalTime.of(10, 0), LocalTime.of(12, 0)));
+            ServiceDate sd = new ServiceDate(calendar.getTime(), s, 1, LocalTime.of(10, 0), LocalTime.of(12, 0));
+            sd.setPlan(plan.getBody());
+
+            entity = new HttpEntity<>(objectMapper.writeValueAsString(List.of(sd)), createHeadersWithToken(UserRole.ROLE_USER));
+
+            restTemplate.exchange(
+                createURLWithPort("plan/") + "/serviceDates/save/" + plan.getBody().getId(),
+                HttpMethod.POST,
+                entity,
+                new ParameterizedTypeReference<List<ServiceDate>>() {});
         }
         for (Participant p : participants) {
             pd.getAvailability().add(new ParticipantAssignment(p, new ArrayList<>(List.of(calendar.getTime()))));
