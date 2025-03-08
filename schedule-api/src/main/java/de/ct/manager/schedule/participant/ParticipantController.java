@@ -39,7 +39,7 @@ public class ParticipantController {
 
     @GetMapping("/page")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<Page<Participant>> listCompanies(@SortDefault(sort = "lastname") @PageableDefault(size = 20) final Pageable pageable) {
+    public ResponseEntity<Page<Participant>> listParticipants(@SortDefault(sort = "lastname") @PageableDefault(size = 20) final Pageable pageable) {
         return ResponseEntity.ok(participantService.listParticipants(pageable));
     }
 

@@ -3,9 +3,9 @@ package de.ct.manager.schedule.participant;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 import org.hibernate.envers.Audited;
 
@@ -63,7 +63,7 @@ public class Participant extends AbstractPersistentEntity {
         joinColumns = @JoinColumn(name = "participant_id"),
         inverseJoinColumns = @JoinColumn(name = "service_id")
     )
-    private Set<Service> services = new HashSet<>();
+    private List<Service> services = new ArrayList<>();
 
     @JsonIgnore
     public int getCurrentAge() {

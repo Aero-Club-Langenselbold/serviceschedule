@@ -27,8 +27,9 @@ if (user.value?.roles.includes('ROLE_ADMIN')) {
     displayText.value = t('app.user.adminWelcome')
 } else {
     const {data, error } = await useAPI('/participant/fetchByMail/' + user.value?.username, { method: 'GET' })
-    userData.value = data.value
-    if (error.value === "error" || data.value === '') {
+
+    userData.value = data?.value
+    if (error?.value === "error" || data.value === '') {
       displayText.value = t('app.user.userWelcome')
     } else {
       displayText.value = t('app.user.participantWelcome')

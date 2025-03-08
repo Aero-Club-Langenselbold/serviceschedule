@@ -48,10 +48,23 @@ export default defineI18nConfig(() => ({
           email: 'Email',
           dateOfBirth: 'Date of Birth',
           status: 'Status',
+          services: 'Assigned Services',
           save: 'Save',
           success: 'Participant saved successfully',
           error: 'Error saving participant',
-          exists: 'Participant already exists'
+          exists: 'Participant already exists',
+          list: 'Participant List',
+          active: 'Active',
+          passive: 'Passive',
+          statusInfo: 'Active participants (or members) are automatically considered for all available days in new service plans. Passive participants (or members) are only considered for days for which they explicitly register.'
+      },
+      service: {
+          name: 'Service name',
+          save: 'Save',
+          list: 'Service list',
+          success: 'Service saved successfully',
+          error: 'Error saving service',
+          exists: 'Service already exists',
       },
       error: {
         credentials: 'Invalid credentials'
@@ -97,16 +110,29 @@ export default defineI18nConfig(() => ({
         }
       },
       participants: {
-          add: 'Neuen Teilnehmer hinzufügen',
-          firstname: 'Vorname',
-          lastname: 'Nachname',
-          email: 'Email',
-          dateOfBirth: 'Geburtsdatum',
-          status: 'Status',
+        add: 'Neuen Teilnehmer hinzufügen',
+        firstname: 'Vorname',
+        lastname: 'Nachname',
+        email: 'Email',
+        dateOfBirth: 'Geburtsdatum',
+        status: 'Status',
+        services: 'Zugeordnete Dienste',
+        save: 'Speichern',
+        success: 'Teilnehmer erfolgreich gespeichert',
+        error: 'Fehler beim Speichern des Teilnehmers',
+        exists: 'Teilnehmer existiert bereits',
+        list: 'Teilnehmerliste',
+        active: 'Aktiv',
+        passive: 'Passiv',
+        statusInfo: 'Aktive Teilnehmer (bzw. Mitglieder) werden automatisch bei neuen Dienstplänen für alle verfügbaren Tage berücksichtigt. Passive Teilnehmer (bzw. Mitglieder) werden nur für Tage berücksichtigt, für die sie sich explizit eintragen.'
+      },
+      service: {
+          name: 'Dienst',
           save: 'Speichern',
-          success: 'Teilnehmer erfolgreich gespeichert',
-          error: 'Fehler beim Speichern des Teilnehmers',
-          exists: 'Teilnehmer existiert bereits'
+          list: 'Dienstliste',
+          success: 'Dienst erfolgreich gespeichert',
+          error: 'Fehler beim Speichern des Dienstes',
+          exists: 'Dienst existiert bereits',
       },
       error: {
         credentials: 'Ungültige Anmeldeinformationen'

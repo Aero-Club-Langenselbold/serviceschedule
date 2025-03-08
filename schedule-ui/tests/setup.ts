@@ -17,6 +17,20 @@ mockNuxtImport('useAPI', () => {
                 },
                 status: { value: 'success' }
             }
+        } else if (url.startsWith('/participant/fetchByMail/')) {
+            const username = url.split('/').pop()
+            return {
+                data: {
+                    value: {
+                        id: '2',
+                        email: username,
+                        firstname: 'Lulli',
+                        lastname: 'Palooza',
+                        status: 'ACTIVE'
+                    }
+                },
+                status: { value: 'success' }
+            }
         }
         // Add more mock responses as needed
         return { data: { value: {} } }

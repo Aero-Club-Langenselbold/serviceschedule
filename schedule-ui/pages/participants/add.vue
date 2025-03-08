@@ -44,9 +44,15 @@
             {{ $t('participants.status') }}
           </label>
           <UCheckbox v-model="participant.status" />
-          <UTooltip :delay-duration="0" text="Open on GitHub" class="ml-5">
-            <UButton icon="i-lucide-calendar" color="neutral" variant="subtle" />
+          <UTooltip :delay-duration="0" :text="t('participants.statusInfo')" class="ml-5">
+            <UButton icon="i-lucide-message-circle-question" color="secondary" variant="ghost" />
           </UTooltip>
+        </div>
+        <div class="mb-6">
+          <label class="block text-sm font-bold mb-2">
+            {{ $t('participants.services') }}
+          </label>
+          <USelect v-model="serviceValue" multiple value-key="id" :items="serviceItems" class="w-full" />
         </div>
         <div class="flex items-center justify-between">
           <UButton trailing-icon="i-lucide-arrow-right" size="md" :label="$t('participants.save')" type="submit" />
@@ -69,21 +75,28 @@ const participant = reactive({
   lastname: ref<string | number>(''),
   email: ref<string | number>(''),
   dateOfBirth: shallowRef<CalendarDate | null>(null),
-  status: ref<string | boolean>(true)
+  status: ref<string | boolean>(true),
+  services: ref<string | number>('')
 })
 
 const errorMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
+const serviceItems = ref([])
+const serviceValue = ref<(string | number)[]>([])
 
 const onSubmit = async () => {
   errorMessage.value = null
   successMessage.value = null
 
+  console.log(JSON.stringify(serviceValue.value))
   const participantData = {
     ...participant,
     dateOfBirth: participant.dateOfBirth ? participant.dateOfBirth.toDate(getLocalTimeZone()).toISOString() : null,
-    status: participant.status ? 'active' : 'inactive'
+    status: participant.status ? 'active' : 'inactive',
+    services: participant.services.filter((service: { id: string | number }) => serviceValue.value.includes(service.id))
   }
+  console.log(JSON.stringify(participant))
+  console.log(JSON.stringify(participantData))
   await useAPI('/participant/save', { method: 'POST', body: JSON.stringify(participantData) })
   .then(async (response) => {
     if (response.status.value === "error" && response.error?.value?.statusCode === 409) {
@@ -104,6 +117,22 @@ const onSubmit = async () => {
   .catch((error) => {
     console.log(error)
   })
+}
+
+try {
+  const { data, error } = await useAPI(`/service/list`, { method: 'GET' })
+  if (error.value) {
+    errorMessage.value = error.value.message
+  } else {
+    participant.services = data.value
+    // USelect seems to ignore the label-property
+    serviceItems.value = data.value.map((service: { id: string; servicename: string }) => ({
+      id: service.id,
+      label: service.servicename
+    }))
+  }
+} catch (err) {
+  errorMessage.value = 'An error occurred while fetching the data.'
 }
 
 definePageMeta({

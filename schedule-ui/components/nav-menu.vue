@@ -7,8 +7,8 @@ const { t, setLocale } = useI18n()
 const localeStore = useLocaleStore()
 const { setUserLocale } = localeStore
 const userStore = useUserStore()
-const { logout, user } = userStore
-const { isLoggedIn } = storeToRefs(userStore)
+const { logout } = userStore
+const { isLoggedIn, user } = storeToRefs(userStore)
 
 const menu = computed(() => {
   const items = []
@@ -18,6 +18,8 @@ const menu = computed(() => {
       icon: 'i-heroicons-home',
       to: '/'
     })
+  }
+  if (isLoggedIn.value && user.value?.roles.includes('ROLE_ADMIN')) {
     items.push({
       label: computed(() => t('nav.participants.menu')),
       icon: 'i-lucide-users',
@@ -74,7 +76,7 @@ const sessionInfo = computed(() => {
   const items = []
   if (isLoggedIn.value) {
     items.push({
-      label: user?.username,
+      label: user.value?.username,
       icon: 'i-lucide-user'
     })
     items.push({

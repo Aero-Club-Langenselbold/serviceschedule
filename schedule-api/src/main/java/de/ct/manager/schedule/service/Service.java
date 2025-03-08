@@ -4,6 +4,8 @@ import java.util.Set;
 
 import org.hibernate.envers.Audited;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import de.ct.manager.schedule.participant.Participant;
 import de.ct.manager.schedule.util.AbstractPersistentEntity;
 import jakarta.persistence.Column;
@@ -28,6 +30,7 @@ public class Service extends AbstractPersistentEntity {
     @NotNull
     private String servicename;
 
+    @JsonIgnore
     @ManyToMany(mappedBy = "services", fetch = FetchType.LAZY)
     private Set<Participant> participants;
 
