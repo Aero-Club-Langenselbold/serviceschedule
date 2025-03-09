@@ -28,6 +28,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import de.ct.manager.schedule.participant.DateParticipantAvailability;
+import de.ct.manager.schedule.participant.DateParticipantAvailabilityRepository;
 import de.ct.manager.schedule.participant.Participant;
 import de.ct.manager.schedule.participant.ParticipantAssignment;
 import de.ct.manager.schedule.participant.ParticipantRepository;
@@ -49,6 +51,9 @@ class PlanServiceUnitTest {
 
     @Mock
     ServiceDateRepository serviceDateRepository;
+
+    @Mock
+    DateParticipantAvailabilityRepository dateParticipantAvailabilityRepository;
 
     @Mock
     ParticipantRepository participantRepository;
@@ -119,14 +124,7 @@ class PlanServiceUnitTest {
         when(planRepository.save(any(Plan.class))).thenAnswer(i -> i.getArgument(0));
         when(serviceDateRepository.findByPlan(dummyData.getPlan())).thenReturn(Optional.of(dummyData.getServiceDates()));
 
-        // participants without availabilities
-        List<ParticipantAssignment> participantAvailability = new ArrayList<>();
-        for (ParticipantAssignment pa : dummyData.getParticipantAvailability()) {
-            participantAvailability.add(new ParticipantAssignment(pa.getParticipant(), new ArrayList<>()));
-        }
-
-        Plan plan = planService.generatePlan(dummyData.getPlan().getId(),
-            participantAvailability);
+        Plan plan = planService.generatePlan(dummyData.getPlan().getId());
 
         Assertions.assertThat(plan).isNotNull();
         Assertions.assertThat(plan.getEntries()).isEmpty();
@@ -384,12 +382,22 @@ class PlanServiceUnitTest {
     private Plan generatePlan(boolean withSpecialRequestDates) {
         PlanDummyData dummyData = new PlanDummyData(withSpecialRequestDates);
 
+        List<DateParticipantAvailability> participantAvailability = new ArrayList<>();
+        for (ParticipantAssignment pa : dummyData.getParticipantAvailability()) {
+            for (Date date : pa.getDatesAvailable()) {
+                participantAvailability.add(new DateParticipantAvailability(date, false, pa.getParticipant(), dummyData.getPlan()));
+            }
+            for (Date date : pa.getDatesRequested()) {
+                participantAvailability.add(new DateParticipantAvailability(date, true, pa.getParticipant(), dummyData.getPlan()));
+            }
+        }
+
         when(planRepository.findById(dummyData.getPlan().getId())).thenReturn(Optional.of(dummyData.getPlan()));
         when(planRepository.save(any(Plan.class))).thenAnswer(i -> i.getArgument(0));
         when(serviceDateRepository.findByPlan(dummyData.getPlan())).thenReturn(Optional.of(dummyData.getServiceDates()));
+        when(dateParticipantAvailabilityRepository.findByPlan(dummyData.getPlan())).thenReturn(Optional.of(participantAvailability));
 
-        return planService.generatePlan(dummyData.getPlan().getId(),
-            dummyData.getParticipantAvailability());
+        return planService.generatePlan(dummyData.getPlan().getId());
     }
 
     private List<Plan> generateListResponse() {

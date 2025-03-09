@@ -2,7 +2,6 @@ package de.ct.manager.schedule.plan;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
@@ -17,8 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.jdbc.Sql;
 
+import de.ct.manager.schedule.participant.DateParticipantAvailability;
 import de.ct.manager.schedule.participant.Participant;
-import de.ct.manager.schedule.participant.ParticipantAssignment;
 import de.ct.manager.schedule.service.Service;
 import de.ct.manager.schedule.service.ServiceDate;
 import de.ct.manager.schedule.user.UserRole;
@@ -209,7 +208,7 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @Sql(scripts = { "classpath:scripts/test-services.sql", "classpath:scripts/test-participants.sql" }, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(scripts = "classpath:scripts/test-participants-full.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(scripts = "classpath:scripts/delete-test-plans.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testGeneratePlan() throws Exception {
         // create new plan
@@ -254,14 +253,10 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
         List<Service> services = serviceResponse.getBody();
         List<Participant> participants = participantResponse.getBody();
 
-        for (Participant p : participants) {
-            p.getServices().addAll(services);
-        }
-
         // generate plan entries
         Calendar calendar = Calendar.getInstance();
         calendar.set(2020, 01, 01, 0, 0, 0);
-        PlanDetails pd = new PlanDetails();
+        // add service dates
         for (Service s : services) {
             ServiceDate sd = new ServiceDate(calendar.getTime(), s, 1, LocalTime.of(10, 0), LocalTime.of(12, 0));
             sd.setPlan(plan.getBody());
@@ -274,11 +269,19 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
                 entity,
                 new ParameterizedTypeReference<List<ServiceDate>>() {});
         }
+        // add availability dates
         for (Participant p : participants) {
-            pd.getAvailability().add(new ParticipantAssignment(p, new ArrayList<>(List.of(calendar.getTime()))));
+            DateParticipantAvailability availability = new DateParticipantAvailability(calendar.getTime(), false, p, plan.getBody());
+            entity = new HttpEntity<>(objectMapper.writeValueAsString(availability), createHeadersWithToken(UserRole.ROLE_USER));
+
+            restTemplate.exchange(
+                createURLWithPort("plan/") + "/participantAvailability/save/" + plan.getBody().getId(),
+                HttpMethod.POST,
+                entity,
+                new ParameterizedTypeReference<DateParticipantAvailability>() {});
         }
 
-        entity = new HttpEntity<>(objectMapper.writeValueAsString(pd), createHeadersWithToken(UserRole.ROLE_USER));
+        entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
 
         plan = restTemplate.exchange(
             createURLWithPort("plan/") + "generate/" + plan.getBody().getId(),

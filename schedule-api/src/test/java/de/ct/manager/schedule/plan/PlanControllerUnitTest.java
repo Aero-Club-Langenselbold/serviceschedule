@@ -22,8 +22,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import de.ct.manager.schedule.participant.DateParticipantAvailability;
+import de.ct.manager.schedule.participant.DateParticipantAvailabilityRepository;
 import de.ct.manager.schedule.participant.Participant;
-import de.ct.manager.schedule.participant.ParticipantAssignment;
 import de.ct.manager.schedule.participant.ParticipantRepository;
 import de.ct.manager.schedule.service.Service;
 import de.ct.manager.schedule.service.ServiceDate;
@@ -49,6 +50,9 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
 
     @MockitoBean
     private ParticipantRepository participantRepository;
+
+    @MockitoBean
+    private DateParticipantAvailabilityRepository dateParticipantAvailabilityRepository;
 
     @Test
     void testListPlans() throws Exception {
@@ -108,15 +112,21 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
     void testGeneratePlan() throws Exception {
         mockValidAuthentication(UserRole.ROLE_USER);
 
+        Plan plan = generatePlan(0);
         Service s1 = generateService(0);
         Service s2 = generateService(1);
+        Participant p1 = generateParticipant(0);
+        Participant p2 = generateParticipant(1);
+        p1.setServices(List.of(s1));
+        p2.setServices(List.of(s2));
 
-        when(planRepository.findById("4711")).thenReturn(Optional.of(generatePlan(0)));
+        when(planRepository.findById("4711")).thenReturn(Optional.of(plan));
         when(serviceRepository.findById("4712")).thenReturn(Optional.of(s1));
         when(serviceRepository.findById("4713")).thenReturn(Optional.of(s2));
-        when(serviceDateRepository.findByPlan(any())).thenReturn(Optional.of(generateServiceDates(s1, s2)));
-        when(participantRepository.findById("4714")).thenReturn(Optional.of(generateParticipant(0)));
-        when(participantRepository.findById("4715")).thenReturn(Optional.of(generateParticipant(1)));
+        when(serviceDateRepository.findByPlan(plan)).thenReturn(Optional.of(generateServiceDates(s1, s2)));
+        when(participantRepository.findById("4714")).thenReturn(Optional.of(p1));
+        when(participantRepository.findById("4715")).thenReturn(Optional.of(p2));
+        when(dateParticipantAvailabilityRepository.findByPlan(plan)).thenReturn(Optional.of(generatePlanDetails(s1, s2, p1, p2)));
 
         // when a plan is saved return the plan that was saved
         when(planRepository.save(any(Plan.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -124,7 +134,6 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
         mockMvc.perform(
             post("/plan/generate/4711")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(generatePlanDetails()))
                 .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
             )
             .andDo(print())
@@ -158,12 +167,8 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
         return plans;
     }
 
-    private PlanDetails generatePlanDetails() {
-        PlanDetails planDetails = new PlanDetails();
-        planDetails.setAvailability(new ArrayList<ParticipantAssignment>());
-
-        Service s1 = serviceRepository.findById("4712").get();
-        Service s2 = serviceRepository.findById("4713").get();
+    private List<DateParticipantAvailability> generatePlanDetails(Service s1, Service s2, Participant p1, Participant p2) {
+        List<DateParticipantAvailability> dpa = new ArrayList<>();
 
         Calendar calendar = Calendar.getInstance();
         calendar.set(2020, 01, 01, 0, 0, 0);
@@ -172,22 +177,10 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
         calendar.add(Calendar.DAY_OF_MONTH, 1);
         ServiceDate serviceDate2 = new ServiceDate(calendar.getTime(), s2, 1, LocalTime.of(10, 0), LocalTime.of(12, 0));
 
-        Participant p1 = participantRepository.findById("4714").get();
-        p1.getServices().add(s1);
-        List<Date> d1 = new ArrayList<>();
-        d1.add(serviceDate1.getDate());
-        Participant p2 = participantRepository.findById("4715").get();
-        p2.getServices().add(s2);
-        List<Date> d2 = new ArrayList<>();
-        d2.add(serviceDate2.getDate());
+        dpa.add(new DateParticipantAvailability(serviceDate1.getDate(), false, p1, null));
+        dpa.add(new DateParticipantAvailability(serviceDate2.getDate(), false, p2, null));
 
-        ParticipantAssignment pa1 = new ParticipantAssignment(p1, d1);
-        ParticipantAssignment pa2 = new ParticipantAssignment(p2, d2);
-
-        planDetails.getAvailability().add(pa1);
-        planDetails.getAvailability().add(pa2);
-
-        return planDetails;
+        return dpa;
     }
 
     private Plan generatePlan(int index) {

@@ -57,7 +57,7 @@ public class Participant extends AbstractPersistentEntity {
     @Column(length = 15)
     private Status status = Status.ACTIVE;
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "participant_service",
         joinColumns = @JoinColumn(name = "participant_id"),

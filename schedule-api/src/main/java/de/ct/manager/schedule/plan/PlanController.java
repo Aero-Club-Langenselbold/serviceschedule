@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.ct.manager.schedule.participant.DateParticipantAvailability;
 import de.ct.manager.schedule.service.ServiceDate;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -46,8 +47,8 @@ public class PlanController {
 
     @PostMapping("/generate/{id}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Plan> generatePlan(@PathVariable String id, @RequestBody PlanDetails planDetails) {
-        return ResponseEntity.ok(planService.generatePlan(id, planDetails.getAvailability()));
+    public ResponseEntity<Plan> generatePlan(@PathVariable String id) {
+        return ResponseEntity.ok(planService.generatePlan(id));
     }
 
 
@@ -71,5 +72,9 @@ public class PlanController {
         return ResponseEntity.ok().build();
     }
 
-
+    @PostMapping("/participantAvailability/save/{id}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<DateParticipantAvailability> createOrUpdateParticipantAvailability(@PathVariable String id, @RequestBody DateParticipantAvailability participantAvailability) {
+        return ResponseEntity.ok(planService.addDateParticipantAvailability(id, participantAvailability));
+    }
 }

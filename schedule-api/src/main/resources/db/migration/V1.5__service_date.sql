@@ -11,7 +11,7 @@ CREATE TABLE service_date (
 
 ALTER TABLE service_date ADD CONSTRAINT service_date_pkey PRIMARY KEY (id);
 ALTER TABLE service_date ADD CONSTRAINT fk_service_date_service_id FOREIGN KEY (service_id) REFERENCES service(id);
-ALTER TABLE service_date ADD CONSTRAINT fk_service_date_plan_id FOREIGN KEY (plan_id) REFERENCES service(id);
+ALTER TABLE service_date ADD CONSTRAINT fk_service_date_plan_id FOREIGN KEY (plan_id) REFERENCES plan(id);
 
 -- Create service_date_aud table for auditing
 CREATE TABLE service_date_aud (

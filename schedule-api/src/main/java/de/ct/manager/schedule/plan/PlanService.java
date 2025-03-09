@@ -22,6 +22,8 @@ import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 
 import de.ct.manager.schedule.participant.DateAssignment;
+import de.ct.manager.schedule.participant.DateParticipantAvailability;
+import de.ct.manager.schedule.participant.DateParticipantAvailabilityRepository;
 import de.ct.manager.schedule.participant.ParticipantAssignment;
 import de.ct.manager.schedule.service.Service;
 import de.ct.manager.schedule.service.ServiceDate;
@@ -37,10 +39,12 @@ public class PlanService {
 
     private final PlanRepository planRepository;
     private final ServiceDateRepository serviceDateRepository;
+    private final DateParticipantAvailabilityRepository dateParticipantAvailabilityRepository;
 
-    public PlanService(PlanRepository planRepository, ServiceDateRepository serviceDateRepository) {
+    public PlanService(PlanRepository planRepository, ServiceDateRepository serviceDateRepository, DateParticipantAvailabilityRepository dateParticipantAvailabilityRepository) {
         this.planRepository = planRepository;
         this.serviceDateRepository = serviceDateRepository;
+        this.dateParticipantAvailabilityRepository = dateParticipantAvailabilityRepository;
     }
 
     public List<Plan> listPlans() {
@@ -72,6 +76,21 @@ public class PlanService {
 
     public void deleteServiceDate(String id) {
         serviceDateRepository.deleteById(id);
+    }
+
+    public DateParticipantAvailability addDateParticipantAvailability(String planId, DateParticipantAvailability dpa) {
+        Plan plan = planRepository.findById(planId).orElse(null);
+
+        if (plan == null) {
+            throw new IllegalArgumentException("Plan not found");
+        }
+        dpa.setPlan(plan);
+
+        return dateParticipantAvailabilityRepository.save(dpa);
+    }
+
+    public void deleteDateParticipantAvailability(String id) {
+        dateParticipantAvailabilityRepository.deleteById(id);
     }
 
     public List<ServiceDate> listServiceDatesByPlan(String planId) {
@@ -141,7 +160,7 @@ public class PlanService {
 
 
     @Transactional
-    public Plan generatePlan(String planId, List<ParticipantAssignment> availability) {
+    public Plan generatePlan(String planId) {
         Plan plan = planRepository.findById(planId).orElse(null);
 
         if (plan == null) {
@@ -153,6 +172,8 @@ public class PlanService {
         if (serviceDates == null || serviceDates.isEmpty()) {
             throw new IllegalArgumentException("No services and dates provided");
         }
+
+        List<ParticipantAssignment> availability = getAvailabilityForPlan(plan);
 
         Set<PlanEntry> planEntries = new HashSet<>();
         List<DateAssignment> dateAssignments = generateDateAssignments(serviceDates, availability);
@@ -370,5 +391,34 @@ public class PlanService {
         possibleParticipants.remove(selectedParticipant);
 
         return planEntry;
+    }
+
+    private List<ParticipantAssignment> getAvailabilityForPlan(Plan plan) {
+        List<DateParticipantAvailability> availabilities = this.dateParticipantAvailabilityRepository.findByPlan(plan).orElse(new ArrayList<>());
+        List<ParticipantAssignment> availability = new ArrayList<>();
+
+        for (DateParticipantAvailability dpa : availabilities) {
+            Optional<ParticipantAssignment> existingAssignment = availability.stream()
+                .filter(pa -> pa.getParticipant().equals(dpa.getParticipant()))
+                .findFirst();
+
+            if (existingAssignment.isPresent()) {
+                if (dpa.isRequested()) {
+                    existingAssignment.get().getDatesRequested().add(dpa.getDate());
+                } else {
+                    existingAssignment.get().getDatesAvailable().add(dpa.getDate());
+                }
+            } else {
+                ParticipantAssignment pa = new ParticipantAssignment(dpa.getParticipant(), new ArrayList<>(), new ArrayList<>());
+                if (dpa.isRequested()) {
+                    pa.getDatesRequested().add(dpa.getDate());
+                } else {
+                    pa.getDatesAvailable().add(dpa.getDate());
+                }
+                availability.add(pa);
+            }
+        }
+
+        return availability;
     }
 }
