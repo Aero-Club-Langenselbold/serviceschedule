@@ -1,6 +1,7 @@
 package de.ct.manager.schedule.security;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 import org.springframework.context.annotation.Bean;
@@ -13,7 +14,9 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
 
 @Configuration
 public class JacksonConfig {
@@ -22,10 +25,14 @@ public class JacksonConfig {
     public ObjectMapper objectMapper() {
         JavaTimeModule javaTimeModule = new JavaTimeModule();
         DateTimeFormatter isoFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ISO_LOCAL_TIME;
 
         // Configure the module to use ISO 8601 format for LocalDateTime
         javaTimeModule.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(isoFormatter));
         javaTimeModule.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer(isoFormatter));
+
+        javaTimeModule.addSerializer(LocalTime.class, new LocalTimeSerializer(timeFormatter));
+        javaTimeModule.addDeserializer(LocalTime.class, new LocalTimeDeserializer(timeFormatter));
 
         return JsonMapper.builder()
             .addModule(javaTimeModule)

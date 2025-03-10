@@ -46,6 +46,9 @@ public class Plan extends AbstractPersistentEntity {
     @NotNull
     private Date dateUntil;
 
+    @Column
+    private boolean published;
+
     @OneToMany(mappedBy = "plan", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
     private Set<PlanEntry> entries = new HashSet<>();
 

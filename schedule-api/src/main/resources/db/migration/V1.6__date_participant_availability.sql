@@ -1,6 +1,7 @@
 -- Create date_participant_availability table
 CREATE TABLE date_participant_availability (
     id character varying(36) NOT NULL,
+    version int4 DEFAULT 0 NOT NULL,
     date DATE NOT NULL,
     requested BOOLEAN,
     participant_id character varying(36) NOT NULL,
@@ -14,8 +15,8 @@ ALTER TABLE date_participant_availability ADD CONSTRAINT fk_date_participant_ava
 -- Create date_participant_availability_aud table for auditing
 CREATE TABLE date_participant_availability_aud (
     id character varying(36) NOT NULL,
-    rev INT NOT NULL,
-    revtype TINYINT,
+    rev int4 NOT NULL,
+    revtype int2,
     date DATE,
     requested BOOLEAN,
     participant_id character varying(36),

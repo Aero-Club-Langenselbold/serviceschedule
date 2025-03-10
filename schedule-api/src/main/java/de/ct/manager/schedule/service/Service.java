@@ -8,10 +8,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.ct.manager.schedule.participant.Participant;
 import de.ct.manager.schedule.util.AbstractPersistentEntity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -27,6 +29,9 @@ public class Service extends AbstractPersistentEntity {
     @NotBlank
     @NotNull
     private String servicename;
+
+    @OneToMany(mappedBy = "service", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
+    private Set<ServiceSettings> settings;
 
     @JsonIgnore
     @ManyToMany(mappedBy = "services", fetch = FetchType.LAZY)

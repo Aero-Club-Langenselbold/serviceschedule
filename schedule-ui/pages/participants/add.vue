@@ -88,15 +88,13 @@ const onSubmit = async () => {
   errorMessage.value = null
   successMessage.value = null
 
-  console.log(JSON.stringify(serviceValue.value))
   const participantData = {
     ...participant,
     dateOfBirth: participant.dateOfBirth ? participant.dateOfBirth.toDate(getLocalTimeZone()).toISOString() : null,
     status: participant.status ? 'active' : 'inactive',
     services: participant.services.filter((service: { id: string | number }) => serviceValue.value.includes(service.id))
   }
-  console.log(JSON.stringify(participant))
-  console.log(JSON.stringify(participantData))
+
   await useAPI('/participant/save', { method: 'POST', body: JSON.stringify(participantData) })
   .then(async (response) => {
     if (response.status.value === "error" && response.error?.value?.statusCode === 409) {

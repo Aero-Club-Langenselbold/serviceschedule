@@ -20,6 +20,9 @@ public class ServiceService {
     }
 
     public Service createOrUpdateService(Service service) {
+        if (!service.getSettings().isEmpty()) {
+            service.getSettings().forEach(settings -> settings.setService(service));
+        }
         return serviceRepository.save(service);
     }
 

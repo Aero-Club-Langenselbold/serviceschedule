@@ -3,6 +3,22 @@ export default defineI18nConfig(() => ({
   locale: 'en',
   messages: {
     en: {
+      general: {
+        yes: 'Yes',
+        no: 'No',
+        january: 'January',
+        february: 'February',
+        march: 'March',
+        april: 'April',
+        may: 'May',
+        june: 'June',
+        july: 'July',
+        august: 'August',
+        september: 'September',
+        october: 'October',
+        november: 'November',
+        december: 'December'
+      },
       login: {
         title: 'Login',
         username: 'Username',
@@ -59,18 +75,54 @@ export default defineI18nConfig(() => ({
           statusInfo: 'Active participants (or members) are automatically considered for all available days in new service plans. Passive participants (or members) are only considered for days for which they explicitly register.'
       },
       service: {
+          add: 'Add new Service',
           name: 'Service name',
           save: 'Save',
           list: 'Service list',
           success: 'Service saved successfully',
           error: 'Error saving service',
           exists: 'Service already exists',
+          addSetting: 'Add setting',
+          rangeFrom: 'From',
+          rangeTo: 'To',
+          mandatoryAssignees: 'Participants',
+          saturdays: 'Saturdays',
+          sundays: 'Sundays',
+          publicHolidays: 'Public Holidays',
+          startTime: 'Start time',
+          endTime: 'End time',
+          actions: 'Actions',
+          removeSetting: 'Remove setting'
+      },
+      plan: {
+        add: 'Add new Service Plan',
+          name: 'Service Plan name',
+          description: 'Description',
+          dateFrom: 'From',
+          dateUntil: 'Until',
+          save: 'Save'
       },
       error: {
         credentials: 'Invalid credentials'
       }
     },
     de: {
+      general: {
+        yes: 'Ja',
+        no: 'Nein',
+        january: 'Januar',
+        february: 'Februar',
+        march: 'März',
+        april: 'April',
+        may: 'Mai',
+        june: 'Juni',
+        july: 'Juli',
+        august: 'August',
+        september: 'September',
+        october: 'Oktober',
+        november: 'November',
+        december: 'Dezember'
+      },
       login: {
         title: 'Anmelden',
         username: 'Benutzername',
@@ -127,13 +179,33 @@ export default defineI18nConfig(() => ({
         statusInfo: 'Aktive Teilnehmer (bzw. Mitglieder) werden automatisch bei neuen Dienstplänen für alle verfügbaren Tage berücksichtigt. Passive Teilnehmer (bzw. Mitglieder) werden nur für Tage berücksichtigt, für die sie sich explizit eintragen.'
       },
       service: {
+          add: 'Neuen Dienst hinzufügen',
           name: 'Dienst',
           save: 'Speichern',
           list: 'Dienstliste',
           success: 'Dienst erfolgreich gespeichert',
           error: 'Fehler beim Speichern des Dienstes',
           exists: 'Dienst existiert bereits',
+          addSetting: 'Einstellung hinzufügen',
+          rangeFrom: 'Von',
+          rangeTo: 'Bis',
+          mandatoryAssignees: 'Teilnehmer',
+          saturdays: 'Samstage',
+          sundays: 'Sonntage',
+          publicHolidays: 'Feiertage',
+          startTime: 'Startzeit',
+          endTime: 'Endzeit',
+          actions: 'Aktionen',
+          removeSetting: 'Einstellung entfernen'
       },
+      plan: {
+        add: 'Neuen Dienstplan hinzufügen',
+        name: 'Dienstplan Name',
+        description: 'Beschreibung',
+        dateFrom: 'Von',
+        dateUntil: 'Bis',
+        save: 'Speichern'
+    },
       error: {
         credentials: 'Ungültige Anmeldeinformationen'
       }

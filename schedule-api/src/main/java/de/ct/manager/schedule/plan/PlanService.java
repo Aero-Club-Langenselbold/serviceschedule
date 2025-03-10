@@ -192,6 +192,7 @@ public class PlanService {
         }
 
         plan.getEntries().addAll(planEntries);
+        plan.setPublished(true);
 
         return planRepository.save(plan);
     }
