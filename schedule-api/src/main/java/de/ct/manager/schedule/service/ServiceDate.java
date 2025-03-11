@@ -5,6 +5,8 @@ import java.util.Date;
 
 import org.hibernate.envers.Audited;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import de.ct.manager.schedule.plan.Plan;
 import de.ct.manager.schedule.util.AbstractPersistentEntity;
 import jakarta.persistence.Column;
@@ -31,6 +33,7 @@ public class ServiceDate extends AbstractPersistentEntity {
     @JoinColumn(name = "service_id")
     private Service service;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plan_id")
     private Plan plan;

@@ -12,7 +12,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
@@ -73,12 +75,44 @@ public class PlanService {
             throw new IllegalArgumentException("Plan not found");
         }
 
-        for (ServiceDate sd : serviceDates) {
-            sd.setService(serviceRepository.findById(sd.getService().getId()).orElseThrow(() -> new IllegalArgumentException("Service not found")));
-        }
+        // Fetch existing service dates for the plan
+        List<ServiceDate> existingServiceDates = serviceDateRepository.findByPlan(plan).orElse(new ArrayList<>());
 
-        serviceDates.forEach(sd -> sd.setPlan(plan));
-        return serviceDateRepository.saveAll(serviceDates);
+        // Create sets for easy comparison
+        Set<String> newServiceDateIds = serviceDates.stream().map(ServiceDate::getId).collect(Collectors.toSet());
+        Set<String> existingServiceDateIds = existingServiceDates.stream().map(ServiceDate::getId).collect(Collectors.toSet());
+
+        // Identify service dates to delete
+        List<ServiceDate> serviceDatesToDelete = existingServiceDates.stream()
+            .filter(sd -> !newServiceDateIds.contains(sd.getId()))
+            .collect(Collectors.toList());
+
+        // Delete missing service dates
+        serviceDatesToDelete.forEach(sd -> serviceDateRepository.deleteById(sd.getId()));
+
+        // Update existing service dates and add new ones
+        for (ServiceDate sd : serviceDates) {
+            if (existingServiceDateIds.contains(sd.getId())) {
+                // Update existing service date
+                ServiceDate existingServiceDate = existingServiceDates.stream()
+                    .filter(esd -> esd.getId().equals(sd.getId()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Service date not found"));
+                existingServiceDate.setStartTime(sd.getStartTime());
+                existingServiceDate.setEndTime(sd.getEndTime());
+                existingServiceDate.setMandatoryAssignees(sd.getMandatoryAssignees());
+
+                serviceDateRepository.save(existingServiceDate);
+            } else {
+                // Add new service date
+                sd.setId(UUID.randomUUID().toString());
+                sd.setService(serviceRepository.findById(sd.getService().getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Service not found")));
+                sd.setPlan(plan);
+                serviceDateRepository.save(sd);
+            }
+        }
+        return serviceDateRepository.findByPlan(plan).orElse(new ArrayList<>());
     }
 
     public void deleteServiceDate(String id) {

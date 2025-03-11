@@ -70,7 +70,7 @@ interface DateEntry {
 }
 
 const dates = ref<DateEntry[]>([])
-const values = ref<{ mandatoryAssignees: number, startTime: string, endTime: string }[][]>([])
+const values = ref<{ id: string, mandatoryAssignees: number, startTime: string, endTime: string }[][]>([])
 const plan = ref<any>({})
 
 const isDateUnavailable = (date: DateValue) => {
@@ -89,22 +89,69 @@ const fetchData = async () => {
     const { data: planData, error: planError } = await useAPI(`/plan/fetch/` + id, { method: 'GET' })
     const { data: servicesData, error: servicesError } = await useAPI(`/service/list`, { method: 'GET' })
 
+    // TODO: consider holidays
+
     if (planError?.value === 'error' || servicesError?.value === 'error') {
       errorMessage.value = 'An error occurred while fetching the data.'
       return
     }
 
     // TODO: if the plan already contains service_dates, build the table based on those instead of building a fresh table
-    buildTableData(planData, servicesData)
+    // if database entries exist load those
+    if (planData.value.serviceDates.length > 0) {
+      buildTableData(planData, servicesData, true)
+    } else {
+      buildTableData(planData, servicesData, false)
+    }
   } catch (err) {
     errorMessage.value = 'An error occurred while fetching the data.'
   }
 }
 
-const buildTableData = (planData: any, servicesData: any) => {
+const buildTableData = (planData: any, servicesData: any, fromDataBase: boolean) => {
   plan.value = planData.value
   services.value = servicesData.value
 
+  if (fromDataBase) {
+    createPageFromDB()
+  } else {
+    createNewPage()
+  }
+}
+
+function createPageFromDB() {
+  plan.value.serviceDates.sort((a: any, b: any) => new Date(a.date) - new Date(b.date))
+
+  plan.value.serviceDates.forEach((entry: any) => {
+      const existingDate = dates.value.find(date => date.originalDate.getTime() === new Date(entry.date).getTime())
+      if (!existingDate) {
+        dates.value.push({
+          localeString: new Date(entry.date).toLocaleDateString(locale.value, { weekday: 'short', month: '2-digit', day: '2-digit', year: 'numeric' }),
+          originalDate: new Date(entry.date)
+        })
+      }
+    })
+    values.value = dates.value.map(date =>
+      services.value.map(service => {
+        const entry = plan.value.serviceDates.find((e: any) =>
+          new Date(e.date).getTime() === date.originalDate.getTime() && e.service.id === service.id
+        )
+        return entry ? {
+          id: entry.id,
+          mandatoryAssignees: entry.mandatoryAssignees,
+          startTime: entry.startTime,
+          endTime: entry.endTime
+        } : {
+          id: null,
+          mandatoryAssignees: 0,
+          startTime: '',
+          endTime: ''
+        }
+      })
+    )
+}
+
+function createNewPage() {
   const startDate = new Date(plan.value.dateFrom)
   const endDate = new Date(plan.value.dateUntil)
   const currentDate = new Date(startDate)
@@ -119,19 +166,20 @@ const buildTableData = (planData: any, servicesData: any) => {
     currentDate.setDate(currentDate.getDate() + 1)
   }
 
-  values.value = dates.value.map(date =>
-    services.value.map(service => {
-      const s = getSettings(service, date.originalDate)
-      return s ? {
-        mandatoryAssignees: s.mandatoryAssignees,
-        startTime: s.startTime,
-        endTime: s.endTime
-      } : {
-        mandatoryAssignees: 0,
-        startTime: '',
-        endTime: ''
-      }
-    })
+  values.value = dates.value.map(date => services.value.map(service => {
+    const s = getSettings(service, date.originalDate)
+    return s ? {
+      id: null,
+      mandatoryAssignees: s.mandatoryAssignees,
+      startTime: s.startTime,
+      endTime: s.endTime
+    } : {
+      id: null,
+      mandatoryAssignees: 0,
+      startTime: '',
+      endTime: ''
+    }
+  })
   )
 }
 
@@ -166,6 +214,7 @@ const addDate = () => {
 
       // Initialize values for the new date
       const newValues = services.value.map(service => ({
+        id: null,
         mandatoryAssignees: 0,
         startTime: service.settings.startTime || '',
         endTime: service.settings.endTime || ''
@@ -186,9 +235,10 @@ const saveDetails = async () => {
   try {
     const payload = dates.value.flatMap((date, dateIndex) =>
       services.value.map((service, serviceIndex) => {
-        const { mandatoryAssignees, startTime, endTime } = values.value[dateIndex][serviceIndex]
+        const { id, mandatoryAssignees, startTime, endTime } = values.value[dateIndex][serviceIndex]
         if (mandatoryAssignees > 0) {
           return {
+            id: id,
             date: date.originalDate,
             service: {
               id: service.id

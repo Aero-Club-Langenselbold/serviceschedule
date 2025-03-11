@@ -11,6 +11,7 @@ import org.hibernate.envers.Audited;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.ct.manager.schedule.service.Service;
+import de.ct.manager.schedule.service.ServiceDate;
 import de.ct.manager.schedule.util.AbstractPersistentEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -51,6 +52,9 @@ public class Plan extends AbstractPersistentEntity {
 
     @OneToMany(mappedBy = "plan", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
     private Set<PlanEntry> entries = new HashSet<>();
+
+    @OneToMany(mappedBy = "plan", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
+    private Set<ServiceDate> serviceDates = new HashSet<>();
 
     @JsonIgnore
     public List<Service> getAllServices() {
