@@ -169,6 +169,7 @@ const onSubmit = async () => {
       errorMessage.value = null
 
       service.servicename = ''
+      service.settings = []
     }
   })
   .catch((error) => {

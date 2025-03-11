@@ -22,6 +22,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
         Map<String, String> errors = new HashMap<>();
         errors.put("error", "Duplicate key error: " + ex.getMostSpecificCause().getMessage());
+        log.error("DataIntegrityViolationException", ex);
         return new ResponseEntity<>(errors, HttpStatus.CONFLICT);
     }
 

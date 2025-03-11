@@ -95,12 +95,15 @@ export default defineI18nConfig(() => ({
           removeSetting: 'Remove setting'
       },
       plan: {
-        add: 'Add new Service Plan',
+          add: 'Add new Service Plan',
+          addDate: 'Add Date',
           name: 'Service Plan name',
           description: 'Description',
           dateFrom: 'From',
           dateUntil: 'Until',
-          save: 'Save'
+          save: 'Save',
+          date: 'Date',
+          details: 'Add plan details'
       },
       error: {
         credentials: 'Invalid credentials'
@@ -199,12 +202,15 @@ export default defineI18nConfig(() => ({
           removeSetting: 'Einstellung entfernen'
       },
       plan: {
-        add: 'Neuen Dienstplan hinzufügen',
-        name: 'Dienstplan Name',
-        description: 'Beschreibung',
-        dateFrom: 'Von',
-        dateUntil: 'Bis',
-        save: 'Speichern'
+          add: 'Neuen Dienstplan hinzufügen',
+          addDate: 'Datum hinzufügen',
+          name: 'Dienstplan Name',
+          description: 'Beschreibung',
+          dateFrom: 'Von',
+          dateUntil: 'Bis',
+          save: 'Speichern',
+          date: 'Datum',
+          details: 'Dienstplan Details festlegen'
     },
       error: {
         credentials: 'Ungültige Anmeldeinformationen'

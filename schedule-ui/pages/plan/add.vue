@@ -97,6 +97,8 @@ const onSubmit = async () => {
       plan.description = ''
       plan.dateFrom = null
       plan.dateUntil = null
+
+      await navigateTo('/plan/details/' + response.data?.value.id)
     }
   })
   .catch((error) => {

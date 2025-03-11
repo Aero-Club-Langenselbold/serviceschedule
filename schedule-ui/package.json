@@ -14,10 +14,12 @@
     "@iconify-json/heroicons": "^1.2.2",
     "@nuxtjs/i18n": "9.0.0-rc.2",
     "@pinia/nuxt": "^0.10.1",
+    "date-fns": "^4.1.0",
     "nuxt": "^3.15.4",
     "nuxt-app": "file:",
     "nuxt-auth-utils": "^0.5.16",
     "pinia": "^3.0.1",
+    "v-calendar": "^3.1.2",
     "vue": "latest",
     "vue-router": "latest"
   },

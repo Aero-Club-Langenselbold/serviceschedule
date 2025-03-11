@@ -28,6 +28,7 @@ import de.ct.manager.schedule.participant.ParticipantAssignment;
 import de.ct.manager.schedule.service.Service;
 import de.ct.manager.schedule.service.ServiceDate;
 import de.ct.manager.schedule.service.ServiceDateRepository;
+import de.ct.manager.schedule.service.ServiceRepository;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,13 +39,15 @@ public class PlanService {
     private static final int ADULT_AGE = 18;
 
     private final PlanRepository planRepository;
+    private final ServiceRepository serviceRepository;
     private final ServiceDateRepository serviceDateRepository;
     private final DateParticipantAvailabilityRepository dateParticipantAvailabilityRepository;
 
-    public PlanService(PlanRepository planRepository, ServiceDateRepository serviceDateRepository, DateParticipantAvailabilityRepository dateParticipantAvailabilityRepository) {
+    public PlanService(PlanRepository planRepository, ServiceDateRepository serviceDateRepository, DateParticipantAvailabilityRepository dateParticipantAvailabilityRepository, ServiceRepository serviceRepository) {
         this.planRepository = planRepository;
         this.serviceDateRepository = serviceDateRepository;
         this.dateParticipantAvailabilityRepository = dateParticipantAvailabilityRepository;
+        this.serviceRepository = serviceRepository;
     }
 
     public List<Plan> listPlans() {
@@ -68,6 +71,10 @@ public class PlanService {
 
         if (plan == null) {
             throw new IllegalArgumentException("Plan not found");
+        }
+
+        for (ServiceDate sd : serviceDates) {
+            sd.setService(serviceRepository.findById(sd.getService().getId()).orElseThrow(() -> new IllegalArgumentException("Service not found")));
         }
 
         serviceDates.forEach(sd -> sd.setPlan(plan));
