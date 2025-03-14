@@ -14,6 +14,8 @@
 <script lang="ts" setup>
 import type { TableColumn } from '@nuxt/ui'
 
+const UButton = resolveComponent('UButton')
+
 const { t, locale } = useI18n()
 
 const errorMessage = ref<string | null>(null)
@@ -22,6 +24,7 @@ const successMessage = ref<string | null>(null)
 const listData = ref([])
 
 type Plan = {
+  id: string,
   name: string,
   description: string,
   dateFrom: string,
@@ -54,6 +57,14 @@ const columns = computed<TableColumn<Plan>[]>(() => [
         month: '2-digit',
         year: 'numeric'
       })
+    }
+  }, {
+    header: t('plan.actions'),
+    cell: ({ row }) => {
+      return h(UButton, {
+        onClick: () => navigateTo(`/plan/details/${row.original.id}`),
+        color: 'neutral'
+      }, () => t('plan.editDetails'))
     }
   }
 ])

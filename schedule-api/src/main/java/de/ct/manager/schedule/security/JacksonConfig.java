@@ -17,6 +17,8 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
+import com.fasterxml.jackson.databind.ser.std.DateSerializer;
+import com.fasterxml.jackson.databind.deser.std.DateDeserializers.DateDeserializer;
 
 @Configuration
 public class JacksonConfig {
@@ -33,6 +35,9 @@ public class JacksonConfig {
 
         javaTimeModule.addSerializer(LocalTime.class, new LocalTimeSerializer(timeFormatter));
         javaTimeModule.addDeserializer(LocalTime.class, new LocalTimeDeserializer(timeFormatter));
+
+        javaTimeModule.addSerializer(java.util.Date.class, new DateSerializer(false, new java.text.SimpleDateFormat("yyyy-MM-dd")));
+        javaTimeModule.addDeserializer(java.util.Date.class, new DateDeserializer());
 
         return JsonMapper.builder()
             .addModule(javaTimeModule)

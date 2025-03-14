@@ -29,15 +29,7 @@
           <label class="block text-sm font-bold mb-2">
             {{ $t('participants.dateOfBirth') }}
           </label>
-          <UPopover>
-            <UButton color="neutral" variant="subtle" icon="i-lucide-calendar" class="w-full">
-              {{ participant.dateOfBirth ? df.format(participant.dateOfBirth.toDate(getLocalTimeZone())) : $t('participants.dateOfBirth') }}
-            </UButton>
-
-            <template #content>
-              <UCalendar v-model="participant.dateOfBirth" class="p-2" />
-            </template>
-          </UPopover>
+          <UInput v-model="participant.dateOfBirth" type="date" :placeholder="$t('participants.dateOfBirth')" class="w-full" />
         </div>
         <div class="mb-6 flex items-center ">
           <label class="text-sm font-bold mr-6">
@@ -90,7 +82,7 @@ const onSubmit = async () => {
 
   const participantData = {
     ...participant,
-    dateOfBirth: participant.dateOfBirth ? participant.dateOfBirth.toDate(getLocalTimeZone()).toISOString() : null,
+    dateOfBirth: participant.dateOfBirth ? participant.dateOfBirth : null,
     status: participant.status ? 'active' : 'inactive',
     services: participant.services.filter((service: { id: string | number }) => serviceValue.value.includes(service.id))
   }

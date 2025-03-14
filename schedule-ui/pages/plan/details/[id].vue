@@ -96,7 +96,6 @@ const fetchData = async () => {
       return
     }
 
-    // TODO: if the plan already contains service_dates, build the table based on those instead of building a fresh table
     // if database entries exist load those
     if (planData.value.serviceDates.length > 0) {
       buildTableData(planData, servicesData, true)
@@ -254,16 +253,13 @@ const saveDetails = async () => {
 
     const { data, error } = await useAPI(`/plan/serviceDates/save/` + plan.value.id, { method: 'POST', body: JSON.stringify(payload) })
 
-
-    // TODO: reinitialize table with returned data
     if (error?.value === 'error') {
-      errorMessage.value = 'An error occurred while saving the data.'
+      errorMessage.value = t('plan.saveError')
       return
     }
-
-    successMessage.value = 'Data saved successfully.'
+    successMessage.value = t('plan.saveSuccess')
   } catch (err) {
-    errorMessage.value = 'An error occurred while saving the data.'
+    errorMessage.value = t('plan.saveException')
   }
 }
 

@@ -6,12 +6,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import de.ct.manager.schedule.service.ServiceRepository;
+
 @Service
 public class ParticipantService {
     private final ParticipantRepository participantRepository;
+    private final ServiceRepository serviceRepository;
 
-    public ParticipantService(ParticipantRepository participantRepository) {
+    public ParticipantService(ParticipantRepository participantRepository, ServiceRepository serviceRepository) {
         this.participantRepository = participantRepository;
+        this.serviceRepository = serviceRepository;
     }
 
     public List<Participant> listParticipants() {
@@ -31,6 +35,15 @@ public class ParticipantService {
     }
 
     public Participant createOrUpdateParticipant(Participant participant) {
+        if (participant.getServices() != null) {
+            participant.setServices(participant.getServices().stream().map(service -> {
+                if (service.getId() != null) {
+                    return serviceRepository.findById(service.getId())
+                        .orElseThrow(() -> new IllegalArgumentException("Service not found with id: " + service.getId()));
+                }
+                return service;
+            }).toList());
+        }
         return participantRepository.save(participant);
     }
 

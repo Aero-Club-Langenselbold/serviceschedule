@@ -16,17 +16,17 @@ INSERT INTO service (id, version, servicename) VALUES
     ('5114', 0, 'Super Service'),
     ('5115', 0, 'Mega Service');
 
-INSERT INTO plan (id, version, name, description, date_from, date_until) VALUES
-    ('6000', 0, 'World Domination tour', 'Schedule for all team members trying to take over the world', '2020-01-01 00:00:00', '2020-07-01 00:00:00'),
-    ('6001', 0, 'Marketing Blitz', 'Intensive marketing campaign', '2021-03-01 00:00:00', '2021-06-01 00:00:00'),
-    ('6002', 0, 'Product Launch', 'Launch schedule for new product', '2021-05-01 00:00:00', '2021-12-01 00:00:00'),
-    ('6003', 0, 'Team Building Retreat', 'Schedule for team building activities', '2021-07-15 00:00:00', '2021-07-20 00:00:00'),
-    ('6004', 0, 'End of Year Review', 'Review schedule for end of year performance', '2021-12-01 00:00:00', '2021-12-31 00:00:00'),
-    ('6005', 0, 'Q1 Sales Push', 'Sales push for the first quarter', '2022-01-01 00:00:00', '2022-03-31 00:00:00'),
-    ('6006', 0, 'Annual General Meeting', 'Schedule for the annual general meeting', '2022-04-01 00:00:00', '2022-04-02 00:00:00'),
-    ('6007', 0, 'Summer Internship Program', 'Schedule for summer interns', '2022-06-01 00:00:00', '2022-08-31 00:00:00'),
-    ('6008', 0, 'Holiday Season Campaign', 'Marketing campaign for the holiday season', '2022-11-01 00:00:00', '2022-12-31 00:00:00'),
-    ('6009', 0, 'New Year Kickoff', 'Kickoff schedule for the new year', '2023-01-01 00:00:00', '2023-01-15 00:00:00');
+INSERT INTO plan (id, version, name, description, date_from, date_until, published) VALUES
+    ('6000', 0, 'World Domination tour', 'Schedule for all team members trying to take over the world', '2020-01-01 00:00:00', '2020-07-01 00:00:00', false),
+    ('6001', 0, 'Marketing Blitz', 'Intensive marketing campaign', '2021-03-01 00:00:00', '2021-06-01 00:00:00', false),
+    ('6002', 0, 'Product Launch', 'Launch schedule for new product', '2021-05-01 00:00:00', '2021-12-01 00:00:00', false),
+    ('6003', 0, 'Team Building Retreat', 'Schedule for team building activities', '2021-07-15 00:00:00', '2021-07-20 00:00:00', false),
+    ('6004', 0, 'End of Year Review', 'Review schedule for end of year performance', '2021-12-01 00:00:00', '2021-12-31 00:00:00', false),
+    ('6005', 0, 'Q1 Sales Push', 'Sales push for the first quarter', '2022-01-01 00:00:00', '2022-03-31 00:00:00', false),
+    ('6006', 0, 'Annual General Meeting', 'Schedule for the annual general meeting', '2022-04-01 00:00:00', '2022-04-02 00:00:00', false),
+    ('6007', 0, 'Summer Internship Program', 'Schedule for summer interns', '2022-06-01 00:00:00', '2022-08-31 00:00:00', false),
+    ('6008', 0, 'Holiday Season Campaign', 'Marketing campaign for the holiday season', '2022-11-01 00:00:00', '2022-12-31 00:00:00', false),
+    ('6009', 0, 'New Year Kickoff', 'Kickoff schedule for the new year', '2023-01-01 00:00:00', '2023-01-15 00:00:00', false);
 
 INSERT INTO plan_entry (id, version, start_time, end_time, service_id, participant_id, plan_id) VALUES
     ('7500', 0, '2020-01-01 10:00:00', '2020-01-01 18:00:00', '5111', '4711', '6000'),

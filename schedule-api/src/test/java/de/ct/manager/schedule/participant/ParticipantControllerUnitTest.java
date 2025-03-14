@@ -23,6 +23,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort.Direction;
 
+import de.ct.manager.schedule.service.ServiceRepository;
 import de.ct.manager.schedule.user.UserRole;
 import de.ct.manager.schedule.util.AbstractControllerUnitTest;
 
@@ -34,6 +35,9 @@ class ParticipantControllerUnitTest extends AbstractControllerUnitTest {
 
     @MockitoBean
     private ParticipantRepository participantRepository;
+
+    @MockitoBean
+    private ServiceRepository serviceRepository;
 
     @Test
     void testPageParticipants() throws Exception {

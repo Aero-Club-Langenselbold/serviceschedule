@@ -2,6 +2,7 @@ package de.ct.manager.schedule.plan;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
@@ -257,18 +258,19 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
         Calendar calendar = Calendar.getInstance();
         calendar.set(2020, 01, 01, 0, 0, 0);
         // add service dates
+        List<ServiceDate> sds = new ArrayList<>();
         for (Service s : services) {
             ServiceDate sd = new ServiceDate(calendar.getTime(), s, 1, LocalTime.of(10, 0), LocalTime.of(12, 0));
             sd.setPlan(plan.getBody());
-
-            entity = new HttpEntity<>(objectMapper.writeValueAsString(List.of(sd)), createHeadersWithToken(UserRole.ROLE_USER));
-
-            restTemplate.exchange(
-                createURLWithPort("plan/") + "/serviceDates/save/" + plan.getBody().getId(),
-                HttpMethod.POST,
-                entity,
-                new ParameterizedTypeReference<List<ServiceDate>>() {});
+            sds.add(sd);
         }
+        entity = new HttpEntity<>(objectMapper.writeValueAsString(sds), createHeadersWithToken(UserRole.ROLE_USER));
+
+        restTemplate.exchange(
+            createURLWithPort("plan/") + "/serviceDates/save/" + plan.getBody().getId(),
+            HttpMethod.POST,
+            entity,
+            new ParameterizedTypeReference<List<ServiceDate>>() {});
         // add availability dates
         for (Participant p : participants) {
             DateParticipantAvailability availability = new DateParticipantAvailability(calendar.getTime(), false, p, plan.getBody());
