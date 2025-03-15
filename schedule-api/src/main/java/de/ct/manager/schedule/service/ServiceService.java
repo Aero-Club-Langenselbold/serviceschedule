@@ -1,14 +1,17 @@
 package de.ct.manager.schedule.service;
 
 import java.util.List;
+import java.util.Optional;
 
 @org.springframework.stereotype.Service
 public class ServiceService {
 
     private final ServiceRepository serviceRepository;
+    private final ServiceDateRepository serviceDateRepository;
 
-    public ServiceService(ServiceRepository serviceRepository) {
+    public ServiceService(ServiceRepository serviceRepository, ServiceDateRepository serviceDateRepository) {
         this.serviceRepository = serviceRepository;
+        this.serviceDateRepository = serviceDateRepository;
     }
 
     public List<Service> listServices() {
@@ -23,6 +26,10 @@ public class ServiceService {
         if (service.getSettings() != null && !service.getSettings().isEmpty()) {
             service.getSettings().forEach(settings -> settings.setService(service));
         }
+
+        Optional<List<ServiceDate>> existingServiceDates = serviceDateRepository.findByServiceId(service.getId());
+        service.setServiceDates(existingServiceDates.orElse(null));
+
         return serviceRepository.save(service);
     }
 
@@ -30,3 +37,4 @@ public class ServiceService {
         serviceRepository.deleteById(id);
     }
 }
+

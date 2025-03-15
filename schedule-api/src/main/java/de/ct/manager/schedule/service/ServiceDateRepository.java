@@ -10,4 +10,6 @@ import de.ct.manager.schedule.plan.Plan;
 public interface ServiceDateRepository extends JpaRepository<ServiceDate, String>{
 
     Optional<List<ServiceDate>> findByPlan(Plan plan);
+
+    Optional<List<ServiceDate>> findByServiceId(String serviceId);
 }

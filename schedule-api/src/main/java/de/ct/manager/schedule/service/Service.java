@@ -1,5 +1,6 @@
 package de.ct.manager.schedule.service;
 
+import java.util.List;
 import java.util.Set;
 
 import org.hibernate.envers.Audited;
@@ -32,6 +33,10 @@ public class Service extends AbstractPersistentEntity {
 
     @OneToMany(mappedBy = "service", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
     private Set<ServiceSettings> settings;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "service", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
+    private List<ServiceDate> serviceDates;
 
     @JsonIgnore
     @ManyToMany(mappedBy = "services", fetch = FetchType.LAZY)

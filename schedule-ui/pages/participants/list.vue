@@ -222,7 +222,7 @@ const columns = computed<TableColumn<Participant>[]>(() => [
             successMessage.value = t('participants.updateSuccess')
             fetchData()
           }
-        } catch (err) {          console.log(err)
+        } catch (err) {
           errorMessage.value = 'An error occurred while updating the data.'
         } finally {
           editingState[rowId] = false

@@ -1,0 +1,1 @@
+ALTER TABLE service_settings_aud ALTER COLUMN service_id DROP NOT NULL;
