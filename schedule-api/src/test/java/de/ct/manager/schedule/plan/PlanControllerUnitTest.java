@@ -56,14 +56,14 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testListPlans() throws Exception {
-        mockValidAuthentication(UserRole.ROLE_USER);
+        mockValidAuthentication(UserRole.ROLE_ADMIN);
 
         when(planRepository.findAll()).thenReturn(generateListResponse());
 
         mockMvc.perform(
             get("/plan/list")
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ADMIN))
             )
             .andDo(print())
             .andExpect(status().isOk())
@@ -73,14 +73,14 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testPlan() throws Exception {
-        mockValidAuthentication(UserRole.ROLE_USER);
+        mockValidAuthentication(UserRole.ROLE_ADMIN);
 
         when(planRepository.findById("4711")).thenReturn(Optional.of(generatePlan(0)));
 
         mockMvc.perform(
             get("/plan/fetch/4711")
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ADMIN))
             )
             .andDo(print())
             .andExpect(status().isOk())
@@ -90,7 +90,7 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testCreatePlan() throws Exception {
-        mockValidAuthentication(UserRole.ROLE_USER);
+        mockValidAuthentication(UserRole.ROLE_ADMIN);
 
         Plan plan = generatePlan(0);
 
@@ -100,7 +100,7 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
             post("/plan/save")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(plan))
-                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ADMIN))
             )
             .andDo(print())
             .andExpect(status().isOk())
@@ -110,7 +110,7 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testGeneratePlan() throws Exception {
-        mockValidAuthentication(UserRole.ROLE_USER);
+        mockValidAuthentication(UserRole.ROLE_ADMIN);
 
         Plan plan = generatePlan(0);
         Service s1 = generateService(0);
@@ -134,7 +134,7 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
         mockMvc.perform(
             post("/plan/generate/4711")
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ADMIN))
             )
             .andDo(print())
             .andExpect(status().isOk())
@@ -145,12 +145,12 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
 
     @Test
     void testDeletePlan() throws Exception {
-        mockValidAuthentication(UserRole.ROLE_USER);
+        mockValidAuthentication(UserRole.ROLE_ADMIN);
 
         mockMvc.perform(
             delete("/plan/delete/4711")
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ADMIN))
             )
             .andDo(print())
             .andExpect(status().isOk());

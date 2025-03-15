@@ -32,37 +32,37 @@ public class ParticipantController {
     }
 
     @GetMapping("/list")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Participant>> listParticipants() {
         return ResponseEntity.ok(participantService.listParticipants());
     }
 
     @GetMapping("/page")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<Participant>> listParticipants(@SortDefault(sort = "lastname") @PageableDefault(size = 20) final Pageable pageable) {
         return ResponseEntity.ok(participantService.listParticipants(pageable));
     }
 
     @GetMapping("/fetch/{id}")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Participant> getParticipant(@PathVariable String id) {
         return ResponseEntity.ok(participantService.getParticipant(id));
     }
 
     @GetMapping("/fetchByMail/{email:.+}")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<Participant> getParticipantByEmail(@PathVariable String email) {
         return ResponseEntity.ok(participantService.getParticipantByEmail(email));
     }
 
     @PostMapping("/save")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Participant> createOrUpdateParticipant(@RequestBody @Valid Participant participant) {
         return ResponseEntity.ok(participantService.createOrUpdateParticipant(participant));
     }
 
     @DeleteMapping("/delete/{id}")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteParticipant(@PathVariable String id) {
         participantService.deleteParticipant(id);
         return ResponseEntity.ok().build();

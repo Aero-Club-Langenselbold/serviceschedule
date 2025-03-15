@@ -28,52 +28,52 @@ public class PlanController {
     }
 
     @GetMapping("/list")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Plan>> listPlans() {
         return ResponseEntity.ok(planService.listPlans());
     }
 
     @GetMapping("/fetch/{id}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Plan> getPlan(@PathVariable String id) {
         return ResponseEntity.ok(planService.getPlan(id));
     }
 
     @PostMapping("/save")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Plan> createOrUpdatePlan(@RequestBody Plan plan) {
         return ResponseEntity.ok(planService.createOrUpdatePlan(plan));
     }
 
     @PostMapping("/generate/{id}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Plan> generatePlan(@PathVariable String id) {
         return ResponseEntity.ok(planService.generatePlan(id));
     }
 
 
     @DeleteMapping("/delete/{id}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deletePlan(@PathVariable String id) {
         planService.deletePlan(id);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/serviceDates/save/{id}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ServiceDate>> createOrUpdateServiceDate(@PathVariable String id, @RequestBody List<ServiceDate> serviceDates) {
         return ResponseEntity.ok(planService.addServiceDates(id, serviceDates));
     }
 
     @DeleteMapping("/serviceDates/delete/{id}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteServiceDate(@PathVariable String id) {
         planService.deleteServiceDate(id);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/participantAvailability/save/{id}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<DateParticipantAvailability> createOrUpdateParticipantAvailability(@PathVariable String id, @RequestBody DateParticipantAvailability participantAvailability) {
         return ResponseEntity.ok(planService.addDateParticipantAvailability(id, participantAvailability));
     }

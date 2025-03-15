@@ -21,7 +21,7 @@ class ServiceIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-services.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM service", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testListServices() {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<List<Service>> response = restTemplate.exchange(
             createURLWithPort("service/") + "list",
@@ -40,7 +40,7 @@ class ServiceIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-services.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM service", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testFetchService() {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<Service> response = restTemplate.exchange(
             createURLWithPort("service/") + "fetch/5111",
@@ -58,7 +58,7 @@ class ServiceIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-services.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM service", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testDeleteService() {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         restTemplate.exchange(
             createURLWithPort("service/") + "delete/5111",
@@ -86,7 +86,7 @@ class ServiceIntegrationTest extends AbstractIntegrationTest {
         Service newby = new Service();
         newby.setServicename("Nullpointer service");
 
-        HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(newby), createHeadersWithToken(UserRole.ROLE_USER));
+        HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(newby), createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<Service> service = restTemplate.exchange(
             createURLWithPort("service/") + "save",
@@ -115,7 +115,7 @@ class ServiceIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-services.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM service", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testUpdateService() throws Exception {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         // fetch funky service
         ResponseEntity<Service> response = restTemplate.exchange(
@@ -133,7 +133,7 @@ class ServiceIntegrationTest extends AbstractIntegrationTest {
         Service service = response.getBody();
         service.setServicename("Even funkier Service");
 
-        entity = new HttpEntity<>(objectMapper.writeValueAsString(service), createHeadersWithToken(UserRole.ROLE_USER));
+        entity = new HttpEntity<>(objectMapper.writeValueAsString(service), createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         response = restTemplate.exchange(
             createURLWithPort("service/") + "save",

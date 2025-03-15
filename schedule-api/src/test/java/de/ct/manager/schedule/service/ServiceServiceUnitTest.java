@@ -19,6 +19,9 @@ class ServiceServiceUnitTest {
     @Mock
     ServiceRepository serviceRepository;
 
+    @Mock
+    ServiceDateRepository serviceDateRepository;
+
     @InjectMocks
     ServiceService serviceService;
 

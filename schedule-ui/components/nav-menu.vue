@@ -19,7 +19,7 @@ const menu = computed(() => {
       to: '/'
     })
   }
-  if (isLoggedIn.value && user.value?.roles.includes('ROLE_USER')) {
+  if (isLoggedIn.value && user.value?.roles.includes('ROLE_ADMIN')) {
     items.push({
       label: computed(() => t('nav.participants.menu')),
       icon: 'i-lucide-users',

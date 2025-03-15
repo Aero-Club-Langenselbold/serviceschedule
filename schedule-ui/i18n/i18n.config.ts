@@ -19,6 +19,10 @@ export default defineI18nConfig(() => ({
         november: 'November',
         december: 'December'
       },
+      permissionDenied: {
+        title: 'Permission Denied',
+        description: 'You do not have permission to access this page.'
+      },
       login: {
         title: 'Login',
         username: 'Username',
@@ -135,6 +139,10 @@ export default defineI18nConfig(() => ({
         october: 'Oktober',
         november: 'November',
         december: 'Dezember'
+      },
+      permissionDenied: {
+        title: 'Zugang verweigert',
+        description: 'Du hast keine Berechtigung, auf diese Seite zuzugreifen.'
       },
       login: {
         title: 'Anmelden',

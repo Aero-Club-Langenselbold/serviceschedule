@@ -91,6 +91,6 @@ watchEffect(() => {
 
 
 definePageMeta({
-    middleware: ['authenticated']
+  middleware: ['authenticated', 'admin']
 })
 </script>

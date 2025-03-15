@@ -178,6 +178,6 @@ const onSubmit = async () => {
 }
 
 definePageMeta({
-    middleware: ['authenticated']
+  middleware: ['authenticated', 'admin']
 })
 </script>

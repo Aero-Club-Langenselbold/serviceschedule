@@ -23,7 +23,7 @@ class ParticipantIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-participants.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM participant", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testPageParticipantsWithoutParams() {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<RestPageImpl<Participant>> response = restTemplate.exchange(
             createURLWithPort("participant/") + "page",
@@ -42,7 +42,7 @@ class ParticipantIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-participants.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM participant", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testPageParticipantsWithParams() {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<RestPageImpl<Participant>> response = restTemplate.exchange(
             createURLWithPort("participant/") + "page?page=0&size=5&sort=firstname,desc",
@@ -62,7 +62,7 @@ class ParticipantIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-participants.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM participant", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testListParticipants() {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<List<Participant>> response = restTemplate.exchange(
             createURLWithPort("participant/") + "list",
@@ -81,7 +81,7 @@ class ParticipantIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-participants.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM participant", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testFetchParticipant() {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<Participant> response = restTemplate.exchange(
             createURLWithPort("participant/") + "fetch/4711",
@@ -99,7 +99,7 @@ class ParticipantIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-participants.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM participant", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testDeleteParticipant() {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         restTemplate.exchange(
             createURLWithPort("participant/") + "delete/4711",
@@ -131,7 +131,7 @@ class ParticipantIntegrationTest extends AbstractIntegrationTest {
         newby.setDateOfBirth(new Date());
         newby.setStatus(Status.ACTIVE);
 
-        HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(newby), createHeadersWithToken(UserRole.ROLE_USER));
+        HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(newby), createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<Participant> participant = restTemplate.exchange(
             createURLWithPort("participant/") + "save",
@@ -160,7 +160,7 @@ class ParticipantIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-participants.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM participant", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testUpdateParticipant() throws Exception {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         // fetch donald
         ResponseEntity<Participant> response = restTemplate.exchange(
@@ -178,7 +178,7 @@ class ParticipantIntegrationTest extends AbstractIntegrationTest {
         Participant participant = response.getBody();
         participant.setEmail("donald@notangryanymore.com");
 
-        entity = new HttpEntity<>(objectMapper.writeValueAsString(participant), createHeadersWithToken(UserRole.ROLE_USER));
+        entity = new HttpEntity<>(objectMapper.writeValueAsString(participant), createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         response = restTemplate.exchange(
             createURLWithPort("participant/") + "save",

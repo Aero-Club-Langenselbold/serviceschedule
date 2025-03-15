@@ -31,7 +31,7 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-plans.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(scripts = "classpath:scripts/delete-test-plans.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testListPlans() {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<List<Plan>> response = restTemplate.exchange(
             createURLWithPort("plan/") + "list",
@@ -50,7 +50,7 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-plans.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(scripts = "classpath:scripts/delete-test-plans.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testFetchPlan() {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<Plan> response = restTemplate.exchange(
             createURLWithPort("plan/") + "fetch/6000",
@@ -71,7 +71,7 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-plans.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(scripts = "classpath:scripts/delete-test-plans.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testDeletePlan() {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         restTemplate.exchange(
             createURLWithPort("plan/") + "delete/6000",
@@ -98,7 +98,7 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/delete-test-plans.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testCreatePlan() throws Exception {
 
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         // get required service and participant
         ResponseEntity<Service> serviceResponse = restTemplate.exchange(
@@ -137,7 +137,7 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
         entry.setParticipant(participantResponse.getBody());
         newby.getEntries().add(entry);
 
-        entity = new HttpEntity<>(objectMapper.writeValueAsString(newby), createHeadersWithToken(UserRole.ROLE_USER));
+        entity = new HttpEntity<>(objectMapper.writeValueAsString(newby), createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<Plan> plan = restTemplate.exchange(
             createURLWithPort("plan/") + "save",
@@ -166,7 +166,7 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-plans.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(scripts = "classpath:scripts/delete-test-plans.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testUpdatePlan() throws Exception {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         // fetch a plan
         ResponseEntity<Plan> response = restTemplate.exchange(
@@ -184,7 +184,7 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
         Plan plan = response.getBody();
         plan.setName("Universe Domination tour");
 
-        entity = new HttpEntity<>(objectMapper.writeValueAsString(plan), createHeadersWithToken(UserRole.ROLE_USER));
+        entity = new HttpEntity<>(objectMapper.writeValueAsString(plan), createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         response = restTemplate.exchange(
             createURLWithPort("plan/") + "save",
@@ -219,7 +219,7 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
         newby.setDateFrom(new Date());
         newby.setDateUntil(new Date());
 
-        HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(newby), createHeadersWithToken(UserRole.ROLE_USER));
+        HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(newby), createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<Plan> plan = restTemplate.exchange(
             createURLWithPort("plan/") + "save",
@@ -264,7 +264,7 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
             sd.setPlan(plan.getBody());
             sds.add(sd);
         }
-        entity = new HttpEntity<>(objectMapper.writeValueAsString(sds), createHeadersWithToken(UserRole.ROLE_USER));
+        entity = new HttpEntity<>(objectMapper.writeValueAsString(sds), createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         restTemplate.exchange(
             createURLWithPort("plan/") + "/serviceDates/save/" + plan.getBody().getId(),
@@ -274,7 +274,7 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
         // add availability dates
         for (Participant p : participants) {
             DateParticipantAvailability availability = new DateParticipantAvailability(calendar.getTime(), false, p, plan.getBody());
-            entity = new HttpEntity<>(objectMapper.writeValueAsString(availability), createHeadersWithToken(UserRole.ROLE_USER));
+            entity = new HttpEntity<>(objectMapper.writeValueAsString(availability), createHeadersWithToken(UserRole.ROLE_ADMIN));
 
             restTemplate.exchange(
                 createURLWithPort("plan/") + "/participantAvailability/save/" + plan.getBody().getId(),
@@ -283,7 +283,7 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
                 new ParameterizedTypeReference<DateParticipantAvailability>() {});
         }
 
-        entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
+        entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         plan = restTemplate.exchange(
             createURLWithPort("plan/") + "generate/" + plan.getBody().getId(),
