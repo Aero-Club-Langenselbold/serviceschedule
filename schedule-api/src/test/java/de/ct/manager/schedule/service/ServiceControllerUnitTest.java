@@ -25,7 +25,7 @@ import de.ct.manager.schedule.util.AbstractControllerUnitTest;
 @Import({
     ServiceService.class
 })
-class ServiceControllerUnitTest extends AbstractControllerUnitTest{
+class ServiceControllerUnitTest extends AbstractControllerUnitTest {
 
     @MockitoBean
     private ServiceRepository serviceRepository;
