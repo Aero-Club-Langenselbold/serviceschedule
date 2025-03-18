@@ -3,6 +3,8 @@
 </template>
 
 <script lang="ts" setup>
+import { on } from 'v-calendar/dist/types/src/utils/helpers.js'
+
 const { t, setLocale } = useI18n()
 const localeStore = useLocaleStore()
 const { setUserLocale } = localeStore
@@ -87,9 +89,12 @@ const sessionInfo = computed(() => {
         navigateTo('/login')
       }
     })
-    items.push({
-      icon: 'i-lucide-settings'
-    })
+    if (user.value?.roles.includes('ROLE_ADMIN')) {
+      items.push({
+        icon: 'i-lucide-settings',
+        onSelect: () => navigateTo('/settings')
+      })
+    }
   }
   items.push({
     icon: 'circle-flags:de',

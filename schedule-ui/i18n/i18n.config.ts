@@ -111,13 +111,31 @@ export default defineI18nConfig(() => ({
         description: 'Description',
         dateFrom: 'From',
         dateUntil: 'Until',
+        backToList: 'Back to list',
         save: 'Save',
         date: 'Date',
         details: 'Add plan details',
+        detailsInfo: 'Add or edit the details of the service plan.',
+        generateInfo: 'Generate final service plan',
+        availabilityInfo: 'View/edit availabilities',
+        pdfInfo: 'Download as PDF',
+        generatedDetailsInfo: 'Details of the final service plan',
         editDetails: 'Details',
         saveSuccess: 'Service plan saved successfully',
         saveError: 'Error saving service plan',
         saveException: 'Severe error saving service plan'
+      },
+      availabilities: {
+        list: 'Manage availabilities'
+      },
+      settings: {
+        title: 'Settings',
+        holidayInfo: 'Set your country and state here to automatically consider the valid public holidays in service plans.',
+        country: 'Country',
+        state: 'State',
+        save: 'Save',
+        success: 'Settings saved successfully',
+        error: 'Error saving settings'
       },
       error: {
         credentials: 'Invalid credentials'
@@ -233,13 +251,31 @@ export default defineI18nConfig(() => ({
         dateFrom: 'Von',
         dateUntil: 'Bis',
         save: 'Speichern',
+        backToList: 'Zurück zur Übersicht',
         date: 'Datum',
         details: 'Dienstplan Details festlegen',
+        detailsInfo: 'Erstelle oder bearbeite die Details dieses Dienstplans.',
+        availabilityInfo: 'Verfügbarkeiten einsehen/editieren',
+        pdfInfo: 'Download als PDF',
+        generatedDetailsInfo: 'Details des finalen Dienstplans',
+        generateInfo: 'Dienstplan final generieren',
         editDetails: 'Details',
         saveSuccess: 'Dienstplan erfolgreich gespeichert',
         saveError: 'Fehler beim Speichern des Dienstplans',
         saveException: 'Schwerer Fehler beim Speichern des Dienstplans'
-    },
+      },
+      availabilities: {
+        list: 'Verfügbarkeiten verwalten'
+      },
+      settings: {
+        title: 'Einstellungen',
+        holidayInfo: 'Lege hier dein Land und Bundesland fest, um bei Dienstplänen automatisch die gültigen Feiertage zu berücksichtigen.',
+        country: 'Land',
+        state: 'Bundesland',
+        save: 'Speichern',
+        success: 'Einstellungen erfolgreich gespeichert',
+        error: 'Fehler beim Speichern der Einstellungen'
+      },
       error: {
         credentials: 'Ungültige Anmeldeinformationen'
       }

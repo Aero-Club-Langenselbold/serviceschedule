@@ -23,6 +23,13 @@ public class SettingsService {
 
     public SelectedState saveSelectedState(SelectedState selectedState) {
         settingsRepository.deleteAll();
+
+        Country country = settingsRepository.findCountryById(selectedState.getCountry().getId()).orElseThrow();
+        State state = settingsRepository.findStateById(selectedState.getState().getId()).orElseThrow();
+
+        selectedState.setCountry(country);
+        selectedState.setState(state);
+
         return settingsRepository.save(selectedState);
     }
 

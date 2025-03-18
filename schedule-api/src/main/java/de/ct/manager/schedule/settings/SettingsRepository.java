@@ -14,6 +14,9 @@ public interface SettingsRepository extends JpaRepository<SelectedState, String>
     @Query("SELECT c FROM Country c where c.id = ?1")
     Optional<Country> findCountryById(String countryId);
 
+    @Query("SELECT s FROM State s where s.id = ?1")
+    Optional<State> findStateById(String stateId);
+
     @Query("SELECT s FROM State s where s.country = ?1 order by s.name ASC")
     Optional<List<State>> findAllStatesByCountry(Country country);
 }

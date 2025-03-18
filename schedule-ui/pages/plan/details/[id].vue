@@ -6,7 +6,11 @@
     <div class="p-8 rounded-4xl shadow-md w-full max-w-max border-2">
       <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('plan.details') }}</h2>
       <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
-
+      <div class="flex justify-start mb-4">
+        <UButton color="neutral" variant="subtle" icon="i-lucide-arrow-left" @click="navigateTo('/plan/list')">
+          {{ $t('plan.backToList') }}
+        </UButton>
+      </div>
       <div class="flex justify-end mb-4">
         <UPopover>
           <UButton color="neutral" variant="subtle" icon="i-lucide-calendar">
@@ -17,10 +21,18 @@
             <UCalendar v-model="selectedDate" @update:modelValue="addDate" :is-date-unavailable="isDateUnavailable" class="p-2" />
           </template>
         </UPopover>
-        <UButton color="primary" @click="saveDetails" class="ml-4">{{ $t('plan.save') }}</UButton>
+        <UButton color="primary" @click="saveDetails" class="ml-4" :loading="isSaving">{{ $t('plan.save') }}</UButton>
       </div>
 
-      <div class="overflow-x-auto mt-4">
+      <!-- Show loading spinner -->
+      <div v-if="loading" class="flex justify-center items-center">
+        <svg class="animate-spin h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+      </div>
+
+      <div v-else class="overflow-x-auto mt-4">
         <table class="min-w-full border border-gray-200 mt-4 ">
           <thead>
             <tr>
@@ -48,7 +60,7 @@
 </template>
 
 <script lang="ts" setup>
-import type {DateValue } from '@internationalized/date'
+import type { DateValue } from '@internationalized/date'
 import { DateFormatter, getLocalTimeZone } from '@internationalized/date'
 
 const df = new DateFormatter('en-US', {
@@ -58,9 +70,11 @@ const df = new DateFormatter('en-US', {
 const route = useRoute()
 const id = route.params.id
 const { t, locale } = useI18n()
+const loading = ref(true)
 
 const errorMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
+const isSaving = ref<boolean>(false)
 const selectedDate = shallowRef(null)
 
 const services = ref<any[]>([])
@@ -83,13 +97,15 @@ const isDateUnavailable = (date: DateValue) => {
 const fetchData = async () => {
   errorMessage.value = null
   successMessage.value = null
+  loading.value = true
+
+  values.value = []
+  dates.value = []
 
   try {
     // fetch the plan details and all services
     const { data: planData, error: planError } = await useAPI(`/plan/fetch/` + id, { method: 'GET' })
     const { data: servicesData, error: servicesError } = await useAPI(`/service/list`, { method: 'GET' })
-
-    // TODO: consider holidays
 
     if (planError?.value === 'error' || servicesError?.value === 'error') {
       errorMessage.value = 'An error occurred while fetching the data.'
@@ -104,6 +120,8 @@ const fetchData = async () => {
     }
   } catch (err) {
     errorMessage.value = 'An error occurred while fetching the data.'
+  } finally {
+    loading.value = false
   }
 }
 
@@ -150,13 +168,21 @@ function createPageFromDB() {
     )
 }
 
-function createNewPage() {
+const createNewPage = async () => {
   const startDate = new Date(plan.value.dateFrom)
   const endDate = new Date(plan.value.dateUntil)
   const currentDate = new Date(startDate)
 
+  // consider holidays
+  const { data: holidayData, error: holidayError } = await useAPI('/settings/holidays/' + id, { method: 'GET' })
+
   while (currentDate < endDate) {
-    if (currentDate.getDay() === 6 || currentDate.getDay() === 0) { // Saturday or Sunday
+    const isHoliday = holidayData.value?.some((holiday: any) => {
+      const holidayDate = new Date(holiday)
+      return holidayDate.toDateString() === currentDate.toDateString()
+    })
+
+    if (currentDate.getDay() === 6 || currentDate.getDay() === 0 || isHoliday) { // Saturday or Sunday or Holiday
       dates.value.push({
         localeString: currentDate.toLocaleDateString(locale.value, { weekday: 'short', month: '2-digit', day: '2-digit', year: 'numeric' }),
         originalDate: new Date(currentDate)
@@ -187,12 +213,13 @@ const getSettings = (service: any, date: string) => {
   const currentYear = currentDate.getFullYear()
   const isSaturday = currentDate.getDay() === 6
   const isSunday = currentDate.getDay() === 0
+  const isHoliday = !isSaturday && !isSunday
 
   const s = service.settings.find((setting: any) => {
     const rangeFrom = new Date(`${currentYear}-${setting.rangeFrom}`)
     const rangeTo = new Date(`${currentYear}-${setting.rangeTo}`)
     const isWithinRange = currentDate >= rangeFrom && currentDate < rangeTo
-    const isValidDay = (isSaturday && setting.saturdays) || (isSunday && setting.sundays)
+    const isValidDay = (isSaturday && setting.saturdays) || (isSunday && setting.sundays) || (isHoliday && setting.publicHolidays)
     return isWithinRange && isValidDay
   })
 
@@ -231,6 +258,7 @@ const removeDate = (index: number) => {
 }
 
 const saveDetails = async () => {
+  isSaving.value = true
   try {
     const payload = dates.value.flatMap((date, dateIndex) =>
       services.value.map((service, serviceIndex) => {
@@ -251,7 +279,7 @@ const saveDetails = async () => {
       }).filter(entry => entry !== null)
     )
 
-    const { data, error } = await useAPI(`/plan/serviceDates/save/` + plan.value.id, { method: 'POST', body: JSON.stringify(payload) })
+    const { error } = await useAPI(`/plan/serviceDates/save/` + plan.value.id, { method: 'POST', body: JSON.stringify(payload) })
 
     if (error?.value === 'error') {
       errorMessage.value = t('plan.saveError')
@@ -261,9 +289,10 @@ const saveDetails = async () => {
   } catch (err) {
     errorMessage.value = t('plan.saveException')
   }
+  isSaving.value = false
 }
 
-watchEffect(() => {
+onMounted(() => {
   fetchData()
 })
 

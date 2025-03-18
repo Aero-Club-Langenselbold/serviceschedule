@@ -1,2 +1,7 @@
 @import "tailwindcss" theme(static);
 @import "@nuxt/ui";
+
+.rotate span {
+    writing-mode: vertical-rl;
+    transform: rotate(225deg);
+}

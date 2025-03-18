@@ -15,6 +15,7 @@
 import type { TableColumn } from '@nuxt/ui'
 
 const UButton = resolveComponent('UButton')
+const UTooltip = resolveComponent('UTooltip')
 
 const { t, locale } = useI18n()
 
@@ -28,7 +29,9 @@ type Plan = {
   name: string,
   description: string,
   dateFrom: string,
-  dateUntil: string
+  dateUntil: string,
+  published: boolean,
+  serviceDates: string[]
 }
 
 const columns = computed<TableColumn<Plan>[]>(() => [
@@ -61,11 +64,78 @@ const columns = computed<TableColumn<Plan>[]>(() => [
   }, {
     header: t('plan.actions'),
     cell: ({ row }) => {
-      return h(UButton, {
-        onClick: () => navigateTo(`/plan/details/${row.original.id}`),
-        color: 'neutral'
-      }, () => t('plan.editDetails'))
-    }
+      const hasServiceDates = row.original.serviceDates.length > 0;
+      return [
+        h(UTooltip, {
+          'delay-duration': 0,
+          text: t('plan.detailsInfo')
+        }, {
+          default: () =>
+          h(UButton, {
+            onClick: () => navigateTo(`/plan/details/${row.original.id}`),
+            variant: hasServiceDates ? 'soft' : 'solid',
+            color: hasServiceDates ? 'neutral' : 'primary',
+            disabled: row.original.published,
+            icon: "i-lucide-eye"
+          })
+        }),
+        h(UTooltip, {
+          'delay-duration': 0,
+          text: t('plan.availabilityInfo'),
+          class: 'ml-2'
+        }, {
+          default: () =>
+          h(UButton, {
+            onClick: () => navigateTo(`/plan/availabilities/${row.original.id}`),
+            variant: hasServiceDates ? 'solid' : 'soft',
+            color: hasServiceDates ? 'primary' : 'error',
+            disabled: !hasServiceDates || row.original.published,
+            icon: "i-lucide-users"
+          })
+        }),
+        h(UTooltip, {
+          'delay-duration': 0,
+          text: t('plan.generateInfo'),
+          class: 'ml-2'
+        }, {
+          default: () =>
+          h(UButton, {
+            onClick: () => navigateTo(`/plan/availabilities/${row.original.id}`),
+            variant: hasServiceDates ? 'solid' : 'soft',
+            color: hasServiceDates ? 'primary' : 'error',
+            disabled: !hasServiceDates || row.original.published,
+            icon: "i-lucide-plane"
+          })
+        }),
+        h(UTooltip, {
+          'delay-duration': 0,
+          text: t('plan.generatedDetailsInfo'),
+          class: 'ml-2'
+        }, {
+          default: () =>
+          h(UButton, {
+            onClick: () => navigateTo(`/plan/availabilities/${row.original.id}`),
+            variant: row.original.published ? 'solid' : 'soft',
+            color: row.original.published ? 'primary' : 'error',
+            disabled: !row.original.published,
+            icon: "i-lucide-book"
+          })
+        }),
+        h(UTooltip, {
+          'delay-duration': 0,
+          text: t('plan.pdfInfo'),
+          class: 'ml-2'
+        }, {
+          default: () =>
+          h(UButton, {
+            onClick: () => navigateTo(`/plan/availabilities/${row.original.id}`),
+            variant: row.original.published ? 'solid' : 'soft',
+            color: row.original.published ? 'primary' : 'error',
+            disabled: !row.original.published,
+            icon: "i-lucide-file-down"
+          })
+        })
+    ]}
   }
 ])
 
