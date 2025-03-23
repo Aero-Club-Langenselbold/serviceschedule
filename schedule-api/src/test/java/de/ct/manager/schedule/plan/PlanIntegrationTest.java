@@ -274,7 +274,7 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
         // add availability dates
         for (Participant p : participants) {
             DateParticipantAvailability availability = new DateParticipantAvailability(calendar.getTime(), false, p, plan.getBody());
-            entity = new HttpEntity<>(objectMapper.writeValueAsString(availability), createHeadersWithToken(UserRole.ROLE_ADMIN));
+            entity = new HttpEntity<>(objectMapper.writeValueAsString(List.of(availability)), createHeadersWithToken(UserRole.ROLE_ADMIN));
 
             restTemplate.exchange(
                 createURLWithPort("plan/") + "/participantAvailability/save/" + plan.getBody().getId(),

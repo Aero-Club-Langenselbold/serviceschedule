@@ -21,6 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import de.ct.manager.schedule.participant.DateParticipantAvailabilityRepository;
+import de.ct.manager.schedule.participant.ParticipantRepository;
 import de.ct.manager.schedule.plan.Plan;
 import de.ct.manager.schedule.plan.PlanRepository;
 import de.ct.manager.schedule.plan.PlanService;
@@ -41,6 +42,9 @@ public class SettingsControllerUnitTest extends AbstractControllerUnitTest {
 
     @MockitoBean
     private PlanRepository planRepository;
+
+    @MockitoBean
+    private ParticipantRepository participantRepository;
 
     @MockitoBean
     private ServiceDateRepository serviceDateRepository;
@@ -75,9 +79,12 @@ public class SettingsControllerUnitTest extends AbstractControllerUnitTest {
         mockValidAuthentication(UserRole.ROLE_ADMIN);
 
         SelectedState selectedState = new SelectedState();
+        selectedState.setId("1");
         selectedState.setCountry(new Country());
         selectedState.setState(new State());
-        when(settingsRepository.save(selectedState)).thenReturn(selectedState);
+        when(settingsRepository.findCountryById(any())).thenReturn(Optional.of(new Country()));
+        when(settingsRepository.findStateById(any())).thenReturn(Optional.of(new State()));
+        when(settingsRepository.save(any())).thenReturn(selectedState);
 
         mockMvc.perform(
             post("/settings/selected-state")

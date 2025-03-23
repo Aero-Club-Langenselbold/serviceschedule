@@ -126,7 +126,13 @@ export default defineI18nConfig(() => ({
         saveException: 'Severe error saving service plan'
       },
       availabilities: {
-        list: 'Manage availabilities'
+        list: 'Manage availabilities',
+        me: 'Your availabilities',
+        yes: 'I\'m available',
+        no: 'I\'m not available',
+        please: 'I would like to',
+        save: 'Save',
+        success: 'Availabilities saved successfully'
       },
       settings: {
         title: 'Settings',
@@ -265,7 +271,13 @@ export default defineI18nConfig(() => ({
         saveException: 'Schwerer Fehler beim Speichern des Dienstplans'
       },
       availabilities: {
-        list: 'Verfügbarkeiten verwalten'
+        list: 'Verfügbarkeiten verwalten',
+        me: 'Deine Verfügbarkeiten',
+        yes: 'Ich kann',
+        no: 'Ich kann nicht',
+        please: 'Möchte ich gerne',
+        save: 'Speichern',
+        success: 'Verfügbarkeiten erfolgreich gespeichert'
       },
       settings: {
         title: 'Einstellungen',

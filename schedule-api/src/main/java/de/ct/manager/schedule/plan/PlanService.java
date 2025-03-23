@@ -27,6 +27,7 @@ import de.ct.manager.schedule.participant.DateAssignment;
 import de.ct.manager.schedule.participant.DateParticipantAvailability;
 import de.ct.manager.schedule.participant.DateParticipantAvailabilityRepository;
 import de.ct.manager.schedule.participant.ParticipantAssignment;
+import de.ct.manager.schedule.participant.ParticipantRepository;
 import de.ct.manager.schedule.service.Service;
 import de.ct.manager.schedule.service.ServiceDate;
 import de.ct.manager.schedule.service.ServiceDateRepository;
@@ -44,12 +45,14 @@ public class PlanService {
     private final ServiceRepository serviceRepository;
     private final ServiceDateRepository serviceDateRepository;
     private final DateParticipantAvailabilityRepository dateParticipantAvailabilityRepository;
+    private final ParticipantRepository participantRepository;
 
-    public PlanService(PlanRepository planRepository, ServiceDateRepository serviceDateRepository, DateParticipantAvailabilityRepository dateParticipantAvailabilityRepository, ServiceRepository serviceRepository) {
+    public PlanService(PlanRepository planRepository, ServiceDateRepository serviceDateRepository, DateParticipantAvailabilityRepository dateParticipantAvailabilityRepository, ServiceRepository serviceRepository, ParticipantRepository participantRepository) {
         this.planRepository = planRepository;
         this.serviceDateRepository = serviceDateRepository;
         this.dateParticipantAvailabilityRepository = dateParticipantAvailabilityRepository;
         this.serviceRepository = serviceRepository;
+        this.participantRepository = participantRepository;
     }
 
     public List<Plan> listPlans() {
@@ -119,19 +122,56 @@ public class PlanService {
         serviceDateRepository.deleteById(id);
     }
 
-    public DateParticipantAvailability addDateParticipantAvailability(String planId, DateParticipantAvailability dpa) {
+    public void addDateParticipantAvailability(String planId, List<DateParticipantAvailability> dpa) {
         Plan plan = planRepository.findById(planId).orElse(null);
 
         if (plan == null) {
             throw new IllegalArgumentException("Plan not found");
         }
-        dpa.setPlan(plan);
 
-        return dateParticipantAvailabilityRepository.save(dpa);
+        // Get all participants from the provided DateParticipantAvailability list
+        Set<String> participantIds = dpa.stream()
+            .map(da -> da.getParticipant().getId())
+            .collect(Collectors.toSet());
+
+        // Delete all DateParticipantAvailability entries for those participants for the given plan
+        dateParticipantAvailabilityRepository.findByPlan(plan).orElse(new ArrayList<>()).stream()
+            .filter(existingDpa -> participantIds.contains(existingDpa.getParticipant().getId()))
+            .forEach(existingDpa -> dateParticipantAvailabilityRepository.deleteById(existingDpa.getId()));
+
+        dpa.forEach(da -> {
+            da.setPlan(plan);
+            da.setParticipant(participantRepository.findById(da.getParticipant().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Participant not found")));
+        });
+
+        dateParticipantAvailabilityRepository.saveAll(dpa);
     }
 
     public void deleteDateParticipantAvailability(String id) {
         dateParticipantAvailabilityRepository.deleteById(id);
+    }
+
+    public List<DateParticipantAvailability> getDateParticipantAvailability(String planId) {
+        Plan plan = planRepository.findById(planId).orElse(null);
+
+        if (plan == null) {
+            throw new IllegalArgumentException("Plan not found");
+        }
+
+        return dateParticipantAvailabilityRepository.findByPlan(plan).orElse(new ArrayList<>());
+    }
+
+    public List<DateParticipantAvailability> getDateParticipantAvailability(String planId, String userId) {
+        Plan plan = planRepository.findById(planId).orElse(null);
+
+        if (plan == null) {
+            throw new IllegalArgumentException("Plan not found");
+        }
+
+        return dateParticipantAvailabilityRepository.findByPlan(plan).orElse(new ArrayList<>()).stream()
+            .filter(dpa -> dpa.getParticipant().getId().equals(userId))
+            .collect(Collectors.toList());
     }
 
     public List<ServiceDate> listServiceDatesByPlan(String planId) {

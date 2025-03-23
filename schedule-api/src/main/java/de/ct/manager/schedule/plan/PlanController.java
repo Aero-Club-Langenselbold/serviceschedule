@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.ct.manager.schedule.participant.DateParticipantAvailability;
 import de.ct.manager.schedule.service.ServiceDate;
 
+
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/plan")
@@ -74,7 +75,20 @@ public class PlanController {
 
     @PostMapping("/participantAvailability/save/{id}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    public ResponseEntity<DateParticipantAvailability> createOrUpdateParticipantAvailability(@PathVariable String id, @RequestBody DateParticipantAvailability participantAvailability) {
-        return ResponseEntity.ok(planService.addDateParticipantAvailability(id, participantAvailability));
+    public ResponseEntity<Void> createOrUpdateParticipantAvailability(@PathVariable String id, @RequestBody List<DateParticipantAvailability> participantAvailability) {
+        planService.addDateParticipantAvailability(id, participantAvailability);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/participantAvailability/fetch/{planId}/{userId}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<List<DateParticipantAvailability>> getParticipantAvailability(@PathVariable String planId, @PathVariable String userId) {
+        return ResponseEntity.ok(planService.getDateParticipantAvailability(planId, userId));
+    }
+
+    @GetMapping("/participantAvailability/fetch/{planId}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<List<DateParticipantAvailability>> getAllParticipantAvailability(@PathVariable String planId) {
+        return ResponseEntity.ok(planService.getDateParticipantAvailability(planId));
     }
 }

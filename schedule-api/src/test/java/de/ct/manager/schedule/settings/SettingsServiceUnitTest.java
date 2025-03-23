@@ -1,5 +1,6 @@
 package de.ct.manager.schedule.settings;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.text.SimpleDateFormat;
@@ -45,6 +46,8 @@ class SettingsServiceUnitTest {
         selectedState.setState(new State());
 
         when(settingsRepository.save(selectedState)).thenReturn(selectedState);
+        when(settingsRepository.findCountryById(any())).thenReturn(Optional.of(new Country()));
+        when(settingsRepository.findStateById(any())).thenReturn(Optional.of(new State()));
 
         selectedState = settingsService.saveSelectedState(selectedState);
 
