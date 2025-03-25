@@ -36,6 +36,11 @@ const menu = computed(() => {
           label: computed(() => t('nav.participants.add')),
           icon: 'i-lucide-user-plus',
           to: '/participants/add'
+        },
+        {
+          label: computed(() => t('nav.participants.import')),
+          icon: 'i-lucide-upload',
+          to: '/participants/import'
         }
       ]
     })

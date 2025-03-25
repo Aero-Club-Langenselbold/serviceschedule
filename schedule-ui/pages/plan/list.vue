@@ -87,8 +87,8 @@ const columns = computed<TableColumn<Plan>[]>(() => [
           default: () =>
           h(UButton, {
             onClick: () => navigateTo(`/plan/availabilities/${row.original.id}`),
-            variant: hasServiceDates ? 'solid' : 'soft',
-            color: hasServiceDates ? 'primary' : 'error',
+            variant: hasServiceDates && !row.original.published ? 'solid' : 'soft',
+            color: hasServiceDates ? row.original.published ? 'neutral' : 'primary' : 'error',
             disabled: !hasServiceDates || row.original.published,
             icon: "i-lucide-users"
           })
@@ -100,9 +100,10 @@ const columns = computed<TableColumn<Plan>[]>(() => [
         }, {
           default: () =>
           h(UButton, {
-            onClick: () => navigateTo(`/plan/availabilities/${row.original.id}`),
-            variant: hasServiceDates ? 'solid' : 'soft',
-            color: hasServiceDates ? 'primary' : 'error',
+            onClick: () => generatePlan(row.original.id),
+            variant: hasServiceDates && !row.original.published ? 'solid' : 'soft',
+            color: hasServiceDates ? row.original.published ? 'neutral' : 'primary' : 'error',
+            loading: generating.value,
             disabled: !hasServiceDates || row.original.published,
             icon: "i-lucide-plane"
           })
@@ -114,7 +115,7 @@ const columns = computed<TableColumn<Plan>[]>(() => [
         }, {
           default: () =>
           h(UButton, {
-            onClick: () => navigateTo(`/plan/availabilities/${row.original.id}`),
+            onClick: () => navigateTo(`/plan/generated/${row.original.id}`),
             variant: row.original.published ? 'solid' : 'soft',
             color: row.original.published ? 'primary' : 'error',
             disabled: !row.original.published,
@@ -128,7 +129,7 @@ const columns = computed<TableColumn<Plan>[]>(() => [
         }, {
           default: () =>
           h(UButton, {
-            onClick: () => navigateTo(`/plan/availabilities/${row.original.id}`),
+            onClick: () => downloadPdf(row.original.id),
             variant: row.original.published ? 'solid' : 'soft',
             color: row.original.published ? 'primary' : 'error',
             disabled: !row.original.published,
@@ -152,6 +153,44 @@ const fetchData = async () => {
     }
   } catch (err) {
     errorMessage.value = 'An error occurred while fetching the data.'
+  }
+}
+
+const generating = ref<Boolean>(false)
+const generatePlan = async (id: string) => {
+  errorMessage.value = null
+  successMessage.value = null
+  generating.value = true
+
+  try {
+    const { error } = await useAPI(`/plan/generate/${id}`, { method: 'POST' })
+    if (error.value) {
+      errorMessage.value = error.value.message
+    } else {
+      successMessage.value = 'Plan generated successfully.'
+      fetchData()
+    }
+  } catch (err) {
+    errorMessage.value = 'An error occurred while generating the plan.'
+  } finally {
+    generating.value = false
+  }
+}
+
+const downloadPdf = async (id: string) => {
+  errorMessage.value = null
+  successMessage.value = null
+
+  try {
+    const { data, error } = await useAPI(`/plan/download/pdf/${id}`, { method: 'GET' })
+    if (error.value) {
+      errorMessage.value = error.value.message
+    }
+
+    const file = window.URL.createObjectURL(data.value);
+    window.open(file, '_blank');
+  } catch (err) {
+    errorMessage.value = 'An error occurred while downloading the PDF.'
   }
 }
 

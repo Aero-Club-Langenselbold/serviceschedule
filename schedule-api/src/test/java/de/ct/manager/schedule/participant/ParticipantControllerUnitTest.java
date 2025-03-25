@@ -8,6 +8,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -17,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -121,6 +125,32 @@ class ParticipantControllerUnitTest extends AbstractControllerUnitTest {
         mockMvc.perform(
             delete("/participant/delete/4711")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ADMIN))
+            )
+            .andDo(print())
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void testImportParticipants() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_ADMIN);
+
+        String csvContent = new String(
+            Files.readAllBytes(Paths.get("src/test/resources/testimport.csv")),
+            StandardCharsets.UTF_8
+        );
+
+        MockMultipartFile file = new MockMultipartFile(
+            "file",
+            "participants.csv",
+            "text/csv",
+            csvContent.getBytes()
+        );
+
+        mockMvc.perform(
+            multipart("/participant/import")
+                .file(file)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
                 .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ADMIN))
             )
             .andDo(print())

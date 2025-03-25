@@ -1,6 +1,6 @@
 package de.ct.manager.schedule.plan;
 
-import java.io.File;
+import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -26,8 +26,10 @@ import com.itextpdf.layout.element.Table;
 import de.ct.manager.schedule.participant.DateAssignment;
 import de.ct.manager.schedule.participant.DateParticipantAvailability;
 import de.ct.manager.schedule.participant.DateParticipantAvailabilityRepository;
+import de.ct.manager.schedule.participant.Participant;
 import de.ct.manager.schedule.participant.ParticipantAssignment;
 import de.ct.manager.schedule.participant.ParticipantRepository;
+import de.ct.manager.schedule.participant.Status;
 import de.ct.manager.schedule.service.Service;
 import de.ct.manager.schedule.service.ServiceDate;
 import de.ct.manager.schedule.service.ServiceDateRepository;
@@ -184,7 +186,7 @@ public class PlanService {
         return serviceDateRepository.findByPlan(plan).orElse(new ArrayList<>());
     }
 
-    public File generatePlanPDF(String id) {
+    public byte[] generatePlanPDF(String id) {
         Plan plan = planRepository.findById(id).orElse(null);
 
         if (plan == null) {
@@ -192,8 +194,8 @@ public class PlanService {
         }
 
         // create PDF from plan
-        try {
-            PdfWriter writer = new PdfWriter("plan_" + id + ".pdf");
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            PdfWriter writer = new PdfWriter(outputStream);
             PdfDocument pdf = new PdfDocument(writer);
             Document document = new Document(pdf);
 
@@ -212,8 +214,11 @@ public class PlanService {
                 for (Service service : plan.getAllServices()) {
                     // Find the PlanEntry with the matching service and start date
                     List<PlanEntry> matchingEntries = plan.getEntries().stream()
-                        .filter(entry -> entry.getService().equals(service) &&
-                                entry.getStartTime().toLocalDate().equals(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()))
+                        .filter(entry -> {
+                            boolean serviceMatches = entry.getService().getId().equals(service.getId());
+                            boolean dateMatches = entry.getStartTime().toLocalDate().toString().equals(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate().toString());
+                            return serviceMatches && dateMatches;
+                        })
                         .toList();
 
                     // Add service data cell
@@ -231,11 +236,12 @@ public class PlanService {
 
             document.add(table);
             document.close();
+
+            return outputStream.toByteArray();
         } catch (Exception e) {
             log.error("Error creating PDF: {}", e.getMessage());
+            throw new RuntimeException("Error generating PDF", e);
         }
-
-        return new File("plan_" + id + ".pdf");
     }
 
 
@@ -253,6 +259,9 @@ public class PlanService {
         if (serviceDates == null || serviceDates.isEmpty()) {
             throw new IllegalArgumentException("No services and dates provided");
         }
+
+        // if a participant has no availability set (they did not report any), all serviceDates are available by default
+        generateAvailabilitiesForPlan(plan, serviceDates);
 
         List<ParticipantAssignment> availability = getAvailabilityForPlan(plan);
 
@@ -273,6 +282,7 @@ public class PlanService {
         }
 
         plan.getEntries().addAll(planEntries);
+        planEntries.forEach(pe -> pe.setPlan(plan));
         plan.setPublished(true);
 
         return planRepository.save(plan);
@@ -502,5 +512,35 @@ public class PlanService {
         }
 
         return availability;
+    }
+
+    private void generateAvailabilitiesForPlan(Plan plan, List<ServiceDate> serviceDates) {
+        List<Participant> participants = participantRepository.findAll();
+        List<DateParticipantAvailability> allAvailabilities = dateParticipantAvailabilityRepository.findByPlan(plan).orElse(new ArrayList<>());
+
+        participants.forEach(p -> {
+            if (p.getStatus() == Status.INACTIVE) {
+                return;
+            }
+
+            List<DateParticipantAvailability> availabilities = allAvailabilities.stream()
+                .filter(dpa -> dpa.getParticipant().equals(p))
+                .toList();
+
+            if (!availabilities.isEmpty()) {
+                return;
+            }
+
+            availabilities = new ArrayList<>();
+            for (ServiceDate sd : serviceDates) {
+                DateParticipantAvailability dpa = new DateParticipantAvailability();
+                dpa.setParticipant(p);
+                dpa.setPlan(plan);
+                dpa.setDate(sd.getDate());
+                dpa.setRequested(false);
+                availabilities.add(dpa);
+            }
+            dateParticipantAvailabilityRepository.saveAll(availabilities);
+        });
     }
 }

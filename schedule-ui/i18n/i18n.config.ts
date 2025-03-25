@@ -38,7 +38,8 @@ export default defineI18nConfig(() => ({
         participants: {
           menu: 'Manage Participants',
           list: 'Show Participants',
-          add: 'Add Particpant'
+          add: 'Add Particpant',
+          import: 'Import Participants'
         },
         service: {
           menu: 'Manage Services',
@@ -81,7 +82,10 @@ export default defineI18nConfig(() => ({
         updateFailure: 'Error updating participant',
         updateSuccess: 'Participant updated successfully',
         deleteSuccess: 'Participant deleted successfully',
-        deleteFailure: 'Error deleting participant'
+        deleteFailure: 'Error deleting participant',
+        import: 'Import Participants',
+        importSuccess: 'Participants imported successfully',
+        importFailure: 'Error importing participants'
       },
       service: {
         add: 'Add new Service',
@@ -183,7 +187,8 @@ export default defineI18nConfig(() => ({
         participants: {
           menu: 'Teilnehmer verwalten',
           list: 'Teilnehmer anzeigen',
-          add: 'Teilnehmer hinzufügen'
+          add: 'Teilnehmer hinzufügen',
+          import: 'Teilnehmer importieren'
         },
         service: {
           menu: 'Dienste verwalten',
@@ -226,7 +231,10 @@ export default defineI18nConfig(() => ({
         updateFailure: 'Fehler beim Aktualisieren des Teilnehmers',
         updateSuccess: 'Teilnehmer erfolgreich aktualisiert',
         deleteSuccess: 'Teilnehmer erfolgreich gelöscht',
-        deleteFailure: 'Fehler beim Löschen des Teilnehmers'
+        deleteFailure: 'Fehler beim Löschen des Teilnehmers',
+        import: 'Teilnehmer importieren',
+        importSuccess: 'Teilnehmer erfolgreich importiert',
+        importFailure: 'Fehler beim Importieren der Teilnehmer'
       },
       service: {
         add: 'Neuen Dienst hinzufügen',

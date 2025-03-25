@@ -14,16 +14,10 @@
         </UButton>
       </div>
 
-      <!-- Show loading spinner -->
-      <div v-if="loading" class="flex justify-center items-center">
-        <svg class="animate-spin h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-        </svg>
-      </div>
+      <Spinner v-if="loading" />
 
       <!-- Render table only when data is loaded -->
-      <UTable v-else sticky :data="data" :columns="columns" class="flex-1 max-h-screen" />
+      <UTable v-else sticky :data="data" :columns="columns" class="flex-1 max-h-[600px]" />
     </div>
   </div>
 </template>
@@ -65,6 +59,8 @@ const columns = computed<TableColumn<any>[]>(() => {
     }
   }
 
+  const step = ref<number>(50 / (participants.value.length * data.value.length))
+
   // Participant columns: One column per participant
   const participantColumns: TableColumn<any>[] = participants.value.map(participant => ({
     accessorKey: participant.id, // Use participant ID as the key
@@ -80,6 +76,8 @@ const columns = computed<TableColumn<any>[]>(() => {
         const currentIndex = toggleStates.indexOf(currentState)
         row.original[participant.id].currentState = toggleStates[(currentIndex + 1) % toggleStates.length]
       }
+
+      //loadProgress.value += step.value
 
       return h(UButton, {
         onClick: toggleState,

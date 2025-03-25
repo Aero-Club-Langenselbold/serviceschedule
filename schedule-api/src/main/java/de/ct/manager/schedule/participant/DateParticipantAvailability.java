@@ -4,6 +4,8 @@ import java.util.Date;
 
 import org.hibernate.envers.Audited;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import de.ct.manager.schedule.plan.Plan;
 import de.ct.manager.schedule.util.AbstractPersistentEntity;
 import jakarta.persistence.Column;
@@ -38,6 +40,7 @@ public class DateParticipantAvailability extends AbstractPersistentEntity {
     @JoinColumn(name = "participant_id")
     private Participant participant;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plan_id")
     private Plan plan;

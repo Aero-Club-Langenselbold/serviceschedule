@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
+import org.springframework.web.multipart.MultipartFile;
 
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -66,5 +67,16 @@ public class ParticipantController {
     public ResponseEntity<Void> deleteParticipant(@PathVariable String id) {
         participantService.deleteParticipant(id);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/import")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> importParticipants(@RequestBody MultipartFile file) {
+        try {
+            participantService.importParticipants(file);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 }

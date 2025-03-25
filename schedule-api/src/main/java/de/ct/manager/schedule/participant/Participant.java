@@ -11,6 +11,7 @@ import org.hibernate.envers.Audited;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import de.ct.manager.schedule.plan.PlanEntry;
 import de.ct.manager.schedule.service.Service;
 import de.ct.manager.schedule.util.AbstractPersistentEntity;
 import jakarta.persistence.Column;
@@ -21,6 +22,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -64,6 +66,14 @@ public class Participant extends AbstractPersistentEntity {
         inverseJoinColumns = @JoinColumn(name = "service_id")
     )
     private List<Service> services = new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "participant", fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<DateParticipantAvailability> availabilities = new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "participant", fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<PlanEntry> planEntries = new ArrayList<>();
 
     @JsonIgnore
     public int getCurrentAge() {

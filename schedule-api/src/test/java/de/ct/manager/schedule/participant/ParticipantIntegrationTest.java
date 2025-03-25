@@ -7,10 +7,15 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import de.ct.manager.schedule.user.UserRole;
 import de.ct.manager.schedule.util.AbstractIntegrationTest;
@@ -200,5 +205,51 @@ class ParticipantIntegrationTest extends AbstractIntegrationTest {
         Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         Assertions.assertThat(response.getBody()).isNotNull();
         Assertions.assertThat(response.getBody().getEmail()).isEqualTo("donald@notangryanymore.com");
+    }
+
+    @Test
+    @Sql(scripts = "classpath:scripts/test-services.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(statements = { "DELETE FROM participant", "DELETE FROM service" }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void testImportParticipant() throws Exception {
+        String csvContent = new String(
+            getClass().getResourceAsStream("/testimport.csv").readAllBytes(),
+            "UTF-8");
+
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
+
+        MockMultipartFile file = new MockMultipartFile(
+            "file",
+            "participants.csv",
+            "text/csv",
+            csvContent.getBytes());
+
+        HttpHeaders headers = createHeadersWithToken(UserRole.ROLE_ADMIN);
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", file.getResource());
+
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<Void> response = restTemplate.exchange(
+            createURLWithPort("participant/") + "import",
+            HttpMethod.POST,
+            requestEntity,
+            new ParameterizedTypeReference<Void>() {});
+
+        Assertions.assertThat(response).isNotNull();
+        Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // verify import
+        ResponseEntity<List<Participant>> participants = restTemplate.exchange(
+            createURLWithPort("participant/") + "list",
+            HttpMethod.GET,
+            entity,
+            new ParameterizedTypeReference<List<Participant>>() {});
+
+        Assertions.assertThat(participants).isNotNull();
+        Assertions.assertThat(participants.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(participants.getBody()).isNotNull();
+        Assertions.assertThat(participants.getBody()).hasSize(5);
     }
 }

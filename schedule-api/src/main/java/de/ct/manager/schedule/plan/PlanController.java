@@ -2,6 +2,7 @@ package de.ct.manager.schedule.plan;
 
 import java.util.List;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -50,6 +51,15 @@ public class PlanController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Plan> generatePlan(@PathVariable String id) {
         return ResponseEntity.ok(planService.generatePlan(id));
+    }
+
+    @GetMapping("/download/pdf/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<byte[]> downloadPlanAsPdf(@PathVariable String id) {
+        return ResponseEntity.ok()
+            .header("Content-Disposition", "attachment; filename=plan_" + id + ".pdf")
+            .contentType(MediaType.APPLICATION_PDF)
+            .body(planService.generatePlanPDF(id));
     }
 
 

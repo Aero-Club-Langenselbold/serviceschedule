@@ -2,6 +2,9 @@ package de.ct.manager.schedule.participant;
 
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -12,17 +15,24 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort.Direction;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import de.ct.manager.schedule.service.ServiceRepository;
 
 @ExtendWith(SpringExtension.class)
 class ParticipantServiceUnitTest {
 
     @Mock
     ParticipantRepository participantRepository;
+
+    @Mock
+    ServiceRepository serviceRepository;
 
     @InjectMocks
     ParticipantService participantService;
@@ -86,6 +96,28 @@ class ParticipantServiceUnitTest {
         participantService.deleteParticipant("0");
 
         Assertions.assertThatNoException();
+    }
+
+    @Test
+    void testImportParticipants() throws Exception {
+        // Prepare a mock MultipartFile
+        String csvContent = new String(
+            Files.readAllBytes(Paths.get("src/test/resources/testimport.csv")),
+            StandardCharsets.UTF_8
+        );
+        MockMultipartFile mockFile = new MockMultipartFile(
+            "file",
+            "testimport.csv",
+            "text/csv",
+            csvContent.getBytes()
+        );
+
+        // Mock the repository save behavior
+        when(participantRepository.saveAll(Mockito.anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(serviceRepository.findAll()).thenReturn(new ArrayList<>());
+
+        // Call the service method
+        participantService.importParticipants(mockFile);
     }
 
     private Page<Participant> generatePageResponse() {

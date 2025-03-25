@@ -1,5 +1,6 @@
 package de.ct.manager.schedule.plan;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.hibernate.envers.Audited;
@@ -46,6 +47,10 @@ public class PlanEntry extends AbstractPersistentEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plan_id")
     private Plan plan;
+
+    public LocalDate getDate() {
+        return startTime.toLocalDate();
+    }
 
     @Override
     public String toString() {
