@@ -3,8 +3,6 @@ package de.ct.manager.schedule.service;
 import java.time.LocalTime;
 import java.util.Date;
 
-import org.hibernate.envers.Audited;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.ct.manager.schedule.plan.Plan;
@@ -20,7 +18,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Audited
 @Table(name = "service_date")
 @Data
 @NoArgsConstructor

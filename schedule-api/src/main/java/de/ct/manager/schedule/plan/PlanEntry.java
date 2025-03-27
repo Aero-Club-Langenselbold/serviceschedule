@@ -3,8 +3,6 @@ package de.ct.manager.schedule.plan;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import org.hibernate.envers.Audited;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.ct.manager.schedule.participant.Participant;
@@ -21,7 +19,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Entity
-@Audited
 @Table(name = "plan_entry")
 @Data
 @EqualsAndHashCode(callSuper = true)

@@ -3,8 +3,6 @@ package de.ct.manager.schedule.service;
 import java.util.List;
 import java.util.Set;
 
-import org.hibernate.envers.Audited;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.ct.manager.schedule.participant.Participant;
@@ -21,7 +19,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Entity
-@Audited
 @Table(name = "service")
 @Data
 public class Service extends AbstractPersistentEntity {

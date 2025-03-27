@@ -36,28 +36,28 @@
 const { t } = useI18n()
 const errorMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
+import type { Country } from '~/types/country'
+import type { State } from '~/types/state'
+import type { SelectedState } from '~/types/selectedState'
 
-type Country = {
+type DisplayCountry = {
   id: string
-  name: string
+  label: string
 }
-type State = {
+type DisplayState = {
   id: string
-  name: string
-  holidays: [{
-    id: string
-    name: string
-  }]
+  label: string
 }
+
 const selectedCountryId = ref<string | undefined>(undefined)
 const selectedStateId = ref<string | undefined>(undefined)
-const availableCountries = ref<Country[]>([])
-const availableStates = ref<State[]>([])
+const availableCountries = ref<DisplayCountry[]>([])
+const availableStates = ref<DisplayState[]>([])
 
 const fetchData = async () => {
   try {
     await fetchAvailableCountries()
-    const { data: ss, error: ess } = await useAPI(`/settings/selected-state`, { method: 'GET' })
+    const { data: ss, error: ess } = await useAPI<SelectedState>(`/settings/selected-state`, { method: 'GET' })
     if (ess.value) {
       errorMessage.value = ess.value.message
     } else if (ss.value) {
@@ -74,13 +74,13 @@ const fetchData = async () => {
 
 const fetchAvailableCountries = async () => {
   try {
-    const { data: countries, error: countriesError } = await useAPI('/settings/countries', { method: 'GET' })
+    const { data: countries, error: countriesError } = await useAPI<Country[]>('/settings/countries', { method: 'GET' })
     if (countriesError.value) {
       errorMessage.value = countriesError.value.message
     } else if (countries.value) {
       availableCountries.value = countries.value.map((country: Country) => ({
         id: country.id,
-        label: country.name
+        label: t('settings.countries.' + country.name.toLowerCase())
       }))
     }
   } catch (err) {
@@ -90,17 +90,13 @@ const fetchAvailableCountries = async () => {
 
 const fetchAvailableStates = async (countryId: string) => {
   try {
-    const { data: states, error: statesError } = await useAPI(`/settings/states/${countryId}`, { method: 'GET' })
+    const { data: states, error: statesError } = await useAPI<State[]>(`/settings/states/${countryId}`, { method: 'GET' })
     if (statesError.value) {
       errorMessage.value = statesError.value.message
     } else if (states.value) {
       availableStates.value = states.value.map((state: State) => ({
         id: state.id,
-        label: state.name,
-        holidays: state.holidays.map((holiday: { id: string; name: string }) => ({
-          id: holiday.id,
-          label: holiday.name
-        }))
+        label: t('settings.states.' + state.name.toLowerCase().replace('-', '').replace(' ', ''))
       }))
     }
   } catch (err) {
@@ -124,8 +120,7 @@ const onSubmit = async () => {
     await useAPI('/settings/selected-state', { method: 'POST', body: JSON.stringify(selectedStateData) })
     .then(async (response) => {
       if (response.status.value === "error") {
-        errorMessage.value = response.error?.value?.message
-      } else {
+        errorMessage.value = 'An error occurred while saving the data.'
         successMessage.value = t('settings.success')
         errorMessage.value = null
       }

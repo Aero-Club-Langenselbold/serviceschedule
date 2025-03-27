@@ -2,6 +2,7 @@ package de.ct.manager.schedule.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @org.springframework.stereotype.Service
 public class ServiceService {
@@ -23,6 +24,9 @@ public class ServiceService {
     }
 
     public Service createOrUpdateService(Service service) {
+        if (service.getId().isEmpty()) {
+            service.setId(UUID.randomUUID().toString());
+        }
         if (service.getSettings() != null && !service.getSettings().isEmpty()) {
             service.getSettings().forEach(settings -> settings.setService(service));
         }

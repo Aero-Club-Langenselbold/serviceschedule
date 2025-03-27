@@ -13,6 +13,7 @@
 
 <script lang="ts" setup>
 import type { TableColumn } from '@nuxt/ui'
+import type { Plan } from '~/types/plan'
 
 const UButton = resolveComponent('UButton')
 const UTooltip = resolveComponent('UTooltip')
@@ -22,17 +23,7 @@ const { t, locale } = useI18n()
 const errorMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
 
-const listData = ref([])
-
-type Plan = {
-  id: string,
-  name: string,
-  description: string,
-  dateFrom: string,
-  dateUntil: string,
-  published: boolean,
-  serviceDates: string[]
-}
+const listData = ref<Plan[]>([])
 
 const columns = computed<TableColumn<Plan>[]>(() => [
   {
@@ -135,6 +126,20 @@ const columns = computed<TableColumn<Plan>[]>(() => [
             disabled: !row.original.published,
             icon: "i-lucide-file-down"
           })
+        }),
+        h(resolveComponent('confirmationDialog'), {
+          color: "error",
+          variant: "solid",
+          icon: "i-lucide-trash",
+          loading: deleting.value,
+          tooltip: t('plan.deleteInfo'),
+          modalTitle: t('plan.deleteConfirmationTitle'),
+          confirmLabel: t('plan.deleteConfirmation'),
+          abortLabel: t('plan.cancel'),
+          buttonClass: 'ml-2',
+          onConfirm: () => {
+            deletePlan(row.original.id) // Call the deletePlan function on confirmation
+          }
         })
     ]}
   }
@@ -145,11 +150,11 @@ const fetchData = async () => {
   successMessage.value = null
 
   try {
-    const { data, error } = await useAPI(`/plan/list`, { method: 'GET' })
+    const { data, error } = await useAPI<Plan[]>(`/plan/list`, { method: 'GET' })
     if (error.value) {
       errorMessage.value = error.value.message
     } else {
-      listData.value = data.value
+      listData.value = data.value ?? []
     }
   } catch (err) {
     errorMessage.value = 'An error occurred while fetching the data.'
@@ -157,6 +162,7 @@ const fetchData = async () => {
 }
 
 const generating = ref<Boolean>(false)
+const deleting = ref<Boolean>(false)
 const generatePlan = async (id: string) => {
   errorMessage.value = null
   successMessage.value = null
@@ -187,10 +193,30 @@ const downloadPdf = async (id: string) => {
       errorMessage.value = error.value.message
     }
 
-    const file = window.URL.createObjectURL(data.value);
+    const file = window.URL.createObjectURL(data.value as Blob);
     window.open(file, '_blank');
   } catch (err) {
     errorMessage.value = 'An error occurred while downloading the PDF.'
+  }
+}
+
+const deletePlan = async (id: string) => {
+  errorMessage.value = null
+  successMessage.value = null
+  deleting.value = true
+
+  try {
+    const { error } = await useAPI(`/plan/delete/${id}`, { method: 'DELETE' })
+    if (error.value) {
+      errorMessage.value = error.value.message
+    } else {
+      successMessage.value = 'Plan deleted successfully.'
+      fetchData()
+    }
+  } catch (err) {
+    errorMessage.value = 'An error occurred while deleting the plan.'
+  } finally {
+    deleting.value = false
   }
 }
 

@@ -76,60 +76,24 @@
 </template>
 
 <script lang="ts" setup>
+import type { Service } from '~/types/service'
+
 const { t } = useI18n()
+const dateRangeItems = useDateRangeItems()
 
-const dateRangeItems = ref([
-  {
-    label: t('general.january'),
-    value: '01-01'
-  }, {
-    label: t('general.february'),
-    value: '02-01'
-  }, {
-    label: t('general.march'),
-    value: '03-01'
-  }, {
-    label: t('general.april'),
-    value: '04-01'
-  }, {
-    label: t('general.may'),
-    value: '05-01'
-  }, {
-    label: t('general.june'),
-    value: '06-01'
-  }, {
-    label: t('general.july'),
-    value: '07-01'
-  }, {
-    label: t('general.august'),
-    value: '08-01'
-  }, {
-    label: t('general.september'),
-    value: '09-01'
-  }, {
-    label: t('general.october'),
-    value: '10-01'
-  }, {
-    label: t('general.november'),
-    value: '11-01'
-  }, {
-    label: t('general.december'),
-    value: '12-01'
-  }
-])
-
-const service = reactive({
-  servicename: ref<string | number>(''),
-    settings: [
+const service = ref<Service>({
+  id: '',
+  servicename: '',
+  settings: [
     {
-      rangeFrom: ref<string | number>(''),
-      rangeTo: ref<string | number>(''),
-      mandatoryAssignees: ref<number>(0),
-      saturdays: ref<boolean>(false),
-      sundays: ref<boolean>(false),
-      publicHolidays: ref<boolean>(false),
-      startTime: ref<string | number>(''),
-      endTime: ref<string | number>('')
+      rangeFrom: '',
+      rangeTo: '',
+      mandatoryAssignees: 0,
+      saturdays: false,
+      sundays: false,
+      publicHolidays: false,
+      startTime: '',
+      endTime: ''
     }
   ]
 })
@@ -138,7 +102,7 @@ const errorMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
 
 const addSetting = () => {
-  service.settings.push({
+  service.value.settings.push({
     rangeFrom: '',
     rangeTo: '',
     mandatoryAssignees: 0,
@@ -151,14 +115,14 @@ const addSetting = () => {
 }
 
 const removeSetting = (index: number) => {
-  service.settings.splice(index, 1)
+  service.value.settings.splice(index, 1)
 }
 
 const onSubmit = async () => {
   errorMessage.value = null
   successMessage.value = null
 
-  await useAPI('/service/save', { method: 'POST', body: JSON.stringify(service) })
+  await useAPI('/service/save', { method: 'POST', body: JSON.stringify(service.value) })
   .then(async (response) => {
     if (response.status.value === "error" && response.error?.value?.statusCode === 409) {
       errorMessage.value = t('service.exists')
@@ -168,8 +132,8 @@ const onSubmit = async () => {
       successMessage.value = t('service.success')
       errorMessage.value = null
 
-      service.servicename = ''
-      service.settings = []
+      service.value.servicename = ''
+      service.value.settings = []
     }
   })
   .catch((error) => {

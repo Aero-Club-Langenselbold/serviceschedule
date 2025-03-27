@@ -31,6 +31,25 @@ export default defineI18nConfig(() => ({
         register: 'Register',
         forgot: 'Forgot password?'
       },
+      register: {
+        title: 'Register to the schedule manager',
+        username: 'E-Mail-Address (as provided to the schedule admin)',
+        password: 'Password',
+        key: 'Registration Key',
+        confirmPassword: 'Confirm Password',
+        submit: 'Register',
+        mustContain: 'Must contain:',
+        enterPassword: 'Enter a password',
+        weakPassword: 'Weak password',
+        mediumPassword: 'Medium password',
+        strongPassword: 'Strong password',
+        numberCharacters: 'At least 8 characters',
+        numberMandatory: 'At least 1 number',
+        lowercaseMandatory: 'At least 1 lowercase letter',
+        uppercaseMandatory: 'At least 1 uppercase letter',
+        passwordMismatch: 'Passwords do not match',
+        success: 'Registration successful',
+      },
       nav: {
         home: 'Home',
         about: 'About',
@@ -70,6 +89,7 @@ export default defineI18nConfig(() => ({
         email: 'Email',
         dateOfBirth: 'Date of Birth',
         status: 'Status',
+        registrationKey: 'Registration Key',
         services: 'Assigned Services',
         save: 'Save',
         success: 'Participant saved successfully',
@@ -121,13 +141,17 @@ export default defineI18nConfig(() => ({
         details: 'Add plan details',
         detailsInfo: 'Add or edit the details of the service plan.',
         generateInfo: 'Generate final service plan',
+        deleteInfo: 'Delete service plan',
         availabilityInfo: 'View/edit availabilities',
         pdfInfo: 'Download as PDF',
         generatedDetailsInfo: 'Details of the final service plan',
         editDetails: 'Details',
         saveSuccess: 'Service plan saved successfully',
         saveError: 'Error saving service plan',
-        saveException: 'Severe error saving service plan'
+        saveException: 'Severe error saving service plan',
+        deleteConfirmationTitle: 'Really delete service plan?',
+        deleteConfirmation: 'Confirm',
+        cancel: 'Cancel'
       },
       availabilities: {
         list: 'Manage availabilities',
@@ -145,7 +169,28 @@ export default defineI18nConfig(() => ({
         state: 'State',
         save: 'Save',
         success: 'Settings saved successfully',
-        error: 'Error saving settings'
+        error: 'Error saving settings',
+        countries: {
+          germany: 'Germany'
+        },
+        states: {
+          badenwürttemberg: 'Baden-Württemberg',
+          bavaria: 'Bavaria',
+          berlin: 'Berlin',
+          brandenburg: 'Brandenburg',
+          bremen: 'Bremen',
+          hamburg: 'Hamburg',
+          hesse: 'Hesse',
+          lowerSaxony: 'Lower Saxony',
+          mecklenburgvorpommern: 'Mecklenburg-Vorpommern',
+          northrhinewestphalia: 'North Rhine-Westphalia',
+          rhinelandpalatinate: 'Rhineland-Palatinate',
+          saarland: 'Saarland',
+          saxony: 'Saxony',
+          saxonyanhalt: 'Saxony-Anhalt',
+          schleswigholstein: 'Schleswig-Holstein',
+          thuringia: 'Thuringia'
+        }
       },
       error: {
         credentials: 'Invalid credentials'
@@ -179,6 +224,25 @@ export default defineI18nConfig(() => ({
         submit: 'Anmelden',
         register: 'Registrieren',
         forgot: 'Password vergessen?'
+      },
+      register: {
+        title: 'Registrieren beim Dienstplanmanager',
+        username: 'E-Mail-Adresse (wie vom Administrator bereitgestellt)',
+        password: 'Passwort',
+        key: 'Registrierungsschlüssel',
+        confirmPassword: 'Passwort bestätigen',
+        submit: 'Registrieren',
+        mustContain: 'Muss enthalten:',
+        enterPassword: 'Gib ein Passwort ein',
+        weakPassword: 'Schwaches Passwort',
+        mediumPassword: 'Mittleres Passwort',
+        strongPassword: 'Starkes Passwort',
+        numberCharacters: 'Mindestens 8 Zeichen',
+        numberMandatory: 'Mindestens 1 Zahl',
+        lowercaseMandatory: 'Mindestens 1 Kleinbuchstabe',
+        uppercaseMandatory: 'Mindestens 1 Großbuchstabe',
+        passwordMismatch: 'Passwörter stimmen nicht überein',
+        success: 'Registrierung erfolgreich',
       },
       nav: {
         home: 'Home',
@@ -219,6 +283,7 @@ export default defineI18nConfig(() => ({
         email: 'Email',
         dateOfBirth: 'Geburtsdatum',
         status: 'Status',
+        registrationKey: 'Registrierungsschlüssel',
         services: 'Zugeordnete Dienste',
         save: 'Speichern',
         success: 'Teilnehmer erfolgreich gespeichert',
@@ -273,10 +338,14 @@ export default defineI18nConfig(() => ({
         pdfInfo: 'Download als PDF',
         generatedDetailsInfo: 'Details des finalen Dienstplans',
         generateInfo: 'Dienstplan final generieren',
+        deleteInfo: 'Dienstplan löschen',
         editDetails: 'Details',
         saveSuccess: 'Dienstplan erfolgreich gespeichert',
         saveError: 'Fehler beim Speichern des Dienstplans',
-        saveException: 'Schwerer Fehler beim Speichern des Dienstplans'
+        saveException: 'Schwerer Fehler beim Speichern des Dienstplans',
+        deleteConfirmationTitle: 'Dienstplan wirklich löschen?',
+        deleteConfirmation: 'Bestätigen',
+        cancel: 'Abbrechen'
       },
       availabilities: {
         list: 'Verfügbarkeiten verwalten',
@@ -294,7 +363,28 @@ export default defineI18nConfig(() => ({
         state: 'Bundesland',
         save: 'Speichern',
         success: 'Einstellungen erfolgreich gespeichert',
-        error: 'Fehler beim Speichern der Einstellungen'
+        error: 'Fehler beim Speichern der Einstellungen',
+        countries: {
+          germany: 'Deutschland'
+        },
+        states: {
+          badenwürttemberg: 'Baden-Württemberg',
+          bavaria: 'Bayern',
+          berlin: 'Berlin',
+          brandenburg: 'Brandenburg',
+          bremen: 'Bremen',
+          hamburg: 'Hamburg',
+          hesse: 'Hessen',
+          lowerSaxony: 'Niedersachsen',
+          mecklenburgvorpommern: 'Mecklenburg-Vorpommern',
+          northrhinewestphalia: 'Nordrhein-Westfalen',
+          rhinelandpalatinate: 'Rheinland-Pfalz',
+          saarland: 'Saarland',
+          saxony: 'Sachsen',
+          saxonyanhalt: 'Sachsen-Anhalt',
+          schleswigholstein: 'Schleswig-Holstein',
+          thuringia: 'Thüringen'
+        }
       },
       error: {
         credentials: 'Ungültige Anmeldeinformationen'

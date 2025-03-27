@@ -100,6 +100,14 @@ const sessionInfo = computed(() => {
         onSelect: () => navigateTo('/settings')
       })
     }
+  } else {
+    items.push({
+      label: 'Login',
+      icon: 'i-lucide-log-in',
+      onSelect: async () => {
+        navigateTo('/login')
+      }
+    })
   }
   items.push({
     icon: 'circle-flags:de',

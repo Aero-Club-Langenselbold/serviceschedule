@@ -16,10 +16,11 @@ import de.ct.manager.schedule.util.AbstractIntegrationTest;
 class AuthApiIntegrationTest extends AbstractIntegrationTest {
 
     @Test
-    @Sql(statements = "DELETE FROM auth_user", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(scripts = "classpath:scripts/test-registration-key.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(statements = "DELETE FROM participant;", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testSignUpAndLoginSuccess() {
 
-        SignupRequest signupRequest = new SignupRequest("test@test.com", "Hallo");
+        SignupRequest signupRequest = new SignupRequest("test@test.com", "Hallo", "4711");
         HttpEntity<SignupRequest> signUpEntity = new HttpEntity<>(signupRequest, createHeadersWithToken(null));
         restTemplate.exchange(createURLWithPort("auth/") + "signup", HttpMethod.POST, signUpEntity, new ParameterizedTypeReference<String>() {});
 
@@ -37,7 +38,7 @@ class AuthApiIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void testSignUpUserExists() {
-        SignupRequest signupRequest = new SignupRequest("test@test.com", "Hallo");
+        SignupRequest signupRequest = new SignupRequest("test@test.com", "Hallo", "4711");
         HttpEntity<SignupRequest> signUpEntity = new HttpEntity<>(signupRequest, createHeadersWithToken(null));
         ResponseEntity<String> response = restTemplate.exchange(createURLWithPort("auth/") + "signup", HttpMethod.POST, signUpEntity, new ParameterizedTypeReference<String>() {});
 

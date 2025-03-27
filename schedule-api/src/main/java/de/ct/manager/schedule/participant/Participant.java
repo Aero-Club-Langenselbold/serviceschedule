@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.hibernate.envers.Audited;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.ct.manager.schedule.plan.PlanEntry;
@@ -30,7 +28,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Entity
-@Audited
 @Table(name = "participant")
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -58,6 +55,9 @@ public class Participant extends AbstractPersistentEntity {
     @Enumerated(EnumType.STRING)
     @Column(length = 15)
     private Status status = Status.ACTIVE;
+
+    @Column(length = 36)
+    private String registrationKey;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

@@ -2,8 +2,6 @@ package de.ct.manager.schedule.participant;
 
 import java.util.Date;
 
-import org.hibernate.envers.Audited;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.ct.manager.schedule.plan.Plan;
@@ -21,7 +19,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Audited
 @Data
 @Table(name = "date_participant_availability")
 @EqualsAndHashCode(callSuper = true)

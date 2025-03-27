@@ -251,5 +251,12 @@ class ParticipantIntegrationTest extends AbstractIntegrationTest {
         Assertions.assertThat(participants.getStatusCode()).isEqualTo(HttpStatus.OK);
         Assertions.assertThat(participants.getBody()).isNotNull();
         Assertions.assertThat(participants.getBody()).hasSize(5);
+
+        participants.getBody().forEach(participant -> {
+            if (participant.getEmail().equals("olivia.green@example.com")) {
+                Assertions.assertThat(participant.getFirstname()).isEqualTo("Olivia");
+                Assertions.assertThat(participant.getRegistrationKey()).isNotNull();
+            }
+        });
     }
 }

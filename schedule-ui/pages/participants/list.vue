@@ -3,17 +3,20 @@
     <NavMenu />
   </div>
   <div class="flex items-start justify-center min-h-screen mt-4">
-    <div class="p-8 rounded-4xl shadow-md w-full max-w-8/12 border-2">
+    <div class="p-8 rounded-4xl shadow-md w-full max-w-9/12 border-2">
       <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('participants.list') }}</h2>
       <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
-      <UTable :data="listData" :columns="columns" class="flex-1" />
-      <UPagination v-model:page="page" :total="totalItems" @update:page="fetchData"/>
+      <UTable :data="listData?.content" :columns="columns" class="flex-1" />
+      <UPagination v-model:page="page" :items-per-page="pageSize" :total="listData?.totalElements" @update:page="fetchData"/>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import type { TableColumn } from '@nuxt/ui'
+import type { Page } from '~/types/page'
+import type { Participant } from '~/types/participant'
+import type { Service } from '~/types/service'
 
 const { t, locale } = useI18n()
 
@@ -22,26 +25,14 @@ const successMessage = ref<string | null>(null)
 
 const page = ref(1)
 const pageSize = ref(20)
-const totalItems = ref(0)
-const listData = ref([])
-const serviceItems = ref([])
+const listData = ref<Page<Participant> | null>(null)
+const serviceItems = ref<Service[] | null>([])
 
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UInput = resolveComponent('UInput')
 const UCheckbox = resolveComponent('UCheckbox')
 const USelect = resolveComponent('USelect')
-
-type Participant = {
-  id: string
-  version: number
-  firstname: string
-  lastname: string
-  email: string
-  dateOfBirth: string
-  status: 'ACTIVE' | 'INACTIVE'
-  services: string[]
-}
 
 const editingState = reactive<{ [key: string]: boolean }>({})
 const editedRows = reactive<{ [key: string]: Participant }>({})
@@ -116,7 +107,7 @@ const columns = computed<TableColumn<Participant>[]>(() => [
         h(UInput, {
           modelValue: editedRows[rowId]?.dateOfBirth || new Date(row.original.dateOfBirth).toLocaleDateString('en-CA'),
           type: 'date',
-          'onUpdate:modelValue': (value: string) => {
+          'onUpdate:modelValue': (value: Date) => {
             if (!editedRows[rowId]) {
               editedRows[rowId] = { ...row.original }
             }
@@ -164,19 +155,26 @@ const columns = computed<TableColumn<Participant>[]>(() => [
 
       return isEditing.value ?
         h(USelect, {
-          modelValue: editedRows[rowId]?.services || row.original.services.map((service: { id: string }) => service.id),
-          'onUpdate:modelValue': (value: string[]) => {
+            modelValue: editedRows[rowId]?.services?.map((service: Service) => service.id) || row.original.services?.map((service: Service) => service.id),
+            'onUpdate:modelValue': (value: string[]) => {
             if (!editedRows[rowId]) {
               editedRows[rowId] = { ...row.original }
             }
-            editedRows[rowId].services = value
+            editedRows[rowId].services = serviceItems.value?.filter((service: Service) => value.includes(service.id))
           },
           multiple: true,
           valueKey: 'id',
+          labelKey: 'servicename',
           items: serviceItems.value,
           class: 'w-full'
         }) :
-        row.getValue('services').map((service: { servicename: string }) => service.servicename).join(', ')
+        row.original.services?.map((service: { servicename: string }) => service.servicename).join(', ')
+    }
+  }, {
+    accessorKey: 'registrationKey',
+    header: t('participants.registrationKey'),
+    cell: ({ row }) => {
+      return row.getValue('registrationKey')
     }
   }, {
     accessorKey: 'actions',
@@ -191,7 +189,7 @@ const columns = computed<TableColumn<Participant>[]>(() => [
         if (!editedRows[rowId]) {
           editedRows[rowId] = {
             ...row.original,
-            services: row.original.services.map((service: { id: string }) => service.id) // Convert to array of IDs
+            //services: row.original.services.map((service: { id: string }) => service.id) // Convert to array of IDs
           }
         }
       }
@@ -204,17 +202,9 @@ const columns = computed<TableColumn<Participant>[]>(() => [
 
       const saveEdit = async () => {
         try {
-          // Replace service IDs with full service objects
-          const updatedRow = {
-            ...editedRows[rowId],
-            services: editedRows[rowId].services.map((serviceId: string) =>
-              serviceItems.value.find((service: { id: string }) => service.id === serviceId)
-            )
-          }
-
           const { error } = await useAPI(`/participant/save`, {
             method: 'POST',
-            body: updatedRow
+            body: editedRows[rowId]
           })
           if (error.value) {
             errorMessage.value = t('participants.updateFailure')
@@ -247,10 +237,10 @@ const columns = computed<TableColumn<Participant>[]>(() => [
       }
 
       return isEditing.value ? [
-        h(UButton, { onClick: saveEdit, variant:"subtle", icon:"i-lucide-save" }),
+        h(UButton, { onClick: saveEdit, variant:"subtle", icon:"i-lucide-save", class: "mr-2" }),
         h(UButton, { onClick: abortEdit, color:"error", variant:"subtle", icon:"i-lucide-x" })
       ] : [
-        h(UButton, { onClick: startEdit, variant:"subtle", icon:"i-lucide-pen" }),
+        h(UButton, { onClick: startEdit, variant:"subtle", icon:"i-lucide-pen", class: "mr-2" }),
         h(UButton, { onClick: deleteRow, color:"error", variant:"subtle", icon:"i-lucide-trash" })
       ]
     }
@@ -259,18 +249,14 @@ const columns = computed<TableColumn<Participant>[]>(() => [
 
 const fetchData = async () => {
   try {
-    const { data, error } = await useAPI(`/participant/page?page=${page.value - 1}&size=${pageSize.value}`, { method: 'GET' })
-    const { data: serviceData, error: serviceError } = await useAPI(`/service/list`, { method: 'GET' })
-    if (error.value) {
-      errorMessage.value = error.value.message
+    const { data: participantData, error: participantError } = await useAPI<Page<Participant>>(`/participant/page?page=${page.value - 1}&size=${pageSize.value}`, { method: 'GET' })
+    const { data: serviceData, error: serviceError } = await useAPI<Service[]>(`/service/list`, { method: 'GET' })
+    if (participantError.value && participantError.value?.statusCode !== 200) {
+      errorMessage.value = participantError.value.data.message
     } else {
-      listData.value = data.value.content
-      totalItems.value = data.value.totalElements
+      listData.value = participantData.value
     }
-    serviceItems.value = serviceData.value.map((service: { id: string; servicename: string }) => ({
-      id: service.id,
-      label: service.servicename
-    }))
+    serviceItems.value = serviceData.value
   } catch (err) {
     errorMessage.value = 'An error occurred while fetching the data.'
   }

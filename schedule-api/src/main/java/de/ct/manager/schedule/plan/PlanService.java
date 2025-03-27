@@ -69,7 +69,12 @@ public class PlanService {
         return planRepository.save(plan);
     }
 
+    @Transactional
     public void deletePlan(String id) {
+        Optional<Plan> p = planRepository.findById(id);
+        if (p.isPresent()) {
+            dateParticipantAvailabilityRepository.deleteByPlan(p.get());
+        }
         planRepository.deleteById(id);
     }
 

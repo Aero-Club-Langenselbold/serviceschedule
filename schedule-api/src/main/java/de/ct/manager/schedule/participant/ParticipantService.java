@@ -3,12 +3,14 @@ package de.ct.manager.schedule.participant;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -61,7 +63,7 @@ public class ParticipantService {
     }
 
     public void importParticipants(MultipartFile file) {
-        try (var reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+        try (var reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.ISO_8859_1))) {
             reader.lines().skip(1).forEach(line -> {
                 String[] columns = line.replace("\"", "").split(";");
                 if (columns.length < 5) {
@@ -80,11 +82,13 @@ public class ParticipantService {
                         .filter(service -> List.of(services).contains(service.getServicename()))
                         .toList();
                 }
+
                 Participant participant = new Participant();
                 participant.setFirstname(firstName);
                 participant.setLastname(lastName);
                 participant.setDateOfBirth(Date.from(dateOfBirth.atStartOfDay(ZoneId.systemDefault()).toInstant()));
                 participant.setEmail(email);
+                participant.setRegistrationKey(UUID.randomUUID().toString());
                 participant.setServices(serviceList);
                 if (participantRepository.findByEmail(participant.getEmail()).isEmpty()) {
                     participantRepository.save(participant);

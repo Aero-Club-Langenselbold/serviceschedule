@@ -6,8 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.hibernate.envers.Audited;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.ct.manager.schedule.service.Service;
@@ -25,7 +23,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Entity
-@Audited
 @Table(name = "plan")
 @Data
 @EqualsAndHashCode(callSuper = true, exclude = "entries")

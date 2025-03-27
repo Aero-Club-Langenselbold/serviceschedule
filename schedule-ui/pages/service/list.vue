@@ -108,6 +108,7 @@
 
 <script lang="ts" setup>
 import type { TableColumn } from '@nuxt/ui'
+import type { Service } from '~/types/service'
 
 const { t } = useI18n()
 
@@ -118,69 +119,16 @@ const UButton = resolveComponent('UButton')
 const UBadge = resolveComponent('UBadge')
 const UInput = resolveComponent('UInput')
 
-const dateRangeItems = ref([
-  {
-    label: t('general.january'),
-    value: '01-01'
-  }, {
-    label: t('general.february'),
-    value: '02-01'
-  }, {
-    label: t('general.march'),
-    value: '03-01'
-  }, {
-    label: t('general.april'),
-    value: '04-01'
-  }, {
-    label: t('general.may'),
-    value: '05-01'
-  }, {
-    label: t('general.june'),
-    value: '06-01'
-  }, {
-    label: t('general.july'),
-    value: '07-01'
-  }, {
-    label: t('general.august'),
-    value: '08-01'
-  }, {
-    label: t('general.september'),
-    value: '09-01'
-  }, {
-    label: t('general.october'),
-    value: '10-01'
-  }, {
-    label: t('general.november'),
-    value: '11-01'
-  }, {
-    label: t('general.december'),
-    value: '12-01'
-  }
-])
+const dateRangeItems = useDateRangeItems()
 
 const getLabelForValue = (value: string) => {
   const item = dateRangeItems.value.find(item => item.value === value)
   return item ? item.label : value
 }
 
-const listData = ref([])
+const listData = ref<Service[] | undefined>([])
 const editingState = reactive<{ [key: string]: boolean }>({})
 const editedRows = reactive<{ [key: string]: Service }>({})
-
-type Service = {
-  id: string
-  servicename: string
-  settings: [{
-    rangeFrom: string
-    rangeTo: string
-    mandatoryAssignees: number
-    saturdays: boolean
-    sundays: boolean
-    publicHolidays: boolean
-    startTime: string
-    endTime: string
-  }]
-}
 
 const columns = computed<TableColumn<Service>[]>(() => [
   {
@@ -282,10 +230,10 @@ const columns = computed<TableColumn<Service>[]>(() => [
       }
 
       return isEditing.value ? [
-        h(UButton, { onClick: saveEdit, variant:"subtle", icon:"i-lucide-save" }),
+        h(UButton, { onClick: saveEdit, variant:"subtle", icon:"i-lucide-save", class: "mr-2" }),
         h(UButton, { onClick: abortEdit, color:"error", variant:"subtle", icon:"i-lucide-x" })
       ] : [
-        h(UButton, { onClick: startEdit, variant:"subtle", icon:"i-lucide-pen" }),
+        h(UButton, { onClick: startEdit, variant:"subtle", icon:"i-lucide-pen", class: "mr-2" }),
         h(UButton, { onClick: deleteRow, color:"error", variant:"subtle", icon:"i-lucide-trash" })
       ]
     }
@@ -299,10 +247,10 @@ const fetchData = async () => {
   successMessage.value = null
 
   try {
-    const { data, error } = await useAPI(`/service/list`, { method: 'GET' })
+    const { data, error } = await useAPI<Service[]>(`/service/list`, { method: 'GET' })
     if (error.value) {
       errorMessage.value = error.value.message
-    } else {
+    } else if(data.value) {
       listData.value = data.value
     }
   } catch (err) {
@@ -312,7 +260,12 @@ const fetchData = async () => {
 
 const addSetting = (rowId: string) => {
   if (!editedRows[rowId]) {
-    editedRows[rowId] = { ...listData.value.find(row => row.id === rowId) }
+    const foundRow = listData.value?.find(row => row.id === rowId)
+    if (foundRow) {
+      editedRows[rowId] = { ...foundRow }
+    } else {
+      editedRows[rowId] = { id: rowId, servicename: '', settings: [] }
+    }
   }
   if (!editedRows[rowId].settings) {
     editedRows[rowId].settings = []

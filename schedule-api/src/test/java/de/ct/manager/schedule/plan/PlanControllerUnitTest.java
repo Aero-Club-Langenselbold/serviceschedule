@@ -25,7 +25,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import de.ct.manager.schedule.participant.DateParticipantAvailability;
 import de.ct.manager.schedule.participant.DateParticipantAvailabilityRepository;
 import de.ct.manager.schedule.participant.Participant;
-import de.ct.manager.schedule.participant.ParticipantRepository;
 import de.ct.manager.schedule.service.Service;
 import de.ct.manager.schedule.service.ServiceDate;
 import de.ct.manager.schedule.service.ServiceDateRepository;
@@ -47,9 +46,6 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest{
 
     @MockitoBean
     private ServiceDateRepository serviceDateRepository;
-
-    @MockitoBean
-    private ParticipantRepository participantRepository;
 
     @MockitoBean
     private DateParticipantAvailabilityRepository dateParticipantAvailabilityRepository;

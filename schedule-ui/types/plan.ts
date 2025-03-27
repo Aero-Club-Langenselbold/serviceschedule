@@ -8,6 +8,7 @@ type Plan = {
     dateUntil: Date;
     published: boolean;
     entries: PlanEntry[];
+    serviceDates: string[];
 }
 
 export type { Plan }

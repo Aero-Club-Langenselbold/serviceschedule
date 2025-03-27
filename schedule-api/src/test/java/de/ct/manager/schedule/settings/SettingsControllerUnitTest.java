@@ -21,7 +21,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import de.ct.manager.schedule.participant.DateParticipantAvailabilityRepository;
-import de.ct.manager.schedule.participant.ParticipantRepository;
 import de.ct.manager.schedule.plan.Plan;
 import de.ct.manager.schedule.plan.PlanRepository;
 import de.ct.manager.schedule.plan.PlanService;
@@ -42,9 +41,6 @@ public class SettingsControllerUnitTest extends AbstractControllerUnitTest {
 
     @MockitoBean
     private PlanRepository planRepository;
-
-    @MockitoBean
-    private ParticipantRepository participantRepository;
 
     @MockitoBean
     private ServiceDateRepository serviceDateRepository;

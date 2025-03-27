@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.ct.manager.schedule.participant.ParticipantRepository;
 import de.ct.manager.schedule.security.AuthEntryPointJwt;
 import de.ct.manager.schedule.security.JwtUtils;
 import de.ct.manager.schedule.security.WebSecurityConfig;
@@ -44,6 +45,9 @@ public abstract class AbstractControllerUnitTest {
 
     @MockitoBean
     protected UserRepository userRepository;
+
+    @MockitoBean
+    protected ParticipantRepository participantRepository;
 
     @MockitoBean
     protected AuthenticationManager authenticationManager;

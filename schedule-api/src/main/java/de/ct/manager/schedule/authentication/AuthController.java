@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.ct.manager.schedule.participant.Participant;
+import de.ct.manager.schedule.participant.ParticipantRepository;
 import de.ct.manager.schedule.security.JwtUtils;
 import de.ct.manager.schedule.user.User;
 import de.ct.manager.schedule.user.UserDetailsImpl;
@@ -28,12 +30,14 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
+    private final ParticipantRepository participantRepository;
     private final PasswordEncoder encoder;
     private final JwtUtils jwtUtils;
 
-    public AuthController(AuthenticationManager authenticationManager, UserRepository userRepository, PasswordEncoder encoder, JwtUtils jwtUtils) {
+    public AuthController(AuthenticationManager authenticationManager, UserRepository userRepository, ParticipantRepository participantRepository, PasswordEncoder encoder, JwtUtils jwtUtils) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
+        this.participantRepository = participantRepository;
         this.encoder = encoder;
         this.jwtUtils = jwtUtils;
     }
@@ -64,6 +68,13 @@ public class AuthController {
             return ResponseEntity
                 .badRequest()
                 .body(new MessageResponse("Error: Username is already taken!"));
+        }
+
+        Participant participant = participantRepository.findByEmail(signUpRequest.getUsername()).orElseThrow();
+        if (participant.getRegistrationKey() == null || !participant.getRegistrationKey().equals(signUpRequest.getRegistrationKey())) {
+            return ResponseEntity
+                .badRequest()
+                .body(new MessageResponse("Error: Registration key is invalid!"));
         }
 
         // Create new user's account

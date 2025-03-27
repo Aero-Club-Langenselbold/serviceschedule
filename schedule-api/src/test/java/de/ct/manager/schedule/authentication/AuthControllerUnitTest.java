@@ -19,6 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
+import de.ct.manager.schedule.participant.Participant;
 import de.ct.manager.schedule.user.UserRole;
 import de.ct.manager.schedule.util.AbstractControllerUnitTest;
 
@@ -64,14 +65,32 @@ public class AuthControllerUnitTest extends AbstractControllerUnitTest {
     void testSignUpSuccess() throws Exception {
 
         when(userRepository.existsByUsername(TEST_ADMIN)).thenReturn(false);
+        when(participantRepository.findByEmail(TEST_ADMIN)).thenReturn(Optional.of(createTestParticipant("4711")));
 
         mockMvc.perform(
             post("/auth/signup")
-                .content(objectMapper.writeValueAsString(new SignupRequest(TEST_ADMIN, TEST_ADMIN_PW)))
+                .content(objectMapper.writeValueAsString(new SignupRequest(TEST_ADMIN, TEST_ADMIN_PW, "4711")))
                 .contentType("application/json")
             )
             .andDo(print())
             .andExpect(status().isOk());
+    }
+
+
+
+    @Test
+    void testRegistrationKeyError() throws Exception {
+
+        when(userRepository.existsByUsername(TEST_ADMIN)).thenReturn(false);
+        when(participantRepository.findByEmail(TEST_ADMIN)).thenReturn(Optional.of(createTestParticipant("4712")));
+
+        mockMvc.perform(
+            post("/auth/signup")
+                .content(objectMapper.writeValueAsString(new SignupRequest(TEST_ADMIN, TEST_ADMIN_PW, "4711")))
+                .contentType("application/json")
+            )
+            .andDo(print())
+            .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -81,10 +100,17 @@ public class AuthControllerUnitTest extends AbstractControllerUnitTest {
 
         mockMvc.perform(
             post("/auth/signup")
-                .content(objectMapper.writeValueAsString(new SignupRequest(TEST_ADMIN, TEST_ADMIN_PW)))
+                .content(objectMapper.writeValueAsString(new SignupRequest(TEST_ADMIN, TEST_ADMIN_PW, "4711")))
                 .contentType("application/json")
             )
             .andDo(print())
             .andExpect(status().isBadRequest());
+    }
+
+    private Participant createTestParticipant(String key) {
+        Participant p = new Participant();
+        p.setEmail(TEST_ADMIN);
+        p.setRegistrationKey(key);
+        return p;
     }
 }

@@ -2,8 +2,6 @@ package de.ct.manager.schedule.service;
 
 import java.time.LocalTime;
 
-import org.hibernate.envers.Audited;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.ct.manager.schedule.util.AbstractPersistentEntity;
@@ -18,7 +16,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Entity
-@Audited
 @Table(name = "service_settings")
 @Data
 @EqualsAndHashCode(callSuper = true)

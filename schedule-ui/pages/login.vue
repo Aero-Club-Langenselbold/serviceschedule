@@ -37,7 +37,7 @@
         </div>
         <div class="flex items-center justify-between">
           <UButton trailing-icon="i-lucide-arrow-right" size="md" :label="$t('login.submit')" type="submit"/>
-          <UButton icon="i-lucide-rocket" color="neutral" size="md" :label="$t('login.register')" />
+          <UButton icon="i-lucide-rocket" color="neutral" size="md" :label="$t('login.register')" @click="navigateTo('/register')"/>
         </div>
       </form>
     </div>

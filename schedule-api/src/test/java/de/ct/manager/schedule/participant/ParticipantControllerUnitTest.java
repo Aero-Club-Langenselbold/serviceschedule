@@ -38,9 +38,6 @@ import de.ct.manager.schedule.util.AbstractControllerUnitTest;
 class ParticipantControllerUnitTest extends AbstractControllerUnitTest {
 
     @MockitoBean
-    private ParticipantRepository participantRepository;
-
-    @MockitoBean
     private ServiceRepository serviceRepository;
 
     @Test

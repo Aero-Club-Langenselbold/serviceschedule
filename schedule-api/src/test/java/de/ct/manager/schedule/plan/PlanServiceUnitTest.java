@@ -3,7 +3,6 @@ package de.ct.manager.schedule.plan;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import java.io.File;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -99,7 +98,7 @@ class PlanServiceUnitTest {
     }
 
     @Test
-    void testDeleteParticipant() {
+    void testDeletePlan() {
         Plan plan = new Plan();
         plan.setName("Anger Management");
         plan.setDescription("What the world could look like if we all just got along.");
@@ -350,12 +349,9 @@ class PlanServiceUnitTest {
     void testGeneratePlanPDF() {
         Plan plan = generatePlan();
 
-        File file = planService.generatePlanPDF(plan.getId());
+        byte[] file = planService.generatePlanPDF(plan.getId());
 
-        Assertions.assertThat(file).isNotNull().exists();
-
-        // cleanup
-        file.delete();
+        Assertions.assertThat(file.length).isGreaterThan(0);
     }
 
     @Test

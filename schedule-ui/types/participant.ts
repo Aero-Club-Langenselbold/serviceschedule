@@ -7,7 +7,8 @@ type Participant = {
     email: string;
     dateOfBirth: Date;
     status: 'ACTIVE' | 'INACTIVE';
-    services: Service[];
+    registrationKey: string;
+    services: Service[] | undefined;
 }
 
 export type { Participant }
