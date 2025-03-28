@@ -17,6 +17,7 @@ it ('Does not show menu or credentials without authentication', async () => {
   expect(navMenu.html()).not.toContain('Home')
   expect(navMenu.html()).not.toContain('Manage Participants')
   expect(navMenu.html()).not.toContain('Logout')
+  expect(navMenu.html()).toContain('Login')
 
   // things that should be visible
   expect(navMenu.html()).toContain('i-circle-flags:de')
@@ -30,5 +31,6 @@ it ('Shows menu and credentials with authentication', async () => {
   expect(navMenu.html()).toContain('Home')
   expect(navMenu.html()).toContain('Manage Participants')
   expect(navMenu.html()).toContain('Logout')
+  expect(navMenu.html()).not.toContain('Login')
   expect(navMenu.html()).toContain('testuser')
 })
