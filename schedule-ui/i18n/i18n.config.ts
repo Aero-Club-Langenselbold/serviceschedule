@@ -1,3 +1,4 @@
+
 export default defineI18nConfig(() => ({
   legacy: false,
   locale: 'en',
@@ -152,7 +153,21 @@ export default defineI18nConfig(() => ({
         saveException: 'Severe error saving service plan',
         deleteConfirmationTitle: 'Really delete service plan?',
         deleteConfirmation: 'Confirm',
-        cancel: 'Cancel'
+        cancel: 'Cancel',
+        legend: {
+          button: 'Legend',
+          title: 'Meaning of the buttons',
+          set: {
+            unavailable: 'Unavailable (saved)',
+            available: 'Available (saved)',
+            requested: 'Requested (saved)'
+          },
+          open: {
+            unavailable: 'Unavailable (not saved yet)',
+            available: 'Available (not saved yet)',
+            requested: 'Requested (not saved yet)'
+          }
+        }
       },
       availabilities: {
         list: 'Manage availabilities',
@@ -347,7 +362,21 @@ export default defineI18nConfig(() => ({
         saveException: 'Schwerer Fehler beim Speichern des Dienstplans',
         deleteConfirmationTitle: 'Dienstplan wirklich löschen?',
         deleteConfirmation: 'Bestätigen',
-        cancel: 'Abbrechen'
+        cancel: 'Abbrechen',
+        legend: {
+          button: 'Legende',
+          title: 'Bedeutung der Buttons',
+          set: {
+            unavailable: 'Nicht verfügbar (gespeichert)',
+            available: 'Verfügbar (gespeichert)',
+            requested: 'Terminwunsch (gespeichert)'
+          },
+          open: {
+            unavailable: 'Nicht verfügbar (noch nicht gespeichert)',
+            available: 'Verfügbar (noch nicht gespeichert)',
+            requested: 'Terminwunsch (noch nicht gespeichert)'
+          }
+        }
       },
       availabilities: {
         list: 'Verfügbarkeiten verwalten',

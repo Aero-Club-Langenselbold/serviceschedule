@@ -8,9 +8,37 @@
       <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
 
       <div class="flex justify-start mb-4 mt-4">
-        <UButton color="neutral" variant="subtle" icon="i-lucide-arrow-left" @click="navigateTo('/plan/list')">
+        <UButton color="neutral" variant="subtle" icon="i-lucide-arrow-left" @click="navigateTo('/plan/list')" class="mr-4">
           {{ $t('plan.backToList') }}
         </UButton>
+        <UModal :title="$t('plan.legend.title')">
+          <UButton label="Open" color="neutral" variant="subtle" >
+            {{ $t('plan.legend.button') }}
+          </UButton>
+
+          <template #body>
+            <div class="flex flex-col space-y-4">
+              <div class="flex items-center space-x-4">
+                <UButton color="error" variant="subtle" icon="i-lucide-thumbs-down" />
+                <span>{{ $t('plan.legend.open.unavailable') }}</span>
+                <UButton color="error" variant="solid" icon="i-lucide-thumbs-down" />
+                <span>{{ $t('plan.legend.set.unavailable') }}</span>
+              </div>
+              <div class="flex items-center space-x-4">
+                <UButton color="primary" variant="subtle" icon="i-lucide-thumbs-up"/>
+                <span>{{ $t('plan.legend.open.available') }}</span>
+                <UButton color="primary" variant="solid" icon="i-lucide-thumbs-up" />
+                <span>{{ $t('plan.legend.set.available') }}</span>
+              </div>
+              <div class="flex items-center space-x-4">
+                <UButton color="secondary" variant="subtle" icon="i-lucide-plane"/>
+                <span>{{ $t('plan.legend.open.requested') }}</span>
+                <UButton color="secondary" variant="solid" icon="i-lucide-plane" />
+                <span>{{ $t('plan.legend.set.requested') }}</span>
+              </div>
+            </div>
+          </template>
+        </UModal>
       </div>
 
       <!-- Save button -->
