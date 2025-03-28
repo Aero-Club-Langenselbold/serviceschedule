@@ -6,6 +6,13 @@
     <div class="p-8 rounded-4xl shadow-md w-full max-w-max border-2">
       <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('plan.generatedDetailsInfo') }}</h2>
       <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
+
+      <div class="flex justify-start mb-4 mt-4">
+        <UButton color="neutral" variant="subtle" icon="i-lucide-arrow-left" @click="navigateTo('/plan/list')">
+          {{ $t('plan.backToList') }}
+        </UButton>
+      </div>
+
       <Spinner v-if="loading" />
 
       <UTable v-else :data="data" :columns="columns" class="flex-1 max-h-[600px]" sticky/>

@@ -7,6 +7,12 @@
       <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('availabilities.list') }}</h2>
       <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
 
+      <div class="flex justify-start mb-4 mt-4">
+        <UButton color="neutral" variant="subtle" icon="i-lucide-arrow-left" @click="navigateTo('/plan/list')">
+          {{ $t('plan.backToList') }}
+        </UButton>
+      </div>
+
       <!-- Save button -->
       <div class="flex justify-end mb-4 mt-4">
         <UButton variant="solid" color="primary" icon="i-lucide-save" @click="savePreferences" :loading="saving" >
@@ -24,10 +30,10 @@
 
 <script lang="ts" setup>
 import type { TableColumn } from '@nuxt/ui'
-import type { Plan } from '~/types/plan'
 import type { Participant } from '~/types/participant'
-import type { ServiceDate } from '~/types/serviceDate'
 import type { ParticipantAvailability } from '~/types/participantAvailability'
+import type { Plan } from '~/types/plan'
+import type { ServiceDate } from '~/types/serviceDate'
 
 const UButton = resolveComponent('UButton')
 
@@ -67,9 +73,8 @@ const columns = computed<TableColumn<any>[]>(() => {
       const toggleState = () => {
         const currentIndex = toggleStates.indexOf(currentState)
         row.original[participant.id].currentState = toggleStates[(currentIndex + 1) % toggleStates.length]
+        row.original[participant.id].edited = true
       }
-
-      //loadProgress.value += step.value
 
       return h(UButton, {
         onClick: toggleState,
@@ -124,7 +129,8 @@ const fetchData = async () => {
           row[participant.id] = {
             currentState: status,
             preferencesSaved: savedAvailability,
-            participant: participant
+            participant: participant,
+            edited: savedAvailability
           }
         })
         return row
@@ -143,10 +149,13 @@ const savePreferences = async () => {
   saving.value = true
 
   try {
+    const editedParticipants = data.value.flatMap((row: Record<string, any>) => {
+      return participants.value.filter(participant => row[participant.id].edited)
+    })
     const payload = data.value.flatMap((row: Record<string, any>) => {
       return participants.value.map(participant => {
         const participantData = row[participant.id];
-        if (participantData.currentState === 'yes' || participantData.currentState === 'please') {
+        if (editedParticipants.some(editedParticipant => editedParticipant.id === participant.id) && (participantData.currentState === 'yes' || participantData.currentState === 'please')) {
           return {
             date: new Date(row.date),
             requested: participantData.currentState === 'please',

@@ -7,6 +7,12 @@
       <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('availabilities.list') }}</h2>
       <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
 
+      <div class="flex justify-start mb-4 mt-4">
+        <UButton color="neutral" variant="subtle" icon="i-lucide-arrow-left" @click="navigateTo('/plan/userlist')">
+          {{ $t('plan.backToList') }}
+        </UButton>
+      </div>
+
       <!-- Save button -->
       <div class="flex justify-end mb-4 mt-4">
         <UButton variant="solid" color="primary" icon="i-lucide-save" @click="savePreferences" :loading="saving" >
@@ -24,10 +30,10 @@
 
 <script lang="ts" setup>
 import type { TableColumn } from '@nuxt/ui'
-import type { Plan } from '~/types/plan'
-import type { ServiceDate } from '~/types/serviceDate'
 import type { Participant } from '~/types/participant'
 import type { ParticipantAvailability } from '~/types/participantAvailability'
+import type { Plan } from '~/types/plan'
+import type { ServiceDate } from '~/types/serviceDate'
 
 const { t } = useI18n()
 const userStore = useUserStore()
