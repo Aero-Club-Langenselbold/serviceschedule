@@ -6,7 +6,7 @@
     <div class="p-8 rounded-4xl shadow-md w-full max-w-max border-2">
       <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('plan.details') }}</h2>
       <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
-      <div class="flex justify-start mb-4">
+      <div class="flex justify-start mb-4 mt-4">
         <UButton color="neutral" variant="subtle" icon="i-lucide-arrow-left" @click="navigateTo('/plan/list')">
           {{ $t('plan.backToList') }}
         </UButton>
@@ -55,7 +55,11 @@
 
 <script lang="ts" setup>
 import type { DateValue } from '@internationalized/date'
-import { DateFormatter, getLocalTimeZone } from '@internationalized/date'
+import { DateFormatter, getLocalTimeZone, CalendarDate } from '@internationalized/date'
+import type { Plan } from '~/types/plan'
+import type { Service } from '~/types/service'
+import type { ServiceDate } from '~/types/serviceDate'
+import type { Holiday } from '~/types/holiday'
 
 const df = new DateFormatter('en-US', {
   dateStyle: 'medium'
@@ -69,7 +73,7 @@ const loading = ref(true)
 const errorMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
 const isSaving = ref<boolean>(false)
-const selectedDate = shallowRef(null)
+const selectedDate = shallowRef<CalendarDate | DateValue | undefined>(undefined)
 
 const services = ref<any[]>([])
 interface DateEntry {
@@ -98,16 +102,16 @@ const fetchData = async () => {
 
   try {
     // fetch the plan details and all services
-    const { data: planData, error: planError } = await useAPI(`/plan/fetch/` + id, { method: 'GET' })
-    const { data: servicesData, error: servicesError } = await useAPI(`/service/list`, { method: 'GET' })
+    const { data: planData, error: planError } = await useAPI<Plan>(`/plan/fetch/` + id, { method: 'GET' })
+    const { data: servicesData, error: servicesError } = await useAPI<Service[]>(`/service/list`, { method: 'GET' })
 
-    if (planError?.value === 'error' || servicesError?.value === 'error') {
+    if (planError.value || servicesError.value) {
       errorMessage.value = 'An error occurred while fetching the data.'
       return
     }
 
     // if database entries exist load those
-    if (planData.value.serviceDates.length > 0) {
+    if (planData.value && planData.value.serviceDates.length > 0) {
       buildTableData(planData, servicesData, true)
     } else {
       buildTableData(planData, servicesData, false)
@@ -131,7 +135,7 @@ const buildTableData = (planData: any, servicesData: any, fromDataBase: boolean)
 }
 
 function createPageFromDB() {
-  plan.value.serviceDates.sort((a: any, b: any) => new Date(a.date) - new Date(b.date))
+  plan.value.serviceDates.sort((a: ServiceDate, b: ServiceDate) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
   plan.value.serviceDates.forEach((entry: any) => {
       const existingDate = dates.value.find(date => date.originalDate.getTime() === new Date(entry.date).getTime())
@@ -168,7 +172,7 @@ const createNewPage = async () => {
   const currentDate = new Date(startDate)
 
   // consider holidays
-  const { data: holidayData, error: holidayError } = await useAPI('/settings/holidays/' + id, { method: 'GET' })
+  const { data: holidayData, error: holidayError } = await useAPI<Holiday[]>('/settings/holidays/' + id, { method: 'GET' })
 
   while (currentDate < endDate) {
     const isHoliday = holidayData.value?.some((holiday: any) => {
@@ -186,19 +190,19 @@ const createNewPage = async () => {
   }
 
   values.value = dates.value.map(date => services.value.map(service => {
-    const s = getSettings(service, date.originalDate)
-    return s ? {
-      id: null,
-      mandatoryAssignees: s.mandatoryAssignees,
-      startTime: s.startTime,
-      endTime: s.endTime
-    } : {
-      id: null,
-      mandatoryAssignees: 0,
-      startTime: '',
-      endTime: ''
-    }
-  })
+    const s = getSettings(service, date.originalDate.toISOString())
+      return s ? {
+        id: '',
+        mandatoryAssignees: s.mandatoryAssignees,
+        startTime: s.startTime,
+        endTime: s.endTime
+      } : {
+        id: '',
+        mandatoryAssignees: 0,
+        startTime: '',
+        endTime: ''
+      }
+    })
   )
 }
 
@@ -223,18 +227,18 @@ const getSettings = (service: any, date: string) => {
 const addDate = () => {
   if (selectedDate.value) {
     const newDate = {
-      localeString: selectedDate.value.toDate().toLocaleDateString(locale.value, { weekday: 'short', month: '2-digit', day: '2-digit', year: 'numeric' }),
-      originalDate: new Date(selectedDate.value)
+      localeString: selectedDate.value.toDate(getLocalTimeZone()).toLocaleDateString(locale.value, { weekday: 'short', month: '2-digit', day: '2-digit', year: 'numeric' }),
+      originalDate: selectedDate.value.toDate(getLocalTimeZone())
     }
 
     // Check if the date already exists
     if (!dates.value.some(date => date.localeString === newDate.localeString)) {
       dates.value.push(newDate)
-      dates.value.sort((a, b) => a.originalDate - b.originalDate)
+      dates.value.sort((a, b) => a.originalDate.getTime() - b.originalDate.getTime())
 
       // Initialize values for the new date
       const newValues = services.value.map(service => ({
-        id: null,
+        id: '',
         mandatoryAssignees: 0,
         startTime: service.settings.startTime || '',
         endTime: service.settings.endTime || ''
@@ -242,7 +246,7 @@ const addDate = () => {
       values.value.splice(dates.value.findIndex(date => date.localeString === newDate.localeString), 0, newValues)
     }
 
-    selectedDate.value = null
+    selectedDate.value = undefined
   }
 }
 
@@ -275,15 +279,16 @@ const saveDetails = async () => {
 
     const { error } = await useAPI(`/plan/serviceDates/save/` + plan.value.id, { method: 'POST', body: JSON.stringify(payload) })
 
-    if (error?.value === 'error') {
+    if (error.value) {
       errorMessage.value = t('plan.saveError')
       return
     }
     successMessage.value = t('plan.saveSuccess')
   } catch (err) {
     errorMessage.value = t('plan.saveException')
+  } finally {
+    isSaving.value = false
   }
-  isSaving.value = false
 }
 
 onMounted(() => {

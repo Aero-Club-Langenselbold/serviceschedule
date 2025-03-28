@@ -66,6 +66,9 @@ public class PlanService {
     }
 
     public Plan createOrUpdatePlan(Plan plan) {
+        if (plan.getId().isEmpty()) {
+            plan.setId(UUID.randomUUID().toString());
+        }
         return planRepository.save(plan);
     }
 

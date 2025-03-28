@@ -5,7 +5,7 @@ type Participant = {
     firstname: string;
     lastname: string;
     email: string;
-    dateOfBirth: Date;
+    dateOfBirth: Date | undefined;
     status: 'ACTIVE' | 'INACTIVE';
     registrationKey: string;
     services: Service[] | undefined;

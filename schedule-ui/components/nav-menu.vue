@@ -76,6 +76,12 @@ const menu = computed(() => {
         }
       ]
     })
+  } else if (isLoggedIn.value && user.value?.roles.includes('ROLE_USER')) {
+    items.push({
+      label: computed(() => t('nav.plan.usermenu')),
+      icon: 'i-lucide-tablet-smartphone',
+      to: '/plan/userlist'
+    })
   }
   return items;
 })

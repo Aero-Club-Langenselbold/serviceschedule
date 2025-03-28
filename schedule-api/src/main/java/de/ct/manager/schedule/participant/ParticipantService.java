@@ -46,6 +46,9 @@ public class ParticipantService {
     }
 
     public Participant createOrUpdateParticipant(Participant participant) {
+        if (participant.getId().isEmpty()) {
+            participant.setId(UUID.randomUUID().toString());
+        }
         if (participant.getServices() != null) {
             participant.setServices(participant.getServices().stream().map(service -> {
                 if (service.getId() != null) {
@@ -55,6 +58,7 @@ public class ParticipantService {
                 return service;
             }).toList());
         }
+        participant.setRegistrationKey(UUID.randomUUID().toString());
         return participantRepository.save(participant);
     }
 

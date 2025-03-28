@@ -24,8 +24,10 @@
 
 <script lang="ts" setup>
 import type { TableColumn } from '@nuxt/ui'
-
-const { t } = useI18n()
+import type { Plan } from '~/types/plan'
+import type { Participant } from '~/types/participant'
+import type { ServiceDate } from '~/types/serviceDate'
+import type { ParticipantAvailability } from '~/types/participantAvailability'
 
 const UButton = resolveComponent('UButton')
 
@@ -35,14 +37,6 @@ const successMessage = ref<string | null>(null)
 const id = route.params.id
 const loading = ref(true)
 const saving = ref(false)
-
-type Participant = {
-  id: string
-  firstname: string
-  lastname: string
-  status: 'ACTIVE' | 'INACTIVE'
-  services: []
-}
 
 const participants = ref<Participant[]>([])
 
@@ -59,18 +53,16 @@ const columns = computed<TableColumn<any>[]>(() => {
     }
   }
 
-  const step = ref<number>(50 / (participants.value.length * data.value.length))
-
   // Participant columns: One column per participant
-  const participantColumns: TableColumn<any>[] = participants.value.map(participant => ({
+  const participantColumns: TableColumn<any>[] = participants.value?.map(participant => ({
     accessorKey: participant.id, // Use participant ID as the key
     header: () => h('th', { class: 'rotate' }, [h('span', `${participant.lastname}, ${participant.firstname}`)]),
     cell: ({ row }) => {
       // Toggle state for each cell
       const toggleStates = ['yes', 'no', 'please']
 
-      const currentState = row.getValue(participant.id).currentState
-      const preferencesSaved = row.getValue(participant.id).preferencesSaved
+      const currentState = (row.getValue(participant.id) as { currentState: string }).currentState
+      const preferencesSaved = (row.getValue(participant.id) as { preferencesSaved: boolean }).preferencesSaved
 
       const toggleState = () => {
         const currentIndex = toggleStates.indexOf(currentState)
@@ -98,32 +90,24 @@ const fetchData = async () => {
   loading.value = true
 
   try {
-    const { data: participantsData, error: participantError } = await useAPI(`/participant/list`, { method: 'GET' })
-    const { data: planData, error: planError } = await useAPI(`/plan/fetch/` + id, { method: 'GET' })
-    const { data: availabilityData, error: availabilityError } = await useAPI(`/plan/participantAvailability/fetch/${id}`, { method: 'GET' })
+    const { data: participantsData, error: participantError } = await useAPI<Participant[]>(`/participant/list`, { method: 'GET' })
+    const { data: planData, error: planError } = await useAPI<Plan>(`/plan/fetch/` + id, { method: 'GET' })
+    const { data: availabilityData, error: availabilityError } = await useAPI<ParticipantAvailability[]>(`/plan/participantAvailability/fetch/${id}`, { method: 'GET' })
     if (participantError.value || planError.value || availabilityError.value) {
       errorMessage.value = "error while fetching data"
-    } else {
-      participants.value = participantsData.value.map((participant: Participant) => {
-        return {
-          id: participant.id,
-          firstname: participant.firstname,
-          lastname: participant.lastname,
-          status: participant.status,
-          services: participant.services
-        }
-      })
+    } else if(participantsData.value) {
+      participants.value = participantsData.value
 
-      planData.value.serviceDates.sort((a: any, b: any) => new Date(a.date) - new Date(b.date))
-      // Eliminate duplicate entries and
+      planData.value?.serviceDates.sort((a: ServiceDate, b: ServiceDate) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      // Eliminate duplicate entries
       const uniqueDates = new Set<string>()
-      planData.value.serviceDates.forEach((serviceDate: any) => {
+      planData.value?.serviceDates.forEach((serviceDate: any) => {
         uniqueDates.add(serviceDate.date)
       })
       data.value = Array.from(uniqueDates).map(date => {
         const row: any = { date }
-        participants.value.forEach(participant => {
-          const savedAvailability = availabilityData.value?.filter(av => av.participant.id === participant.id).length > 0
+        participants.value?.forEach(participant => {
+          const savedAvailability = (availabilityData.value ?? []).filter(av => av.participant.id === participant.id).length > 0
           let status = 'no'
 
           if (savedAvailability) {
@@ -159,7 +143,7 @@ const savePreferences = async () => {
   saving.value = true
 
   try {
-    const payload = data.value.flatMap(row => {
+    const payload = data.value.flatMap((row: Record<string, any>) => {
       return participants.value.map(participant => {
         const participantData = row[participant.id];
         if (participantData.currentState === 'yes' || participantData.currentState === 'please') {

@@ -30,13 +30,13 @@ public class PlanController {
     }
 
     @GetMapping("/list")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<List<Plan>> listPlans() {
         return ResponseEntity.ok(planService.listPlans());
     }
 
     @GetMapping("/fetch/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<Plan> getPlan(@PathVariable String id) {
         return ResponseEntity.ok(planService.getPlan(id));
     }

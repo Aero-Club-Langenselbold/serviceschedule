@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.validation.Valid;
 import org.springframework.web.multipart.MultipartFile;
 
 
@@ -58,7 +57,7 @@ public class ParticipantController {
 
     @PostMapping("/save")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Participant> createOrUpdateParticipant(@RequestBody @Valid Participant participant) {
+    public ResponseEntity<Participant> createOrUpdateParticipant(@RequestBody Participant participant) {
         return ResponseEntity.ok(participantService.createOrUpdateParticipant(participant));
     }
 

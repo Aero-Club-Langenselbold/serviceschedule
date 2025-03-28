@@ -67,6 +67,7 @@ export default defineI18nConfig(() => ({
         },
         plan: {
           menu: 'Manage Service Plans',
+          usermenu: 'Service Plans',
           list: 'Show Service Plans',
           add: 'Add Service Plan'
         }
@@ -261,6 +262,7 @@ export default defineI18nConfig(() => ({
         },
         plan: {
           menu: 'Dienstpläne verwalten',
+          usermenu: 'Dienstpläne',
           list: 'Dienstpläne anzeigen',
           add: 'Dienstplan hinzufügen'
         }

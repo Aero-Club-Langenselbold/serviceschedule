@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@iconify-json/heroicons": "^1.2.2",
+    "@internationalized/date": "^3.7.0",
     "@nuxtjs/i18n": "9.3.1",
     "@pinia/nuxt": "^0.10.1",
     "date-fns": "^4.1.0",

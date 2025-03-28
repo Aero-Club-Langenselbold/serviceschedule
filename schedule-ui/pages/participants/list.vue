@@ -105,7 +105,7 @@ const columns = computed<TableColumn<Participant>[]>(() => [
 
       return isEditing.value ?
         h(UInput, {
-          modelValue: editedRows[rowId]?.dateOfBirth || new Date(row.original.dateOfBirth).toLocaleDateString('en-CA'),
+          modelValue: editedRows[rowId]?.dateOfBirth || new Date(row.original.dateOfBirth ?? '').toLocaleDateString('en-CA'),
           type: 'date',
           'onUpdate:modelValue': (value: Date) => {
             if (!editedRows[rowId]) {

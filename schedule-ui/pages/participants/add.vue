@@ -29,13 +29,21 @@
           <label class="block text-sm font-bold mb-2">
             {{ $t('participants.dateOfBirth') }}
           </label>
-          <UInput v-model="participant.dateOfBirth" type="date" :placeholder="$t('participants.dateOfBirth')" class="w-full" />
+          <UPopover>
+            <UButton color="neutral" variant="subtle" icon="i-lucide-calendar" class="w-full">
+              {{ dateOfBirth ? df.format(dateOfBirth.toDate(getLocalTimeZone())) : $t('participants.dateOfBirth') }}
+            </UButton>
+
+            <template #content>
+              <UCalendar v-model="dateOfBirth" class="p-2" />
+            </template>
+          </UPopover>
         </div>
         <div class="mb-6 flex items-center ">
           <label class="text-sm font-bold mr-6">
             {{ $t('participants.status') }}
           </label>
-          <UCheckbox v-model="participant.status" />
+          <UCheckbox v-model="status" />
           <UTooltip :delay-duration="0" :text="t('participants.statusInfo')" class="ml-5">
             <UButton icon="i-lucide-message-circle-question" color="secondary" variant="ghost" />
           </UTooltip>
@@ -44,7 +52,7 @@
           <label class="block text-sm font-bold mb-2">
             {{ $t('participants.services') }}
           </label>
-          <USelect v-model="serviceValue" multiple value-key="id" :items="serviceItems" class="w-full" />
+          <USelect multiple v-model="serviceValue" value-key="id" :items="serviceItems" label-key="servicename" class="w-full" />
         </div>
         <div class="flex items-center justify-between">
           <UButton trailing-icon="i-lucide-arrow-right" size="md" :label="$t('participants.save')" type="submit" />
@@ -55,39 +63,52 @@
 </template>
 
 <script lang="ts" setup>
+import type { DateValue } from '@internationalized/date'
 import { CalendarDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
+import type { Participant } from '~/types/participant'
+import type { Service } from '~/types/service'
 const { t } = useI18n()
 
 const df = new DateFormatter(t('app.dateLocale'), {
   dateStyle: 'short'
 })
 
-const participant = reactive({
+/*const participant = reactive({
   firstname: ref<string | number>(''),
   lastname: ref<string | number>(''),
   email: ref<string | number>(''),
   dateOfBirth: shallowRef<CalendarDate | null>(null),
   status: ref<string | boolean>(true),
   services: ref<string | number>('')
+})*/
+const participant = ref<Participant> ({
+  id: '',
+  firstname: '',
+  lastname: '',
+  email: '',
+  dateOfBirth: new Date(),
+  status: 'ACTIVE',
+  registrationKey: '',
+  services: []
 })
+
+const dateOfBirth = shallowRef<CalendarDate | DateValue | undefined>(undefined)
+const status = ref<boolean>(true)
 
 const errorMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
-const serviceItems = ref([])
-const serviceValue = ref<(string | number)[]>([])
+const serviceItems = ref<Service[]>([])
+const serviceValue = ref<string[]>([])
 
 const onSubmit = async () => {
   errorMessage.value = null
   successMessage.value = null
 
-  const participantData = {
-    ...participant,
-    dateOfBirth: participant.dateOfBirth ? participant.dateOfBirth : null,
-    status: participant.status ? 'active' : 'inactive',
-    services: participant.services.filter((service: { id: string | number }) => serviceValue.value.includes(service.id))
-  }
+  participant.value.dateOfBirth = dateOfBirth.value ? dateOfBirth.value.toDate(getLocalTimeZone()) : undefined
+  participant.value.status = status.value ? 'ACTIVE' : 'INACTIVE'
+  participant.value.services = serviceItems.value.filter((service: { id: string }) => serviceValue.value.includes(service.id))
 
-  await useAPI('/participant/save', { method: 'POST', body: JSON.stringify(participantData) })
+  await useAPI('/participant/save', { method: 'POST', body: JSON.stringify(participant.value) })
   .then(async (response) => {
     if (response.status.value === "error" && response.error?.value?.statusCode === 409) {
       errorMessage.value = t('participants.exists')
@@ -97,11 +118,11 @@ const onSubmit = async () => {
       successMessage.value = t('participants.success')
       errorMessage.value = null
 
-      participant.firstname = ''
-      participant.lastname = ''
-      participant.email = ''
-      participant.dateOfBirth = null
-      participant.status = true
+      participant.value.firstname = ''
+      participant.value.lastname = ''
+      participant.value.email = ''
+      participant.value.dateOfBirth = new Date()
+      participant.value.status = 'ACTIVE'
     }
   })
   .catch((error) => {
@@ -110,16 +131,12 @@ const onSubmit = async () => {
 }
 
 try {
-  const { data, error } = await useAPI(`/service/list`, { method: 'GET' })
+  const { data, error } = await useAPI<Service[]>(`/service/list`, { method: 'GET' })
   if (error.value) {
     errorMessage.value = error.value.message
   } else {
-    participant.services = data.value
-    // USelect seems to ignore the label-property
-    serviceItems.value = data.value.map((service: { id: string; servicename: string }) => ({
-      id: service.id,
-      label: service.servicename
-    }))
+    participant.value.services = data.value ?? []
+    serviceItems.value = data.value ?? []
   }
 } catch (err) {
   errorMessage.value = 'An error occurred while fetching the data.'

@@ -24,6 +24,10 @@
 
 <script lang="ts" setup>
 import type { TableColumn } from '@nuxt/ui'
+import type { Plan } from '~/types/plan'
+import type { ServiceDate } from '~/types/serviceDate'
+import type { Participant } from '~/types/participant'
+import type { ParticipantAvailability } from '~/types/participantAvailability'
 
 const { t } = useI18n()
 const userStore = useUserStore()
@@ -38,7 +42,7 @@ const id = route.params.id
 const loading = ref(true)
 const saving = ref(false)
 
-const data = ref<String[]>([])
+const data = ref<{ date: string; currentState: string; preferencesSaved: boolean; participant: Participant }[]>([])
 
 const columns = computed<TableColumn<any>[]>(() => [
   {
@@ -79,20 +83,20 @@ const fetchData = async () => {
   loading.value = true
 
   try {
-    const { data: participantData, error: participantError } = await useAPI('/participant/fetchByMail/' + user.value?.username, { method: 'GET' })
-    const { data: planData, error: planError } = await useAPI(`/plan/fetch/` + id, { method: 'GET' })
-    const { data: availabilityData, error: availabilityError } = await useAPI(`/plan/participantAvailability/fetch/${id}/${participantData.value?.id}`, { method: 'GET' })
+    const { data: participantData, error: participantError } = await useAPI<Participant>('/participant/fetchByMail/' + user.value?.username, { method: 'GET' })
+    const { data: planData, error: planError } = await useAPI<Plan>(`/plan/fetch/` + id, { method: 'GET' })
+    const { data: availabilityData, error: availabilityError } = await useAPI<ParticipantAvailability[]>(`/plan/participantAvailability/fetch/${id}/${participantData.value?.id}`, { method: 'GET' })
     if (participantError.value || planError.value || availabilityError.value) {
       errorMessage.value = "error while fetching data"
     } else {
-      planData.value.serviceDates.sort((a: any, b: any) => new Date(a.date) - new Date(b.date))
+      planData.value?.serviceDates.sort((a: ServiceDate, b: ServiceDate) => new Date(a.date).getTime() - new Date(b.date).getTime())
       // Eliminate duplicate entries and
       const uniqueDates = new Set<string>()
-      planData.value.serviceDates.forEach((serviceDate: any) => {
+      planData.value?.serviceDates.forEach((serviceDate: any) => {
         uniqueDates.add(serviceDate.date)
       })
       data.value = Array.from(uniqueDates).map(date => {
-        const savedAvailability = availabilityData.value?.length > 0
+        const savedAvailability = (availabilityData.value ?? []).length > 0
         let status = 'no'
 
         if (savedAvailability) {
@@ -153,6 +157,7 @@ const savePreferences = async () => {
     errorMessage.value = 'An error occurred while saving the preferences.'
   } finally {
     saving.value = false
+    fetchData()
   }
 }
 

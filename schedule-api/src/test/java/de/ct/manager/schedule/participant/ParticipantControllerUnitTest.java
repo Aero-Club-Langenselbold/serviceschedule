@@ -1,5 +1,6 @@
 package de.ct.manager.schedule.participant;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import static org.hamcrest.Matchers.is;
@@ -101,7 +102,7 @@ class ParticipantControllerUnitTest extends AbstractControllerUnitTest {
         mockValidAuthentication(UserRole.ROLE_ADMIN);
         Participant participant = generateParticipant(0);
 
-        when(participantRepository.save(participant)).thenReturn(participant);
+        when(participantRepository.save(any())).thenReturn(participant);
 
         mockMvc.perform(
             post("/participant/save")

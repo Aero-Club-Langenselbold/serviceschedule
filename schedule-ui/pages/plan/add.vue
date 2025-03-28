@@ -25,11 +25,11 @@
           </label>
           <UPopover>
             <UButton color="neutral" variant="subtle" icon="i-lucide-calendar" class="w-full">
-              {{ plan.dateFrom ? df.format(plan.dateFrom.toDate(getLocalTimeZone())) : $t('plan.dateFrom') }}
+              {{ dateFrom ? df.format(dateFrom.toDate(getLocalTimeZone())) : $t('plan.dateFrom') }}
             </UButton>
 
             <template #content>
-              <UCalendar v-model="plan.dateFrom" class="p-2" />
+              <UCalendar v-model="dateFrom" class="p-2" />
             </template>
           </UPopover>
         </div>
@@ -39,14 +39,15 @@
           </label>
           <UPopover>
             <UButton color="neutral" variant="subtle" icon="i-lucide-calendar" class="w-full">
-              {{ plan.dateUntil ? df.format(plan.dateUntil.toDate(getLocalTimeZone())) : $t('plan.dateUntil') }}
+              {{ dateUntil ? df.format(dateUntil.toDate(getLocalTimeZone())) : $t('plan.dateUntil') }}
             </UButton>
 
             <template #content>
-              <UCalendar v-model="plan.dateUntil" class="p-2" />
+              <UCalendar v-model="dateUntil" class="p-2" />
             </template>
           </UPopover>
         </div>
+
         <div class="flex items-center justify-between">
           <UButton trailing-icon="i-lucide-arrow-right" size="md" :label="$t('plan.save')" type="submit" />
         </div>
@@ -56,19 +57,28 @@
 </template>
 
 <script lang="ts" setup>
+import type { DateValue } from '@internationalized/date'
 import { CalendarDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
+import type { Plan } from '~/types/plan'
 const { t } = useI18n()
 
 const df = new DateFormatter(t('app.dateLocale'), {
   dateStyle: 'short'
 })
 
-const plan = reactive({
-  name: ref<string | number>(''),
-  description: ref<string | number>(''),
-  dateFrom: shallowRef<CalendarDate | null>(null),
-  dateUntil: shallowRef<CalendarDate | null>(null)
+const plan = ref<Plan>({
+  id: '',
+  name: '',
+  description: '',
+  dateFrom: null,
+  dateUntil: null,
+  published: false,
+  entries: [],
+  serviceDates: []
 })
+
+const dateFrom = shallowRef<CalendarDate | DateValue | undefined>(undefined)
+const dateUntil = shallowRef<CalendarDate | DateValue | undefined>(undefined)
 
 const errorMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
@@ -77,33 +87,29 @@ const onSubmit = async () => {
   errorMessage.value = null
   successMessage.value = null
 
-  const planData = {
-    ...plan,
-    dateFrom: plan.dateFrom ? plan.dateFrom.toDate(getLocalTimeZone()).toISOString() : null,
-    dateUntil: plan.dateUntil ? plan.dateUntil.toDate(getLocalTimeZone()).toISOString() : null
-  }
+  plan.value.dateFrom = dateFrom.value ? dateFrom.value.toDate(getLocalTimeZone()) : null
+  plan.value.dateUntil = dateUntil.value ? dateUntil.value.toDate(getLocalTimeZone()) : null
 
-  await useAPI('/plan/save', { method: 'POST', body: JSON.stringify(planData) })
-  .then(async (response) => {
-    if (response.status.value === "error" && response.error?.value?.statusCode === 409) {
-      errorMessage.value = t('plan.exists')
-    } else if (response.status.value === "error") {
+  try {
+    const { data: pd, error: planError } = await useAPI<Plan>('/plan/save', { method: 'POST', body: JSON.stringify(plan.value) })
+
+    if (planError.value) {
       errorMessage.value = t('plan.error')
     } else {
       successMessage.value = t('plan.success')
       errorMessage.value = null
 
-      plan.name = ''
-      plan.description = ''
-      plan.dateFrom = null
-      plan.dateUntil = null
+      plan.value.name = ''
+      plan.value.description = ''
+      plan.value.dateFrom = null
+      plan.value.dateUntil = null
 
-      await navigateTo('/plan/details/' + response.data?.value.id)
+      await navigateTo('/plan/details/' + pd.value?.id)
     }
-  })
-  .catch((error) => {
-    console.log(error)
-  })
+  }
+  catch(error) {
+    errorMessage.value = t('plan.error')
+  }
 }
 
 definePageMeta({
