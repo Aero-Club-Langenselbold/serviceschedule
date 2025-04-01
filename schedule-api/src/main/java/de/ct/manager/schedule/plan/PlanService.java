@@ -16,6 +16,7 @@ import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
+import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
@@ -163,24 +164,25 @@ public class PlanService {
     }
 
     public List<DateParticipantAvailability> getDateParticipantAvailability(String planId) {
-        Plan plan = planRepository.findById(planId).orElse(null);
-
-        if (plan == null) {
-            throw new IllegalArgumentException("Plan not found");
-        }
+        Plan plan = planRepository.findById(planId).orElseThrow();
 
         return dateParticipantAvailabilityRepository.findByPlan(plan).orElse(new ArrayList<>());
     }
 
     public List<DateParticipantAvailability> getDateParticipantAvailability(String planId, String userId) {
-        Plan plan = planRepository.findById(planId).orElse(null);
-
-        if (plan == null) {
-            throw new IllegalArgumentException("Plan not found");
-        }
+        Plan plan = planRepository.findById(planId).orElseThrow();
 
         return dateParticipantAvailabilityRepository.findByPlan(plan).orElse(new ArrayList<>()).stream()
             .filter(dpa -> dpa.getParticipant().getId().equals(userId))
+            .collect(Collectors.toList());
+    }
+
+    public List<DateParticipantAvailability> getDateParticipantAvailability(String planId, String date, String serviceId) {
+        Plan plan = planRepository.findById(planId).orElseThrow();
+
+        return dateParticipantAvailabilityRepository.findByPlan(plan).orElse(new ArrayList<>()).stream()
+            .filter(dpa -> dpa.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().toString().equals(date) &&
+                dpa.getParticipant().getServices().stream().anyMatch(service -> service.getId().equals(serviceId)))
             .collect(Collectors.toList());
     }
 
@@ -205,7 +207,8 @@ public class PlanService {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             PdfWriter writer = new PdfWriter(outputStream);
             PdfDocument pdf = new PdfDocument(writer);
-            Document document = new Document(pdf);
+            PageSize pageSize = new PageSize(PageSize.A4.rotate());
+            Document document = new Document(pdf, pageSize);
 
             Table table = new Table(plan.getAllServices().size() + 1);
 

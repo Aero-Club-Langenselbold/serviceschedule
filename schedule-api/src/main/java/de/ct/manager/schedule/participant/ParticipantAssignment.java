@@ -38,7 +38,7 @@ public class ParticipantAssignment {
     }
 
     public boolean assignDate(Date date) {
-        if (!datesAvailable.contains(date)) {
+        if (!datesAvailable.contains(date) && !datesRequested.contains(date)) {
             return false;
         }
 

@@ -75,6 +75,10 @@ public class Participant extends AbstractPersistentEntity {
     @OneToMany(mappedBy = "participant", fetch = FetchType.LAZY, orphanRemoval = true)
     private List<PlanEntry> planEntries = new ArrayList<>();
 
+    public String getFullname() {
+        return lastname + ", " + firstname;
+    }
+
     @JsonIgnore
     public int getCurrentAge() {
         return Period.between(dateOfBirth.toInstant().atZone(ZoneId.systemDefault()).toLocalDate(), LocalDate.now()).getYears();

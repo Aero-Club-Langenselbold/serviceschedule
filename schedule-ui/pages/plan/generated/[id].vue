@@ -22,9 +22,17 @@
 
 <script lang="ts" setup>
 import type { TableColumn } from '@nuxt/ui'
+import type { ParticipantAvailability } from '~/types/participantAvailability'
 import type { Plan } from '~/types/plan'
 const route = useRoute()
 const { t, locale } = useI18n()
+
+const userStore = useUserStore()
+const { user } = storeToRefs(userStore)
+
+const UButton = resolveComponent('UButton')
+const UInput = resolveComponent('UInput')
+const USelect = resolveComponent('USelect')
 
 const errorMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
@@ -32,22 +40,28 @@ const successMessage = ref<string | null>(null)
 const id = route.params.id
 const loading = ref<Boolean>(true)
 
-const data = ref<PlanTableEntry[] | undefined>([])
+const data = ref<PlanTableEntryRow[] | undefined>([])
+const editingState = reactive<{ [key: string]: boolean }>({})
+const availabilityData = ref<ParticipantAvailability[]>([])
 
-type PlanTableEntry = {
+type PlanTableEntryRow = {
   date: Date,
   service: {
     id: string,
+    entryIds: string[],    // all plan entry ids associated with this date
     servicename: string,
-    participants: {
+    startTime: Date | undefined,
+    endTime: Date | undefined,
+    participants: {   // all participants associated with this service and date
       id: string,
       firstname: string,
-      lastname: string
+      lastname: string,
+      fullname: string
     }[]
   }[]
 }
 
-const columns = computed<TableColumn<PlanTableEntry>[]>(() => [
+const columns = computed<TableColumn<PlanTableEntryRow>[]>(() => [
   {
     accessorKey: 'date',
     header: t('plan.date'),
@@ -63,10 +77,96 @@ const columns = computed<TableColumn<PlanTableEntry>[]>(() => [
   ...(data.value?.[0]?.service ?? []).map((service, index) => ({
     accessorKey: `service[${index}].servicename`,
     header: service.servicename,
-    cell: ({ row }: { row: { getValue: (key: string) => any; original: PlanTableEntry } }) => {
-      const participants = row.original.service[index].participants
-      const formatted = participants.map(participant => `${participant.lastname}, ${participant.firstname}`).join('<br>')
-      return h('div', { innerHTML: formatted })
+    cell: ({ row }: { row: { getValue: (key: string) => any; original: PlanTableEntryRow } }) => {
+      const service = row.original.service[index]
+      const cellIndex = service.entryIds.join('-')
+      const participants = service.participants
+      const editButton = h(UButton, {
+        variant: 'subtle',
+        icon: 'i-lucide-edit',
+        size: 'sm',
+        class: 'mr-2',
+        onClick: () => editingState[cellIndex] = true
+      })
+      const abortButton = h(UButton, {
+        color: 'error',
+        variant: 'subtle',
+        icon: 'i-lucide-x',
+        size: 'sm',
+        class: 'mr-2',
+        onClick: () => editingState[cellIndex] = false
+      })
+      const saveButton = h(UButton, {
+        variant: 'subtle',
+        icon: 'i-lucide-save',
+        size: 'sm',
+        class: 'mr-2',
+        onClick: () => saveEntry()
+      })
+      const startTime = new Date(service.startTime ?? '').toLocaleString(locale.value, {
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+      const endTime = new Date(service.endTime ?? '').toLocaleString(locale.value, {
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+      const hours = startTime + ' - ' + endTime
+      const startTimeInput = h(UInput, {
+        modelValue: startTime,
+        type: 'time'
+      })
+      const endTimeInput = h(UInput, {
+        modelValue: endTime,
+        type: 'time'
+      })
+
+      const saveEntry = async () => {
+        // TODO: implement save entry logic
+        editingState[cellIndex] = false
+      }
+
+      const elements: any[] = []
+      if (!editingState[cellIndex]) {
+        if (user.value?.roles.includes('ROLE_ADMIN')) {
+          elements.push(editButton)
+          elements.push(h('br'))
+        }
+        elements.push(h('label', {}, hours))
+        elements.push(h('br'))
+        participants.forEach(participant => {
+          elements.push(h('label', {}, `${participant.lastname}, ${participant.firstname}`))
+          elements.push(h('br'))
+        })
+      } else {
+        const allParticipants = Array.from(
+          new Map(
+            availabilityData.value?.filter(availability => availability.participant.services?.some(s => s.id === service.id))
+            .map(availability => [availability.participant.id, availability.participant])
+          ).values()
+        )
+        elements.push(abortButton)
+        elements.push(saveButton)
+        elements.push(h('br'))
+        elements.push(startTimeInput)
+        elements.push(" - ")
+        elements.push(endTimeInput)
+
+        participants.forEach(participant => {
+          elements.push(h('br'))
+          elements.push(h(USelect, {
+            modelValue: participant.id,
+            items: allParticipants,
+            labelKey: 'fullname',
+            valueKey: 'id',
+            class: 'w-full',
+            'onUpdate:modelValue': (newValue: string) => {
+              participant.id = newValue
+            }
+          }))
+        })
+      }
+      return elements
     }
   })) || []
 ])
@@ -81,10 +181,15 @@ const fetchData = async () => {
   try {
     // fetch the plan details and all services
     const { data: planData, error: planError } = await useAPI<Plan>(`/plan/fetch/` + id, { method: 'GET' })
+    const { data: ad, error: availabilityError } = await useAPI<ParticipantAvailability[]>(`/plan/participantAvailability/fetch/` + id, { method: 'GET' })
 
-    if (planError?.value?.message === 'error') {
+    if (planError?.value?.message === 'error' || availabilityError?.value?.message === 'error') {
       errorMessage.value = 'An error occurred while fetching the data.'
       return
+    }
+
+    if (ad.value) {
+      availabilityData.value = ad.value
     }
 
     if (planData.value?.entries) {
@@ -101,7 +206,9 @@ const fetchData = async () => {
         const service = planData.value?.entries.find(entry => entry.service.id === serviceId)?.service
         return {
           id: service?.id || '',
-          servicename: service?.servicename || ''
+          servicename: service?.servicename || '',
+          startTime: undefined,
+          endTime: undefined,
         }
       }).sort((a, b) => a.servicename.localeCompare(b.servicename))
 
@@ -110,8 +217,9 @@ const fetchData = async () => {
         date: new Date(date),
         service: uniqueServices.map(service => ({
           ...service,
+          entryIds: [],
           participants: []
-        })) as PlanTableEntry['service']
+        })) as PlanTableEntryRow['service']
       }))
 
       // Populate participants into the corresponding service
@@ -120,10 +228,14 @@ const fetchData = async () => {
         if (matchingRow) {
           const matchingService = matchingRow.service.find(service => service.id === entry.service.id)
           if (matchingService) {
+            matchingService.entryIds.push(entry.id)
+            matchingService.startTime = entry.startTime
+            matchingService.endTime = entry.endTime
             matchingService.participants.push({
               id: entry.participant.id,
               firstname: entry.participant.firstname,
-              lastname: entry.participant.lastname
+              lastname: entry.participant.lastname,
+              fullname: entry.participant.lastname + ', ' + entry.participant.firstname
             })
           }
         }
@@ -141,6 +253,6 @@ onMounted(() => {
 })
 
 definePageMeta({
-  middleware: ['authenticated', 'admin']
+  middleware: ['authenticated']
 })
 </script>

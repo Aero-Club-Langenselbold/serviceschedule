@@ -73,18 +73,11 @@ const df = new DateFormatter(t('app.dateLocale'), {
   dateStyle: 'short'
 })
 
-/*const participant = reactive({
-  firstname: ref<string | number>(''),
-  lastname: ref<string | number>(''),
-  email: ref<string | number>(''),
-  dateOfBirth: shallowRef<CalendarDate | null>(null),
-  status: ref<string | boolean>(true),
-  services: ref<string | number>('')
-})*/
 const participant = ref<Participant> ({
   id: '',
   firstname: '',
   lastname: '',
+  fullname: '',
   email: '',
   dateOfBirth: new Date(),
   status: 'ACTIVE',

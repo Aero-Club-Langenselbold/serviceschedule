@@ -4,6 +4,7 @@ type Participant = {
     id: string;
     firstname: string;
     lastname: string;
+    fullname: string;
     email: string;
     dateOfBirth: Date | undefined;
     status: 'ACTIVE' | 'INACTIVE';
@@ -11,4 +12,4 @@ type Participant = {
     services: Service[] | undefined;
 }
 
-export type { Participant }
+export type { Participant };

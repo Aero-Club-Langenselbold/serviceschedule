@@ -54,7 +54,7 @@ public class PlanController {
     }
 
     @GetMapping("/download/pdf/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<byte[]> downloadPlanAsPdf(@PathVariable String id) {
         return ResponseEntity.ok()
             .header("Content-Disposition", "attachment; filename=plan_" + id + ".pdf")
@@ -100,5 +100,11 @@ public class PlanController {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<List<DateParticipantAvailability>> getAllParticipantAvailability(@PathVariable String planId) {
         return ResponseEntity.ok(planService.getDateParticipantAvailability(planId));
+    }
+
+    @GetMapping("/participantAvailability/fetch/{planId}/{serviceId}/{date}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<List<DateParticipantAvailability>> getAllParticipantAvailability(@PathVariable String planId, @PathVariable String serviceId, @PathVariable String date) {
+        return ResponseEntity.ok(planService.getDateParticipantAvailability(planId, date, serviceId));
     }
 }

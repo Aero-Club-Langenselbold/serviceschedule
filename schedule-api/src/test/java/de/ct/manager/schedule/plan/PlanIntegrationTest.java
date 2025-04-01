@@ -1,5 +1,6 @@
 package de.ct.manager.schedule.plan;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -295,4 +296,35 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
         Assertions.assertThat(plan.getBody()).isNotNull();
         Assertions.assertThat(plan.getBody().getEntries()).hasSize(5);
     }
+
+    @Test
+    @Sql(scripts = "classpath:scripts/test-duplicate-assignment.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(scripts = "classpath:scripts/delete-duplicate-assignment.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void testGeneratePlanWithoutDuplicateASsignments() throws Exception {
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
+
+        ResponseEntity<Plan> plan = restTemplate.exchange(
+            createURLWithPort("plan/") + "generate/bb883bd7-53cb-4c1f-8596-b0ef222211f3", // plan id as in test-duplicate-assignment.sql
+            HttpMethod.POST,
+            entity,
+            new ParameterizedTypeReference<Plan>() {});
+
+        Assertions.assertThat(plan.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(plan.getBody()).isNotNull();
+
+        // bug report: on April 5th, 2025 the same person was assigned to two different services at the same time
+        Plan p = plan.getBody();
+        long uniqueEmailCount = p.getEntries().stream()
+            .filter(entry -> entry.getDate().equals(LocalDate.of(2025, 4, 5)))
+            .map(entry -> entry.getParticipant().getEmail())
+            .distinct()
+            .count();
+
+        long entryCount = p.getEntries().stream()
+            .filter(entry -> entry.getDate().equals(LocalDate.of(2025, 4, 5)))
+            .count();
+
+        Assertions.assertThat(uniqueEmailCount).isEqualTo(entryCount);
+    }
+
 }

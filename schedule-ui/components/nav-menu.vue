@@ -3,7 +3,6 @@
 </template>
 
 <script lang="ts" setup>
-import { on } from 'v-calendar/dist/types/src/utils/helpers.js'
 
 const { t, setLocale } = useI18n()
 const localeStore = useLocaleStore()
@@ -80,7 +79,7 @@ const menu = computed(() => {
     items.push({
       label: computed(() => t('nav.plan.usermenu')),
       icon: 'i-lucide-tablet-smartphone',
-      to: '/plan/userlist'
+      to: '/plan/list'
     })
   }
   return items;
