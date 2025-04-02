@@ -3,7 +3,7 @@
     <NavMenu />
   </div>
   <div class="flex items-start justify-center min-h-screen mt-4">
-    <div class="p-8 rounded-4xl shadow-md w-full max-w-9/12 border-2">
+    <div class="p-8 rounded-4xl shadow-md w-full max-w-10/12 border-2">
       <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('participants.list') }}</h2>
       <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
       <UTable :data="listData?.content" :columns="columns" class="flex-1" />

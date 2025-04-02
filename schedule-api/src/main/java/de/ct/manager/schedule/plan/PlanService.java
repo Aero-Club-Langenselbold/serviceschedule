@@ -299,6 +299,37 @@ public class PlanService {
         return planRepository.save(plan);
     }
 
+    @Transactional
+    public List<PlanEntry> updatePlanEntry(String planId, List<PlanEntry> planEntries) {
+        Plan plan = planRepository.findById(planId).orElseThrow();
+        List<PlanEntry> newEntries = new ArrayList<>();
+
+        planEntries.forEach(planEntry -> {
+            serviceRepository.findById(planEntry.getService().getId())
+                    .ifPresentOrElse(service -> planEntry.setService(service), () -> {
+                        throw new IllegalArgumentException("Service not found");
+                    });
+            // delete plan entries for given date and service
+            List<PlanEntry> existingEntries = plan.getEntries().stream()
+                .filter(pe -> pe.getService().getId().equals(planEntry.getService().getId()) && pe.getDate().equals(planEntry.getDate()))
+                .toList();
+
+            plan.getEntries().removeAll(existingEntries);
+        });
+
+        planEntries.forEach(planEntry -> {
+            planEntry.setId(UUID.randomUUID().toString());
+            planEntry.setPlan(plan);
+
+            plan.getEntries().add(planEntry);
+            newEntries.add(planEntry);
+        });
+
+        planRepository.save(plan);
+
+        return newEntries;
+    }
+
     private Optional<List<PlanEntry>> assignDate(List<ParticipantAssignment> availability, List<DateAssignment> dateAssignments) {
         List<PlanEntry> pe = new ArrayList<>();
 

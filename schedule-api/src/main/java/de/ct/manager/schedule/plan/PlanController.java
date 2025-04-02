@@ -53,6 +53,12 @@ public class PlanController {
         return ResponseEntity.ok(planService.generatePlan(id));
     }
 
+    @PostMapping("/updatePlanEntry/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<PlanEntry>> updatePlanEntry(@PathVariable String id, @RequestBody List<PlanEntry> planEntry) {
+        return ResponseEntity.ok(planService.updatePlanEntry(id, planEntry));
+    }
+
     @GetMapping("/download/pdf/{id}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<byte[]> downloadPlanAsPdf(@PathVariable String id) {

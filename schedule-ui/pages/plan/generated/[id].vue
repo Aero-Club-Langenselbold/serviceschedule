@@ -24,6 +24,7 @@
 import type { TableColumn } from '@nuxt/ui'
 import type { ParticipantAvailability } from '~/types/participantAvailability'
 import type { Plan } from '~/types/plan'
+import type { PlanEntry } from '~/types/planEntry'
 const route = useRoute()
 const { t, locale } = useI18n()
 
@@ -41,7 +42,7 @@ const id = route.params.id
 const loading = ref<Boolean>(true)
 
 const data = ref<PlanTableEntryRow[] | undefined>([])
-const editingState = reactive<{ [key: string]: boolean }>({})
+const editingState = reactive<{ [key: string]: any }>({})
 const availabilityData = ref<ParticipantAvailability[]>([])
 
 type PlanTableEntryRow = {
@@ -86,7 +87,7 @@ const columns = computed<TableColumn<PlanTableEntryRow>[]>(() => [
         icon: 'i-lucide-edit',
         size: 'sm',
         class: 'mr-2',
-        onClick: () => editingState[cellIndex] = true
+        onClick: () => startEdit()
       })
       const abortButton = h(UButton, {
         color: 'error',
@@ -94,7 +95,7 @@ const columns = computed<TableColumn<PlanTableEntryRow>[]>(() => [
         icon: 'i-lucide-x',
         size: 'sm',
         class: 'mr-2',
-        onClick: () => editingState[cellIndex] = false
+        onClick: () => editingState[cellIndex].editing = false
       })
       const saveButton = h(UButton, {
         variant: 'subtle',
@@ -114,20 +115,136 @@ const columns = computed<TableColumn<PlanTableEntryRow>[]>(() => [
       const hours = startTime + ' - ' + endTime
       const startTimeInput = h(UInput, {
         modelValue: startTime,
-        type: 'time'
+        type: 'time',
+        'onUpdate:modelValue': (value: string) => {
+          editingState[cellIndex].startTime = value
+        }
       })
       const endTimeInput = h(UInput, {
         modelValue: endTime,
-        type: 'time'
+        type: 'time',
+        'onUpdate:modelValue': (value: string) => {
+          editingState[cellIndex].endTime = value
+        }
       })
 
+      const allParticipants = Array.from(
+        new Map(
+          availabilityData.value?.filter(availability => availability.participant.services?.some(s => s.id === service.id))
+          .map(availability => [availability.participant.id, availability.participant])
+        ).values()
+      )
+
+      const startEdit = async () => {
+        editingState[cellIndex] = {}
+        editingState[cellIndex].editing = true
+        editingState[cellIndex].startTime = startTime
+        editingState[cellIndex].endTime = endTime
+        editingState[cellIndex].elements = []
+
+        participants.forEach(participant => {
+          const select = h(USelect, {
+            defaultValue: participant.id,
+            items: allParticipants,
+            labelKey: 'fullname',
+            valueKey: 'id',
+            class: 'w-40',
+            'onUpdate:modelValue': (selectedId: string) => {
+              participantFields.value.selectedId = selectedId
+            }
+          })
+
+          const participantFields = ref({
+            lineFeed: h('br'),
+            select: select,
+            selectedId: participant.id
+          })
+          editingState[cellIndex].elements.push(participantFields.value)
+        })
+      }
+
+      const addParticipant = async () => {
+        const select = h(USelect, {
+            items: allParticipants,
+            labelKey: 'fullname',
+            valueKey: 'id',
+            class: 'w-40',
+            'onUpdate:modelValue': (selectedId: string) => {
+              participantFields.value.selectedId = selectedId
+            }
+          })
+
+          const participantFields = ref({
+            lineFeed: h('br'),
+            select: select,
+            selectedId: ''
+          })
+          editingState[cellIndex].elements.push(participantFields.value)
+      }
+
       const saveEntry = async () => {
-        // TODO: implement save entry logic
-        editingState[cellIndex] = false
+        const planEntry = ref<PlanEntry[]>([])
+        await editingState[cellIndex].elements.forEach(async (element: { selectedId: string }) => {
+          const offset = new Date(row.getValue('date')).getTimezoneOffset() / 60
+          planEntry.value.push({
+            id: '',
+            startTime: new Date(new Date(row.getValue('date')).setHours(
+              parseInt(editingState[cellIndex].startTime.split(':')[0]) - offset,
+              parseInt(editingState[cellIndex].startTime.split(':')[1])
+            )),
+            endTime: new Date(new Date(row.getValue('date')).setHours(
+              parseInt(editingState[cellIndex].endTime.split(':')[0]) - offset,
+              parseInt(editingState[cellIndex].endTime.split(':')[1])
+            )),
+            date: row.original.date,
+            participant: allParticipants.find(participant => participant.id === element.selectedId) || {
+              id: '',
+              firstname: '',
+              lastname: '',
+              fullname: '',
+              email: '',
+              dateOfBirth: new Date(),
+              status: 'INACTIVE',
+              registrationKey: '',
+              services: []
+            },
+            service: {
+              id: service.id,
+              servicename: service.servicename,
+              settings: []
+            }
+          })
+        });
+
+        const { data: entryData, error: entryError } = await useAPI<PlanEntry[]>(`/plan/updatePlanEntry/` + id, { method: 'POST', body: JSON.stringify(planEntry.value) })
+
+        if (entryError?.value?.message === 'error') {
+          errorMessage.value = 'An error occurred while saving the data.'
+          return
+        }
+
+        if(entryData.value && entryData.value.length > 0) {
+          successMessage.value = t('plan.saveSuccess')
+          row.original.service[index].startTime = entryData.value[0].startTime
+          row.original.service[index].endTime = entryData.value[0].endTime
+          row.original.service[index].entryIds = entryData.value.map(entry => entry.id)
+          row.original.service[index].participants = entryData.value.map(entry => ({
+            id: entry.participant.id,
+            firstname: entry.participant.firstname,
+            lastname: entry.participant.lastname,
+            fullname: entry.participant.fullname
+          }))
+        }
+
+        editingState[cellIndex].editing = false
+      }
+
+      const removeEntry = async () => {
+        editingState[cellIndex].elements.pop()
       }
 
       const elements: any[] = []
-      if (!editingState[cellIndex]) {
+      if (!editingState[cellIndex]?.editing) {
         if (user.value?.roles.includes('ROLE_ADMIN')) {
           elements.push(editButton)
           elements.push(h('br'))
@@ -139,12 +256,6 @@ const columns = computed<TableColumn<PlanTableEntryRow>[]>(() => [
           elements.push(h('br'))
         })
       } else {
-        const allParticipants = Array.from(
-          new Map(
-            availabilityData.value?.filter(availability => availability.participant.services?.some(s => s.id === service.id))
-            .map(availability => [availability.participant.id, availability.participant])
-          ).values()
-        )
         elements.push(abortButton)
         elements.push(saveButton)
         elements.push(h('br'))
@@ -152,19 +263,28 @@ const columns = computed<TableColumn<PlanTableEntryRow>[]>(() => [
         elements.push(" - ")
         elements.push(endTimeInput)
 
-        participants.forEach(participant => {
-          elements.push(h('br'))
-          elements.push(h(USelect, {
-            modelValue: participant.id,
-            items: allParticipants,
-            labelKey: 'fullname',
-            valueKey: 'id',
-            class: 'w-full',
-            'onUpdate:modelValue': (newValue: string) => {
-              participant.id = newValue
-            }
-          }))
+        editingState[cellIndex].elements.forEach((element: any) => {
+          elements.push(element.lineFeed)
+          elements.push(element.select)
+          elements.push(element.removeSelect)
         })
+
+        elements.push(h(UButton, {
+          color: 'error',
+          variant: 'subtle',
+          icon: 'i-lucide-x',
+          size: 'sm',
+          class: 'ml-2',
+          onClick: () => removeEntry()
+        }))
+        elements.push(h('br'))
+        elements.push(h(UButton, {
+          variant: 'subtle',
+          icon: 'i-lucide-plus',
+          size: 'sm',
+          class: 'mr-2',
+          onClick: () => addParticipant()
+        }))
       }
       return elements
     }
@@ -181,15 +301,22 @@ const fetchData = async () => {
   try {
     // fetch the plan details and all services
     const { data: planData, error: planError } = await useAPI<Plan>(`/plan/fetch/` + id, { method: 'GET' })
-    const { data: ad, error: availabilityError } = await useAPI<ParticipantAvailability[]>(`/plan/participantAvailability/fetch/` + id, { method: 'GET' })
+    if (user.value?.roles.includes('ROLE_ADMIN')) {
+      const { data: ad, error: availabilityError } = await useAPI<ParticipantAvailability[]>(`/plan/participantAvailability/fetch/` + id, { method: 'GET' })
 
-    if (planError?.value?.message === 'error' || availabilityError?.value?.message === 'error') {
-      errorMessage.value = 'An error occurred while fetching the data.'
-      return
+      if (availabilityError?.value?.message === 'error') {
+        errorMessage.value = 'An error occurred while fetching the data.'
+        return
+      }
+
+      if (ad.value) {
+        availabilityData.value = ad.value
+      }
     }
 
-    if (ad.value) {
-      availabilityData.value = ad.value
+    if (planError?.value?.message === 'error') {
+      errorMessage.value = 'An error occurred while fetching the data.'
+      return
     }
 
     if (planData.value?.entries) {
