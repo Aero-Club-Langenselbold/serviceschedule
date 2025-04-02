@@ -8,20 +8,44 @@
       <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
 
       <div class="flex justify-start mb-4 mt-4">
-        <UButton color="neutral" variant="subtle" icon="i-lucide-arrow-left" @click="navigateTo('/plan/list')">
+        <UButton color="neutral" variant="subtle" icon="i-lucide-arrow-left" @click="goBack">
           {{ $t('plan.backToList') }}
         </UButton>
       </div>
 
       <Spinner v-if="loading" />
 
-      <UTable v-else :data="data" :columns="columns" class="flex-1 max-h-[600px]" sticky/>
+      <div v-else class="w-full space-y-4 pb-4">
+        <UTable
+          ref="table"
+          v-model:pagination="pagination"
+          :data="data"
+          :columns="columns"
+          :loading="loadingPage"
+          loading-color="primary"
+          loading-animation="carousel"
+          :pagination-options="{ getPaginationRowModel: getPaginationRowModel() }"
+          class="flex-1 max-h-[600px]"
+          sticky
+          @vue:BeforeUpdate="loadingPage = true"
+          @vue:Updated="loadingPage = false" />
+
+        <div class="flex justify-center border-t border-(--ui-border) pt-4">
+            <UPagination
+              :default-page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+              :items-per-page="table?.tableApi?.getState().pagination.pageSize"
+              :total="table?.tableApi?.getFilteredRowModel().rows.length"
+              @update:page="(p) => { table?.tableApi?.setPageIndex(p - 1) }"
+            />
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import type { TableColumn } from '@nuxt/ui'
+import { getPaginationRowModel } from '@tanstack/vue-table'
 import type { ParticipantAvailability } from '~/types/participantAvailability'
 import type { Plan } from '~/types/plan'
 import type { PlanEntry } from '~/types/planEntry'
@@ -39,11 +63,14 @@ const errorMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
 
 const id = route.params.id
-const loading = ref<Boolean>(true)
+const loading = ref<boolean>(true)
+const loadingPage = ref<boolean | undefined>(true)
 
 const data = ref<PlanTableEntryRow[] | undefined>([])
 const editingState = reactive<{ [key: string]: any }>({})
 const availabilityData = ref<ParticipantAvailability[]>([])
+
+const table = useTemplateRef('table')
 
 type PlanTableEntryRow = {
   date: Date,
@@ -62,11 +89,16 @@ type PlanTableEntryRow = {
   }[]
 }
 
+const goBack = () => {
+  data.value = []
+  navigateTo('/plan/list')
+}
+
 const columns = computed<TableColumn<PlanTableEntryRow>[]>(() => [
   {
     accessorKey: 'date',
     header: t('plan.date'),
-    cell: ({ row }) => {
+    cell: ({ row }: { row: { getValue: (key: string) => any } }) => {
       return new Date(row.getValue('date')).toLocaleString(locale.value, {
         weekday: 'short',
         day: '2-digit',
@@ -80,7 +112,7 @@ const columns = computed<TableColumn<PlanTableEntryRow>[]>(() => [
     header: service.servicename,
     cell: ({ row }: { row: { getValue: (key: string) => any; original: PlanTableEntryRow } }) => {
       const service = row.original.service[index]
-      const cellIndex = service.entryIds.join('-')
+      const cellIndex = service.id + "_" + row.getValue('date')
       const participants = service.participants
       const editButton = h(UButton, {
         variant: 'subtle',
@@ -112,7 +144,7 @@ const columns = computed<TableColumn<PlanTableEntryRow>[]>(() => [
         hour: '2-digit',
         minute: '2-digit'
       })
-      const hours = startTime + ' - ' + endTime
+      const hours = service.startTime === undefined && service.endTime === undefined ? '' : startTime + ' - ' + endTime
       const startTimeInput = h(UInput, {
         modelValue: startTime,
         type: 'time',
@@ -301,6 +333,7 @@ const fetchData = async () => {
   try {
     // fetch the plan details and all services
     const { data: planData, error: planError } = await useAPI<Plan>(`/plan/fetch/` + id, { method: 'GET' })
+
     if (user.value?.roles.includes('ROLE_ADMIN')) {
       const { data: ad, error: availabilityError } = await useAPI<ParticipantAvailability[]>(`/plan/participantAvailability/fetch/` + id, { method: 'GET' })
 
@@ -374,6 +407,11 @@ const fetchData = async () => {
     loading.value = false
   }
 }
+
+const pagination = ref({
+  pageIndex: 0,
+  pageSize: 5
+})
 
 onMounted(() => {
   fetchData()

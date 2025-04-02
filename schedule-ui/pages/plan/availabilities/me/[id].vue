@@ -8,7 +8,7 @@
       <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
 
       <div class="flex justify-start mb-4 mt-4">
-        <UButton color="neutral" variant="subtle" icon="i-lucide-arrow-left" @click="navigateTo('/plan/userlist')">
+        <UButton color="neutral" variant="subtle" icon="i-lucide-arrow-left" @click="navigateTo('/plan/list')">
           {{ $t('plan.backToList') }}
         </UButton>
       </div>
