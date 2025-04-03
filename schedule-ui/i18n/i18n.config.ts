@@ -107,7 +107,8 @@ export default defineI18nConfig(() => ({
         deleteFailure: 'Error deleting participant',
         import: 'Import Participants',
         importSuccess: 'Participants imported successfully',
-        importFailure: 'Error importing participants'
+        importFailure: 'Error importing participants',
+        registrationKeyCopied: 'The registration key has been copied to the clipboard.'
       },
       service: {
         add: 'Add new Service',
@@ -317,7 +318,8 @@ export default defineI18nConfig(() => ({
         deleteFailure: 'Fehler beim Löschen des Teilnehmers',
         import: 'Teilnehmer importieren',
         importSuccess: 'Teilnehmer erfolgreich importiert',
-        importFailure: 'Fehler beim Importieren der Teilnehmer'
+        importFailure: 'Fehler beim Importieren der Teilnehmer',
+        registrationKeyCopied: 'Der Registrierungsschlüssel wurde in die Zwischenablage kopiert.'
       },
       service: {
         add: 'Neuen Dienst hinzufügen',

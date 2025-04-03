@@ -3,7 +3,7 @@
     <NavMenu />
   </div>
   <div class="flex items-start justify-center min-h-screen mt-4">
-    <div class="p-8 rounded-4xl shadow-md w-full max-w-10/12 border-2">
+    <div class="p-8 rounded-4xl shadow-md w-full max-w-11/12 border-2">
       <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('participants.list') }}</h2>
       <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
       <UTable :data="listData?.content" :columns="columns" class="flex-1" />
@@ -36,6 +36,15 @@ const USelect = resolveComponent('USelect')
 
 const editingState = reactive<{ [key: string]: boolean }>({})
 const editedRows = reactive<{ [key: string]: Participant }>({})
+
+const toast = useToast()
+
+const showToast = () => {
+  toast.add({
+    title: t('participants.registrationKeyCopied'),
+    duration: 3000
+  })
+}
 
 const columns = computed<TableColumn<Participant>[]>(() => [
   {
@@ -174,7 +183,20 @@ const columns = computed<TableColumn<Participant>[]>(() => [
     accessorKey: 'registrationKey',
     header: t('participants.registrationKey'),
     cell: ({ row }) => {
-      return row.getValue('registrationKey')
+      return h('div', { class: 'flex items-center justify-between' }, [
+        h('span', {}, row.getValue('registrationKey')),
+        h(UButton, {
+          color: 'neutral',
+          variant: 'subtle',
+          icon: 'i-lucide-copy',
+          onClick: () => {
+        navigator.clipboard.writeText(row.getValue('registrationKey'))
+        .then(() => {
+          showToast()
+        })
+          }
+        })
+      ])
     }
   }, {
     accessorKey: 'actions',
