@@ -40,6 +40,12 @@
           </template>
         </UModal>
       </div>
+      <div class="flex justify-start mb-4 mt-4">
+        <UCheckbox :label="$t('availabilities.selectAll')" v-model="selectAll" default-value @change="toggleSelectAll" />
+        <div v-for="service in services" :key="service.id" class="ml-4">
+            <UCheckbox default-value :label="service.servicename" v-model="serviceSelect[service.id]" @change="toggleService"/>
+        </div>
+      </div>
 
       <!-- Save button -->
       <div class="flex justify-end mb-4 mt-4">
@@ -51,7 +57,7 @@
       <Spinner v-if="loading" />
 
       <!-- Render table only when data is loaded -->
-      <UTable v-else sticky :data="data" :columns="columns" class="flex-1 max-h-[600px]" />
+      <UTable v-else sticky :data="data" :columns="columns" :key="tableKey" class="flex-1 max-h-[600px]" />
     </div>
   </div>
 </template>
@@ -61,6 +67,7 @@ import type { TableColumn } from '@nuxt/ui'
 import type { Participant } from '~/types/participant'
 import type { ParticipantAvailability } from '~/types/participantAvailability'
 import type { Plan } from '~/types/plan'
+import type { Service } from '~/types/service'
 import type { ServiceDate } from '~/types/serviceDate'
 
 const UButton = resolveComponent('UButton')
@@ -73,8 +80,34 @@ const loading = ref(true)
 const saving = ref(false)
 
 const participants = ref<Participant[]>([])
+const filteredParticipants = ref<Participant[]>([])
+const services = ref<Service[] | null>([])
 
 const data = ref<String[]>([])
+const tableKey = ref<number>(0);
+
+const selectAll = ref<boolean>(true)
+const serviceSelect = ref<Record<string, boolean>>({})
+const toggleSelectAll = (event: Event) => {
+  Object.keys(serviceSelect.value).forEach((serviceId: string) => {
+    serviceSelect.value[serviceId] = selectAll.value
+  })
+
+  console.log('selectAll', selectAll.value)
+  filteredParticipants.value = selectAll.value ? participants.value : []
+  tableKey.value++;
+}
+const toggleService = (event: Event) => {
+  selectAll.value = Object.values(serviceSelect.value).every((value) => value)
+
+  console.log('Triggered')
+  const selectedServiceIds = Object.keys(serviceSelect.value).filter(serviceId => serviceSelect.value[serviceId])
+  filteredParticipants.value = participants.value.filter(participant => {
+    const participantServices = participant.services?.map(service => service.id)
+    return selectedServiceIds.some(serviceId => participantServices?.includes(serviceId))
+  })
+  tableKey.value++;
+}
 
 const columns = computed<TableColumn<any>[]>(() => {
   // First column: Dates
@@ -83,13 +116,14 @@ const columns = computed<TableColumn<any>[]>(() => {
     header: () => h('th', {}, [h('span', '')]),
     cell: ({ row }) => {
       const date = new Date(row.original.date)
-      return date.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit' }) // Format date with locale
+      return date.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit' })
     }
   }
 
   // Participant columns: One column per participant
   const participantColumns: TableColumn<any>[] = participants.value?.map(participant => ({
     accessorKey: participant.id, // Use participant ID as the key
+    id: participant.id,
     header: () => h('th', { class: 'rotate' }, [h('span', `${participant.lastname}, ${participant.firstname}`)]),
     cell: ({ row }) => {
       // Toggle state for each cell
@@ -114,7 +148,13 @@ const columns = computed<TableColumn<any>[]>(() => {
   }))
 
   // Combine the date column with participant columns
-  return [dateColumn, ...participantColumns]
+  return [dateColumn, ...participantColumns.filter(column => {
+    // Example condition: Hide columns for participants with a specific ID
+    if (filteredParticipants.value.some(participant => participant.id === column.id)) {
+      return true // Include this column
+    }
+    return false // Exclude other columns
+  })]
 })
 
 const fetchData = async () => {
@@ -126,20 +166,26 @@ const fetchData = async () => {
     const { data: participantsData, error: participantError } = await useAPI<Participant[]>(`/participant/list`, { method: 'GET' })
     const { data: planData, error: planError } = await useAPI<Plan>(`/plan/fetch/` + id, { method: 'GET' })
     const { data: availabilityData, error: availabilityError } = await useAPI<ParticipantAvailability[]>(`/plan/participantAvailability/fetch/${id}`, { method: 'GET' })
-    if (participantError.value || planError.value || availabilityError.value) {
+    const { data: serviceData, error: serviceError } = await useAPI<Service[]>(`/service/list`, { method: 'GET' })
+    if (participantError.value || planError.value || availabilityError.value || serviceError.value) {
       errorMessage.value = "error while fetching data"
     } else if(participantsData.value) {
       participants.value = participantsData.value
+      filteredParticipants.value = participantsData.value
+      services.value = serviceData.value
+
+      services.value?.forEach((service: Service) => {
+        serviceSelect.value[service.id] = true
+      })
 
       planData.value?.serviceDates.sort((a: ServiceDate, b: ServiceDate) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      // Eliminate duplicate entries
       const uniqueDates = new Set<string>()
       planData.value?.serviceDates.forEach((serviceDate: any) => {
         uniqueDates.add(serviceDate.date)
       })
       data.value = Array.from(uniqueDates).map(date => {
         const row: any = { date }
-        participants.value?.forEach(participant => {
+        participants.value.forEach(participant => {
           const savedAvailability = (availabilityData.value ?? []).filter(av => av.participant.id === participant.id).length > 0
           let status = 'no'
 

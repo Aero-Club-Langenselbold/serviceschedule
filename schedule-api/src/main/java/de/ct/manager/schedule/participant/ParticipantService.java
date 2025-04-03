@@ -58,7 +58,9 @@ public class ParticipantService {
                 return service;
             }).toList());
         }
-        participant.setRegistrationKey(UUID.randomUUID().toString());
+        if (participant.getRegistrationKey() == null || participant.getRegistrationKey().isEmpty()) {
+            participant.setRegistrationKey(UUID.randomUUID().toString());
+        }
         return participantRepository.save(participant);
     }
 

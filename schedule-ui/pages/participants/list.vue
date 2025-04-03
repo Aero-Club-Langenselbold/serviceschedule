@@ -188,8 +188,7 @@ const columns = computed<TableColumn<Participant>[]>(() => [
         editingState[rowId] = true
         if (!editedRows[rowId]) {
           editedRows[rowId] = {
-            ...row.original,
-            //services: row.original.services.map((service: { id: string }) => service.id) // Convert to array of IDs
+            ...row.original
           }
         }
       }

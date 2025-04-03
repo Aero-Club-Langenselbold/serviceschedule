@@ -175,6 +175,7 @@ export default defineI18nConfig(() => ({
         yes: 'I\'m available',
         no: 'I\'m not available',
         please: 'I would like to',
+        selectAll: 'Select all',
         save: 'Save',
         success: 'Availabilities saved successfully'
       },
@@ -384,6 +385,7 @@ export default defineI18nConfig(() => ({
         yes: 'Ich kann',
         no: 'Ich kann nicht',
         please: 'Möchte ich gerne',
+        selectAll: 'Alle auswählen',
         save: 'Speichern',
         success: 'Verfügbarkeiten erfolgreich gespeichert'
       },
