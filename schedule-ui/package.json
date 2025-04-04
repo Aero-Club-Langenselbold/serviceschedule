@@ -16,6 +16,7 @@
     "@nuxtjs/i18n": "9.3.1",
     "@pinia/nuxt": "^0.10.1",
     "date-fns": "^4.1.0",
+    "iconv-lite": "^0.6.3",
     "nuxt": "^3.16.1",
     "nuxt-app": "file:",
     "nuxt-auth-utils": "^0.5.16",

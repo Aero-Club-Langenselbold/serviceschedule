@@ -12,8 +12,10 @@
 </template>
 
 <script lang="ts" setup>
-import type { TableColumn } from '@nuxt/ui'
-import type { Plan } from '~/types/plan'
+import type { TableColumn } from '@nuxt/ui';
+import iconv from 'iconv-lite';
+import type { Plan } from '~/types/plan';
+import type { Service } from '~/types/service';
 
 const UButton = resolveComponent('UButton')
 const UTooltip = resolveComponent('UTooltip')
@@ -131,6 +133,20 @@ const columns = computed<TableColumn<Plan>[]>(() => [
               icon: "i-lucide-file-down"
             })
           }),
+          h(UTooltip, {
+            'delay-duration': 0,
+            text: t('plan.csvInfo'),
+            class: 'ml-2'
+          }, {
+            default: () =>
+            h(UButton, {
+              onClick: () => downloadCsv(row.original.id),
+              variant: row.original.published ? 'solid' : 'soft',
+              color: row.original.published ? 'primary' : 'error',
+              disabled: !row.original.published,
+              icon: "i-lucide-file-text"
+            })
+          }),
           h(resolveComponent('confirmationDialog'), {
             color: "error",
             variant: "solid",
@@ -246,6 +262,41 @@ const downloadPdf = async (id: string) => {
 
     const file = window.URL.createObjectURL(data.value as Blob);
     window.open(file, '_blank');
+  } catch (err) {
+    errorMessage.value = 'An error occurred while downloading the PDF.'
+  }
+}
+
+const downloadCsv = async (id: string) => {
+  errorMessage.value = null
+  successMessage.value = null
+
+  try {
+    const { data: serviceData, error: serviceError } = await useAPI<Service[]>(`/service/list`, { method: 'GET' })
+
+    if (serviceError?.value?.message === 'error') {
+      errorMessage.value = "Unable to fetch services."
+      return
+    }
+
+    serviceData.value?.forEach(async (service) => {
+      const { data, error } = await useAPI(`/plan/download/csv/${id}/${service.id}`, { method: 'GET' })
+      if (error.value) {
+        errorMessage.value = error.value.message
+      }
+
+      // Convert the data to ISO-8859-1 using iconv-lite
+      const csvContent = data.value as string; // Assuming the API returns CSV content as a string
+      const isoEncodedContent = iconv.encode(csvContent, 'ISO-8859-1');
+
+      const blob = new Blob([isoEncodedContent], { type: 'text/csv;charset=ISO-8859-1' });
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = `${service.servicename}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    })
   } catch (err) {
     errorMessage.value = 'An error occurred while downloading the PDF.'
   }

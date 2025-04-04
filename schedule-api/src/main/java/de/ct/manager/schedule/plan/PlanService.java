@@ -3,13 +3,17 @@ package de.ct.manager.schedule.plan;
 import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -255,7 +259,50 @@ public class PlanService {
         }
     }
 
+    public byte[] generatePlanCSV(String planId, String serviceId) {
+        String csvSeparator = ";";
+        Plan plan = planRepository.findById(planId).orElseThrow();
+        Service service = serviceRepository.findById(serviceId).orElseThrow();
 
+        StringBuilder csvBuilder = new StringBuilder();
+        csvBuilder.append("Dienstbezeichnung" + csvSeparator + "Dienstbeginn" + csvSeparator + "Dienstende" + csvSeparator + "Max. Personen" + csvSeparator + "Person" + csvSeparator + "Person2" + csvSeparator + csvSeparator + "\r\n");
+
+        // Group plan entries by startTime, endTime, and service
+        Map<LocalDateTime, List<PlanEntry>> groupedEntries = plan.getEntries().stream()
+            .filter(planEntry -> planEntry.getService().getId().equals(serviceId))
+            .collect(Collectors.groupingBy(planEntry -> planEntry.getStartTime()));
+
+        groupedEntries = groupedEntries.entrySet().stream()
+            .sorted(Map.Entry.comparingByKey())
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                Map.Entry::getValue,
+                (oldValue, newValue) -> oldValue,
+                LinkedHashMap::new
+            ));
+        groupedEntries.forEach((key, entries) -> {
+            PlanEntry firstEntry = entries.get(0);
+            String startTime = firstEntry.getStartTime().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
+            String endTime = firstEntry.getEndTime().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
+
+            // Add the service name, start time, end time, and number of participants
+            csvBuilder
+                .append(service.getServicename()).append(csvSeparator)
+                .append(startTime).append(csvSeparator)
+                .append(endTime).append(csvSeparator)
+                .append(entries.size()).append(csvSeparator); // Number of participants
+
+            // Add participants' names
+            for (int i = 0; i < entries.size(); i++) {
+                csvBuilder.append(entries.get(i).getParticipant().getFullname());
+                csvBuilder.append(csvSeparator);
+            }
+
+            csvBuilder.append("\r\n");
+        });
+
+        return csvBuilder.toString().getBytes();
+    }
 
     @Transactional
     public Plan generatePlan(String planId) {

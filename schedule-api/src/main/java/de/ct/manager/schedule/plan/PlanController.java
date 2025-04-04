@@ -68,6 +68,14 @@ public class PlanController {
             .body(planService.generatePlanPDF(id));
     }
 
+    @GetMapping("/download/csv/{planId}/{serviceId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<byte[]> downloadPlanAsCsv(@PathVariable String planId, @PathVariable String serviceId) {
+        return ResponseEntity.ok()
+            .header("Content-Disposition", "attachment; filename=plan_" + planId + "_" + serviceId + ".csv")
+            .contentType(MediaType.TEXT_PLAIN)
+            .body(planService.generatePlanCSV(planId, serviceId));
+    }
 
     @DeleteMapping("/delete/{id}")
     @PreAuthorize("hasRole('ADMIN')")
