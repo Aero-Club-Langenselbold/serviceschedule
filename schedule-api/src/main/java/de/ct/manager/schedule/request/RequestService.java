@@ -1,6 +1,7 @@
 package de.ct.manager.schedule.request;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +19,9 @@ public class RequestService {
     }
 
     public Request createOrUpdateRequest(Request request) {
+        if (request.getId() == null || request.getId().isEmpty()) {
+            request.setId(UUID.randomUUID().toString());
+        }
         return requestRepository.save(request);
     }
 

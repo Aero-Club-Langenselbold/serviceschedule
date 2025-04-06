@@ -12,7 +12,7 @@
           {{ $t('plan.backToList') }}
         </UButton>
         <UModal :title="$t('plan.legend.title')">
-          <UButton label="Open" color="neutral" variant="subtle" >
+          <UButton color="neutral" variant="subtle" >
             {{ $t('plan.legend.button') }}
           </UButton>
 

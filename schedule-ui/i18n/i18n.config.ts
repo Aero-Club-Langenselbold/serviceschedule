@@ -211,6 +211,35 @@ export default defineI18nConfig(() => ({
           thuringia: 'Thuringia'
         }
       },
+      request: {
+        title: 'Bug/Feature List',
+        headline: 'Subject',
+        description: 'Description',
+        status: {
+          name: 'Status',
+          open: 'Open',
+          in_progress: 'In Progress',
+          closed: 'Closed',
+          rejected: 'Rejected'
+        },
+        type: {
+          name: 'Type',
+          bug: 'Bug',
+          bugdesc: 'Report a bug in the system',
+          feature: 'Feature',
+          featuredesc: 'Report a request for a new feature'
+        },
+        author: 'Author',
+        createdAt: 'Created at',
+        add: {
+          open: 'Create new',
+          title: 'Create new Bug/Feature',
+          submit: 'Create',
+          cancel: 'Cancel',
+          error: 'Error creating',
+          success: 'Bug/Feature created successfully',
+        }
+      },
       error: {
         credentials: 'Invalid credentials'
       }
@@ -421,6 +450,35 @@ export default defineI18nConfig(() => ({
           saxonyanhalt: 'Sachsen-Anhalt',
           schleswigholstein: 'Schleswig-Holstein',
           thuringia: 'Thüringen'
+        }
+      },
+      request: {
+        title: 'Bug/Feature Liste',
+        headline: 'Thema',
+        description: 'Beschreibung',
+        status: {
+          name: 'Status',
+          open: 'Offen',
+          in_progress: 'In Bearbeitung',
+          closed: 'Geschlossen',
+          rejected: 'Abgelehnt'
+        },
+        type: {
+          name: 'Typ',
+          bug: 'Bug',
+          bugdesc: 'Melde einen Fehler im System',
+          feature: 'Feature',
+          featuredesc: 'Melde einen Wunsch für eine neue Funktion'
+        },
+        author: 'Ersteller',
+        createdAt: 'Erstelldatum',
+        add: {
+          open: 'Neu erstellen',
+          title: 'Neuen Bug/Neues Feature erstellen',
+          submit: 'Erstellen',
+          cancel: 'Abbrechen',
+          error: 'Fehler beim Erstellen',
+          success: 'Bug/Feature erfolgreich erstellt',
         }
       },
       error: {
