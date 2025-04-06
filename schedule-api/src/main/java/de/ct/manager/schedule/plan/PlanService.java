@@ -215,7 +215,7 @@ public class PlanService {
             Document document = new Document(pdf, pageSize);
 
             Table table = new Table(plan.getAllServices().size() + 1);
-
+            table.setWidth(pageSize.getWidth() - document.getLeftMargin() - document.getRightMargin());
             // add service headers
             table.addHeaderCell(new Cell().add(new Paragraph("Datum")));
             for (Service service : plan.getAllServices()) {
