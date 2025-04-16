@@ -14,5 +14,10 @@ export default defineNuxtConfig({
     vueI18n: './i18n.config.ts'
   },
   css: ['~/assets/css/main.css'],
-  ssr: false
+  ssr: false,
+  runtimeConfig: {
+      public: {
+          API_URL: process.env.API_URL ?? 'https://not-set.com'
+      }
+  }
 })

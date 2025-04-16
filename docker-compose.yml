@@ -1,10 +1,33 @@
 services:
   db:
-    build: misc/db
+    image: postgres:latest
     ports:
       - 5432:5432
     environment:
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_PASSWORD=3x@mpl3S3cur3P@ssw0rd!
+      - POSTGRES_USER=schedule
     shm_size: "2gb"
     volumes:
       - ./volumes/postgres:/data/postgres
+
+  schedule-api:
+    build:
+      context: ./schedule-api
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - db
+    shm_size: "1gb"
+    volumes:
+      - ./volumes/schedule-api:/var/log/schedule-api
+
+  schedule-ui:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./schedule-ui/.output/public:/usr/share/nginx/html:ro
