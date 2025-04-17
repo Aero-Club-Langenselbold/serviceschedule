@@ -1,0 +1,14 @@
+{
+    "uid": "318808",
+    "firstname": "Max",
+    "lastname": "Powers",
+    "memberid": "10238",
+    "status": "aktiv",
+    "cid": "325",
+    "roles": [
+        "Member",
+        "Manager"
+    ],
+    "email": "max.powers@worlddominationtour.com",
+    "httpstatuscode": 200
+}

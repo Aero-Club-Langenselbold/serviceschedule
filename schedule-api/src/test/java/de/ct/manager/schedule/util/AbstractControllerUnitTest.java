@@ -1,9 +1,11 @@
 package de.ct.manager.schedule.util;
 
+import static de.ct.manager.schedule.util.TestUtils.createAuthorities;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 
+import org.ff4j.FF4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.ct.manager.schedule.participant.ParticipantRepository;
+import de.ct.manager.schedule.plugins.vf.VFConnector;
 import de.ct.manager.schedule.security.AuthEntryPointJwt;
 import de.ct.manager.schedule.security.JwtUtils;
 import de.ct.manager.schedule.security.WebSecurityConfig;
@@ -24,8 +27,6 @@ import de.ct.manager.schedule.user.UserDetailsImpl;
 import de.ct.manager.schedule.user.UserDetailsServiceImpl;
 import de.ct.manager.schedule.user.UserRepository;
 import de.ct.manager.schedule.user.UserRole;
-
-import static de.ct.manager.schedule.util.TestUtils.*;
 
 @Import({
     WebSecurityConfig.class,
@@ -51,6 +52,12 @@ public abstract class AbstractControllerUnitTest {
 
     @MockitoBean
     protected AuthenticationManager authenticationManager;
+
+    @MockitoBean
+    protected VFConnector vfConnector;
+
+    @MockitoBean
+    protected FF4j ff4j;
 
     public void mockValidAuthentication(UserRole role) {
         UserDto user = TestUtils.getUserForRole(role);

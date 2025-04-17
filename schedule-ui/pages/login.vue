@@ -33,11 +33,18 @@
           </UInput>
         </div>
         <div class="mb-6 text-right">
-          <ULink to="#" >{{ $t('login.forgot') }}</ULink>
+          <ULink v-if="!features.some(feature => feature.id === 'vfLoginFeature')" to="#" >{{ $t('login.forgot') }}</ULink>
         </div>
         <div class="flex items-center justify-between">
           <UButton trailing-icon="i-lucide-arrow-right" size="md" :label="$t('login.submit')" type="submit"/>
-          <UButton icon="i-lucide-rocket" color="neutral" size="md" :label="$t('login.register')" @click="navigateTo('/register')"/>
+          <UButton
+            v-if="!features.some(feature => feature.id === 'vfLoginFeature')"
+            icon="i-lucide-rocket"
+            color="neutral"
+            size="md"
+            :label="$t('login.register')"
+            @click="navigateTo('/register')"
+          />
         </div>
       </form>
     </div>
@@ -47,7 +54,11 @@
 <script setup lang="ts">
 const userStore = useUserStore()
 const { login } = userStore
+const featureStore = useFeatureStore()
+const { validateFeatures, features } = featureStore
 const { isLoggedIn } = storeToRefs(userStore)
+
+await validateFeatures()
 
 const credentials = reactive({
   username: ref<string | number>(''),
