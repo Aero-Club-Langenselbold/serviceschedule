@@ -3,7 +3,6 @@ package de.ct.manager.schedule.plugins.vf;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Supplier;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -111,9 +110,7 @@ public class VFConnector {
                 User newUser = new User();
                 newUser.setUsername(userResponse.getEmail());
                 newUser.setPassword(userResponse.getEmail());
-                newUser.setId(UUID.randomUUID().toString());
                 newUser.setUserRole(UserRole.ROLE_USER);
-                newUser.setVersion(0);
                 userRepository.save(newUser);
             } else {
                 authority = new SimpleGrantedAuthority(user.get().getUserRole().name());
