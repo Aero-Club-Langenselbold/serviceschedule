@@ -1,15 +1,15 @@
 package de.ct.manager.schedule.authentication;
 
-import static org.mockito.Mockito.when;
-
+import static de.ct.manager.schedule.util.TestUtils.TEST_ADMIN;
+import static de.ct.manager.schedule.util.TestUtils.TEST_ADMIN_PW;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import static de.ct.manager.schedule.util.TestUtils.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Optional;
 
@@ -32,7 +32,7 @@ public class AuthControllerUnitTest extends AbstractControllerUnitTest {
 
         mockMvc.perform(
             post("/auth/signin")
-                .content(objectMapper.writeValueAsString(new LoginRequest(TEST_ADMIN, TEST_ADMIN_PW)))
+                .content(objectMapper.writeValueAsString(new LoginRequest(TEST_ADMIN, TEST_ADMIN_PW, null)))
                 .contentType("application/json")
             )
             .andDo(print())
@@ -53,7 +53,7 @@ public class AuthControllerUnitTest extends AbstractControllerUnitTest {
 
         mockMvc.perform(
             post("/auth/signin")
-                .content(objectMapper.writeValueAsString(new LoginRequest(TEST_ADMIN, "I'm_pretty_wrong")))
+                .content(objectMapper.writeValueAsString(new LoginRequest(TEST_ADMIN, "I'm_pretty_wrong", null)))
                 .contentType("application/json")
             )
             .andDo(print())

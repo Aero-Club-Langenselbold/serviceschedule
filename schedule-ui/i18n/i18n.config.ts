@@ -30,7 +30,8 @@ export default defineI18nConfig(() => ({
         password: 'Password',
         submit: 'Login',
         register: 'Register',
-        forgot: 'Forgot password?'
+        forgot: 'Forgot password?',
+        authSecret: 'Authentication Secret (if 2FA is enabled)'
       },
       register: {
         title: 'Register to the schedule manager',
@@ -271,7 +272,8 @@ export default defineI18nConfig(() => ({
         password: 'Passwort',
         submit: 'Anmelden',
         register: 'Registrieren',
-        forgot: 'Password vergessen?'
+        forgot: 'Password vergessen?',
+        authSecret: 'Sicherheitscode (bei aktivierter 2FA)'
       },
       register: {
         title: 'Registrieren beim Dienstplanmanager',

@@ -32,11 +32,17 @@
             </template>
           </UInput>
         </div>
+        <div v-if="features.some(feature => feature.id === 'vfLoginFeature')" class="mb-4">
+          <label class="block text-sm font-bold mb-2">
+            {{ $t('login.authSecret') }}
+          </label>
+          <UInput v-model="credentials.authSecret" type="text" trailing-icon="i-lucide-key" :placeholder="$t('login.authSecret')" class="w-full" />
+        </div>
         <div class="mb-6 text-right">
           <ULink v-if="!features.some(feature => feature.id === 'vfLoginFeature')" to="#" >{{ $t('login.forgot') }}</ULink>
         </div>
         <div class="flex items-center justify-between">
-          <UButton trailing-icon="i-lucide-arrow-right" size="md" :label="$t('login.submit')" type="submit"/>
+          <UButton trailing-icon="i-lucide-arrow-right" size="md" :label="$t('login.submit')" type="submit" :loading="working"/>
           <UButton
             v-if="!features.some(feature => feature.id === 'vfLoginFeature')"
             icon="i-lucide-rocket"
@@ -62,10 +68,12 @@ await validateFeatures()
 
 const credentials = reactive({
   username: ref<string | number>(''),
-  password: ref<string | number>('')
+  password: ref<string | number>(''),
+  authSecret: ref<string | number>('')
 })
 
 const onSubmit = async () => {
+  working.value = true
   await login(credentials)
   .then(async () => {
     if (isLoggedIn.value) {
@@ -75,8 +83,10 @@ const onSubmit = async () => {
   .catch(() => {
     loginError.value = t('error.credentials')
   })
+  working.value = false
 }
 
+const working = ref(false)
 const show = ref(false)
 const { t } = useI18n()
 const loginError = ref<string | null>(null)

@@ -84,6 +84,7 @@ public class VFConnector {
         vfLoginRequest.setAppkey(this.apiKey);
         vfLoginRequest.setUsername(loginRequest.getUsername());
         vfLoginRequest.setPassword(DigestUtils.md5DigestAsHex(loginRequest.getPassword().getBytes()));
+        vfLoginRequest.setAuthSecret(loginRequest.getAuthSecret());
         vfLoginRequest.setAccesstoken(accesstoken);
 
         Supplier<VFResponse> loginCall = () -> {
