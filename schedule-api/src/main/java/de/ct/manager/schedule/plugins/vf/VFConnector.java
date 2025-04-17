@@ -1,6 +1,7 @@
 package de.ct.manager.schedule.plugins.vf;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -10,11 +11,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.client.RestTemplate;
 
 import de.ct.manager.schedule.authentication.LoginRequest;
 import de.ct.manager.schedule.user.User;
+import de.ct.manager.schedule.user.UserDetailsImpl;
 import de.ct.manager.schedule.user.UserRepository;
 import de.ct.manager.schedule.user.UserRole;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
@@ -33,8 +39,7 @@ public class VFConnector {
     private UserRepository userRepository;
     private CircuitBreaker circuitBreaker;
 
-
-    public VFConnector(RestTemplate restTemplate, @Value("vf.api.url") String apiUrl, @Value("vf.api.key") String apiKey, UserRepository userRepository) {
+    public VFConnector(RestTemplate restTemplate, @Value("${vf.api.url}") String apiUrl, @Value("${vf.api.key}") String apiKey, UserRepository userRepository) {
         this.restTemplate = restTemplate;
         this.apiUrl = apiUrl;
         this.apiKey = apiKey;
@@ -78,7 +83,7 @@ public class VFConnector {
         VFLoginRequest vfLoginRequest = new VFLoginRequest();
         vfLoginRequest.setAppkey(this.apiKey);
         vfLoginRequest.setUsername(loginRequest.getUsername());
-        vfLoginRequest.setPassword(loginRequest.getPassword());
+        vfLoginRequest.setPassword(DigestUtils.md5DigestAsHex(loginRequest.getPassword().getBytes()));
         vfLoginRequest.setAccesstoken(accesstoken);
 
         Supplier<VFResponse> loginCall = () -> {
@@ -98,7 +103,10 @@ public class VFConnector {
         if (userResponse != null && userResponse.getEmail() != null) {
             // save user to db and return user authentication
             Optional<User> user = userRepository.findByUsername(userResponse.getEmail());
+            GrantedAuthority authority;
             if (!user.isPresent()) {
+                authority = new SimpleGrantedAuthority(UserRole.ROLE_USER.name());
+
                 User newUser = new User();
                 newUser.setUsername(userResponse.getEmail());
                 newUser.setPassword(userResponse.getEmail());
@@ -106,9 +114,17 @@ public class VFConnector {
                 newUser.setUserRole(UserRole.ROLE_USER);
                 newUser.setVersion(0);
                 userRepository.save(newUser);
+            } else {
+                authority = new SimpleGrantedAuthority(user.get().getUserRole().name());
             }
 
-            return new UsernamePasswordAuthenticationToken(userResponse.getEmail(), null);
+            UserDetails userDetails = new UserDetailsImpl(userResponse.getUid(),
+                userResponse.getEmail(),
+                vfLoginRequest.getPassword(),
+                List.of(authority)
+            );
+
+            return new UsernamePasswordAuthenticationToken(userDetails, vfLoginRequest.getPassword());
         }
 
         return null;

@@ -55,7 +55,7 @@ public class AuthController {
         Authentication authentication;
 
         if (this.ff4j.check(VF_LOGIN_FEATURE)) {
-            authentication = authenticationManager.authenticate(vfConnector.signIn(loginRequest));
+            authentication = vfConnector.signIn(loginRequest);
         } else {
             authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
