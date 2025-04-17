@@ -17,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.client.RestTemplate;
 
@@ -88,7 +89,7 @@ public class VFConnectorUnitTest {
         lr.setPassword("testpassword");
         Authentication auth = vfConnector.signIn(lr);
 
-        assertEquals("max.powers@worlddominationtour.com", auth.getPrincipal().toString());
+        assertEquals("max.powers@worlddominationtour.com", ((UserDetails) auth.getPrincipal()).getUsername());
         verify(restTemplate, times(1)).getForObject(VF_API_URL + "/auth/accesstoken", VFRequestTokenResponse.class);
         verify(restTemplate, times(1)).postForObject(eq(VF_API_URL + "/auth/signin"), any(), eq(VFResponse.class));
         verify(restTemplate, times(1)).postForObject(eq(VF_API_URL + "/auth/getuser"), any(), eq(VFUserResponse.class));
