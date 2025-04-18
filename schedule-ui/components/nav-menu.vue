@@ -104,13 +104,13 @@ const sessionInfo = computed(() => {
         icon: 'i-lucide-settings',
         onSelect: () => navigateTo('/settings')
       })
+      items.push({
+        icon: 'i-lucide-bug',
+        onSelect: async () => {
+          navigateTo('/request/list')
+        }
+      })
     }
-    items.push({
-      icon: 'i-lucide-bug',
-      onSelect: async () => {
-        navigateTo('/request/list')
-      }
-    })
   } else {
     items.push({
       label: 'Login',

@@ -201,7 +201,7 @@ export default defineI18nConfig(() => ({
           bremen: 'Bremen',
           hamburg: 'Hamburg',
           hesse: 'Hesse',
-          lowerSaxony: 'Lower Saxony',
+          lowersaxony: 'Lower Saxony',
           mecklenburgvorpommern: 'Mecklenburg-Vorpommern',
           northrhinewestphalia: 'North Rhine-Westphalia',
           rhinelandpalatinate: 'Rhineland-Palatinate',
@@ -235,11 +235,12 @@ export default defineI18nConfig(() => ({
         add: {
           open: 'Create new',
           title: 'Create new Bug/Feature',
-          submit: 'Create',
+          submit: 'Save',
           cancel: 'Cancel',
           error: 'Error creating',
           success: 'Bug/Feature created successfully',
-        }
+        },
+        edit: 'Edit'
       },
       error: {
         credentials: 'Invalid credentials'
@@ -443,7 +444,7 @@ export default defineI18nConfig(() => ({
           bremen: 'Bremen',
           hamburg: 'Hamburg',
           hesse: 'Hessen',
-          lowerSaxony: 'Niedersachsen',
+          lowersaxony: 'Niedersachsen',
           mecklenburgvorpommern: 'Mecklenburg-Vorpommern',
           northrhinewestphalia: 'Nordrhein-Westfalen',
           rhinelandpalatinate: 'Rheinland-Pfalz',
@@ -477,11 +478,12 @@ export default defineI18nConfig(() => ({
         add: {
           open: 'Neu erstellen',
           title: 'Neuen Bug/Neues Feature erstellen',
-          submit: 'Erstellen',
+          submit: 'Speichern',
           cancel: 'Abbrechen',
           error: 'Fehler beim Erstellen',
           success: 'Bug/Feature erfolgreich erstellt',
-        }
+        },
+        edit: 'Bearbeiten'
       },
       error: {
         credentials: 'Ungültige Anmeldeinformationen'

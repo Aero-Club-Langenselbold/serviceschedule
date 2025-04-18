@@ -55,11 +55,11 @@
 
 <script lang="ts" setup>
 import type { DateValue } from '@internationalized/date'
-import { DateFormatter, getLocalTimeZone, CalendarDate } from '@internationalized/date'
+import { CalendarDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
+import type { Holiday } from '~/types/holiday'
 import type { Plan } from '~/types/plan'
 import type { Service } from '~/types/service'
 import type { ServiceDate } from '~/types/serviceDate'
-import type { Holiday } from '~/types/holiday'
 
 const df = new DateFormatter('en-US', {
   dateStyle: 'medium'
@@ -214,8 +214,11 @@ const getSettings = (service: any, date: string) => {
   const isHoliday = !isSaturday && !isSunday
 
   const s = service.settings.find((setting: any) => {
-    const rangeFrom = new Date(`${currentYear}-${setting.rangeFrom}`)
-    const rangeTo = new Date(`${currentYear}-${setting.rangeTo}`)
+    let rangeFrom = new Date(`${currentYear}-${setting.rangeFrom}`)
+    let rangeTo = new Date(`${currentYear}-${setting.rangeTo}`)
+    if (rangeFrom.getTime() > rangeTo.getTime()) {
+      rangeTo.setFullYear(currentYear + 1)
+    }
     const isWithinRange = currentDate >= rangeFrom && currentDate < rangeTo
     const isValidDay = (isSaturday && setting.saturdays) || (isSunday && setting.sundays) || (isHoliday && setting.publicHolidays)
     return isWithinRange && isValidDay

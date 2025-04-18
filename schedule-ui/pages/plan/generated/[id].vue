@@ -21,14 +21,11 @@
           v-model:pagination="pagination"
           :data="data"
           :columns="columns"
-          :loading="loadingPage"
           loading-color="primary"
           loading-animation="carousel"
           :pagination-options="{ getPaginationRowModel: getPaginationRowModel() }"
           class="flex-1 max-h-[600px]"
-          sticky
-          @vue:BeforeUpdate="loadingPage = true"
-          @vue:Updated="loadingPage = false" />
+          sticky />
 
         <div class="flex justify-center border-t border-(--ui-border) pt-4">
             <UPagination
@@ -64,7 +61,6 @@ const successMessage = ref<string | null>(null)
 
 const id = route.params.id
 const loading = ref<boolean>(true)
-const loadingPage = ref<boolean | undefined>(true)
 
 const data = ref<PlanTableEntryRow[] | undefined>([])
 const editingState = reactive<{ [key: string]: any }>({})
@@ -354,15 +350,10 @@ const fetchData = async () => {
 
     if (planData.value?.entries) {
       // Extract unique dates
-      const uniqueDates = Array.from(
-        new Set(planData.value.entries.map(entry => new Date(entry.date).toISOString())
-        )
-      ).sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+      const uniqueDates = Array.from(new Set(planData.value.entries.map(entry => new Date(entry.date).toISOString()))).sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
 
       // Extract unique services
-      const uniqueServices = Array.from(
-        new Set(planData.value.entries.map(entry => entry.service.id))
-      ).map(serviceId => {
+      const uniqueServices = Array.from(new Set(planData.value.entries.map(entry => entry.service.id))).map(serviceId => {
         const service = planData.value?.entries.find(entry => entry.service.id === serviceId)?.service
         return {
           id: service?.id || '',

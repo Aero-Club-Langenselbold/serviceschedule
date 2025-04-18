@@ -31,8 +31,14 @@
               </label>
               <URadioGroup v-model="request.type" color="primary" variant="table" default-value="BUG" :items="typeItems" />
             </div>
+            <div class="mb-6 flex items-center ">
+              <label class="text-sm font-bold mr-6">
+                {{ $t('request.status.name') }}
+              </label>
+              <USelect v-model="request.status" value-key="value" :items="statusItems" class="w-full" />
+            </div>
             <div class="flex justify-end gap-4">
-              <UButton color="success" variant="solid" @click="addRequest()" >
+              <UButton color="success"  variant="solid"  :disabled="!request.headline || !request.description"  @click="addRequest()">
                 {{ $t('request.add.submit') }}
               </UButton>
               <UButton color="neutral" variant="outline" @click="closeModal()">
@@ -46,7 +52,7 @@
       <UTable v-model:expanded="expanded" :ui="{ tr: 'data-[expanded=true]:bg-(--ui-bg-elevated)/50' }" :data="listData?.content" :columns="columns" class="flex-1" >
         <template #expanded="{ row }">
           <div class="p-4">
-            <p>{{ row.original.description }}</p>
+            <UTextarea v-model="row.original.description" color="primary" variant="subtle" :placeholder="$t('request.description')" autoresize class="w-full" disabled />
           </div>
         </template>
       </UTable>
@@ -80,8 +86,44 @@ const page = ref(1)
 const pageSize = ref(20)
 const listData = ref<Page<Request> | null>(null)
 
+const userData = ref<Participant | undefined | null>(undefined)
+const request = ref<Request> ({
+  id: '',
+  headline: '',
+  description: '',
+  createdAt: new Date(),
+  status: 'OPEN',
+  type: 'BUG',
+  author: userData.value
+})
+
+const statusItems = ref([
+  {
+    label: t('request.status.open'),
+    value: 'OPEN'
+  }, {
+    label: t('request.status.in_progress'),
+    value: 'IN_PROGRESS'
+  }, {
+    label: t('request.status.closed'),
+    value: 'CLOSED'
+  }, {
+    label: t('request.status.rejected'),
+    value: 'REJECTED'
+  }
+])
+
 const closeModal = () => {
   modalOpen.value = false
+  request.value = {
+    id: '',
+    headline: '',
+    description: '',
+    createdAt: new Date(),
+    status: 'OPEN',
+    type: 'BUG',
+    author: userData.value
+  }
 }
 
 const addRequest = async () => {
@@ -176,19 +218,17 @@ const columns = computed<TableColumn<Request>[]>(() => [
     accessorKey: 'author',
     header: t('request.author'),
     cell: ({ row }) => (row.getValue('author') as Participant).fullname
+  }, {
+    id: 'edit',
+    cell: ({ row }) =>
+      h(UButton, {
+        color: 'primary',
+        variant: 'subtle',
+        icon: 'i-lucide-edit',
+        onClick: () => openEditModal(row.original)
+      }, t('request.edit'))
   }
 ])
-
-const userData = ref<Participant | undefined | null>(undefined)
-const request = ref<Request> ({
-  id: '',
-  headline: '',
-  description: '',
-  createdAt: new Date(),
-  status: 'OPEN',
-  type: 'BUG',
-  author: userData.value
-})
 
 const fetchData = async () => {
   errorMessage.value = null
@@ -209,6 +249,12 @@ const fetchData = async () => {
   }
 }
 
+const openEditModal = (rowData: Request) => {
+  // Populate the modal with the selected row's data
+  request.value = { ...rowData }
+  modalOpen.value = true
+}
+
 const onSubmit = async () => {
   errorMessage.value = null
   successMessage.value = null
@@ -219,6 +265,6 @@ onMounted(() => {
 })
 
 definePageMeta({
-    middleware: ['authenticated']
+    middleware: ['authenticated', 'admin']
 })
 </script>
