@@ -56,6 +56,9 @@ public class Participant extends AbstractPersistentEntity {
     @Column(length = 15)
     private Status status = Status.ACTIVE;
 
+    @Column
+    private int maxAssignments = 0;
+
     @Column(length = 36)
     private String registrationKey;
 

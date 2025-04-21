@@ -1,13 +1,13 @@
-INSERT INTO participant (id, version, firstname, lastname, email, status, date_of_birth) VALUES
-    ('4711', 0, 'Donald', 'Duck', 'donald@angermanagementissues.com', 'ACTIVE', '1934-06-09'),
-    ('4712', 0, 'Mickey', 'Mouse', 'mickey@funwithtests.com', 'ACTIVE', '1928-11-18'),
-    ('4713', 0, 'Minnie', 'Mouse', 'minnie@funwithtests.com', 'ACTIVE', '1928-11-18'),
-    ('4714', 0, 'Goofy', 'Goof', 'goofy@funwithtests.com', 'ACTIVE', '1932-05-25'),
-    ('4715', 0, 'Daisy', 'Duck', 'daisy@funwithtests.com', 'ACTIVE', '1940-01-01'),
-    ('4716', 0, 'Pluto', 'Dog', 'pluto@funwithtests.com', 'ACTIVE', '1930-09-05'),
-    ('4717', 0, 'Scrooge', 'McDuck', 'scrooge@funwithtests.com', 'ACTIVE', '1947-12-22'),
-    ('4718', 0, 'Huey', 'Duck', 'huey@funwithtests.com', 'ACTIVE', '1937-10-17'),
-    ('4719', 0, 'Dewey', 'Duck', 'dewey@funwithtests.com', 'ACTIVE', '1937-10-17');
+INSERT INTO participant (id, version, firstname, lastname, email, status, date_of_birth, max_assignments) VALUES
+    ('4711', 0, 'Donald', 'Duck', 'donald@angermanagementissues.com', 'ACTIVE', '1934-06-09', 0),
+    ('4712', 0, 'Mickey', 'Mouse', 'mickey@funwithtests.com', 'ACTIVE', '1928-11-18', 0),
+    ('4713', 0, 'Minnie', 'Mouse', 'minnie@funwithtests.com', 'ACTIVE', '1928-11-18', 0),
+    ('4714', 0, 'Goofy', 'Goof', 'goofy@funwithtests.com', 'ACTIVE', '1932-05-25', 0),
+    ('4715', 0, 'Daisy', 'Duck', 'daisy@funwithtests.com', 'ACTIVE', '1940-01-01', 0),
+    ('4716', 0, 'Pluto', 'Dog', 'pluto@funwithtests.com', 'ACTIVE', '1930-09-05', 0),
+    ('4717', 0, 'Scrooge', 'McDuck', 'scrooge@funwithtests.com', 'ACTIVE', '1947-12-22', 0),
+    ('4718', 0, 'Huey', 'Duck', 'huey@funwithtests.com', 'ACTIVE', '1937-10-17', 0),
+    ('4719', 0, 'Dewey', 'Duck', 'dewey@funwithtests.com', 'ACTIVE', '1937-10-17', 0);
 
 INSERT INTO service (id, version, servicename) VALUES
     ('5111', 0, 'Funky Service'),

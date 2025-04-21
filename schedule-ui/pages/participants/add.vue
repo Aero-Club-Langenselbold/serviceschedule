@@ -50,6 +50,12 @@
         </div>
         <div class="mb-6">
           <label class="block text-sm font-bold mb-2">
+            {{ $t('participants.maxAssignments') }}
+          </label>
+          <UInput v-model="participant.maxAssignments" type="number" :placeholder="$t('participants.maxAssignments')" class="w-full" />
+        </div>
+        <div class="mb-6">
+          <label class="block text-sm font-bold mb-2">
             {{ $t('participants.services') }}
           </label>
           <USelect multiple v-model="serviceValue" value-key="id" :items="serviceItems" label-key="servicename" class="w-full" />
@@ -81,6 +87,7 @@ const participant = ref<Participant> ({
   email: '',
   dateOfBirth: new Date(),
   status: 'ACTIVE',
+  maxAssignments: 0,
   registrationKey: '',
   services: []
 })

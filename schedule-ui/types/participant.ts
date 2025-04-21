@@ -8,6 +8,7 @@ type Participant = {
     email: string;
     dateOfBirth: Date | undefined;
     status: 'ACTIVE' | 'INACTIVE';
+    maxAssignments: number;
     registrationKey: string;
     services: Service[] | undefined;
 }

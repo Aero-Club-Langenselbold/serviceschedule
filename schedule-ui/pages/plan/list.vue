@@ -86,7 +86,7 @@ const columns = computed<TableColumn<Plan>[]>(() => [
               onClick: () => navigateTo(`/plan/availabilities/${row.original.id}`),
               variant: hasServiceDates && !row.original.published ? 'solid' : 'soft',
               color: hasServiceDates ? row.original.published ? 'neutral' : 'primary' : 'error',
-              disabled: !hasServiceDates || row.original.published,
+              disabled: !hasServiceDates,
               icon: "i-lucide-users"
             })
           }),
@@ -101,7 +101,7 @@ const columns = computed<TableColumn<Plan>[]>(() => [
               variant: hasServiceDates && !row.original.published ? 'solid' : 'soft',
               color: hasServiceDates ? row.original.published ? 'neutral' : 'primary' : 'error',
               loading: generating.value,
-              disabled: !hasServiceDates || row.original.published,
+              disabled: !hasServiceDates,
               icon: "i-lucide-plane"
             })
           }),
@@ -117,6 +117,20 @@ const columns = computed<TableColumn<Plan>[]>(() => [
               color: row.original.published ? 'primary' : 'error',
               disabled: !row.original.published,
               icon: "i-lucide-book"
+            })
+          }),
+          h(UTooltip, {
+            'delay-duration': 0,
+            text: t('plan.statisticsInfo'),
+            class: 'ml-2'
+          }, {
+            default: () =>
+            h(UButton, {
+              onClick: () => navigateTo(`/plan/statistics/${row.original.id}`),
+              variant: row.original.published ? 'solid' : 'soft',
+              color: row.original.published ? 'primary' : 'error',
+              disabled: !row.original.published,
+              icon: "i-lucide-bar-chart-horizontal-big"
             })
           }),
           h(UTooltip, {

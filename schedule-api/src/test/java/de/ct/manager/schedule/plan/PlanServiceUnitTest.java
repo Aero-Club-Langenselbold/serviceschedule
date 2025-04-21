@@ -117,7 +117,7 @@ class PlanServiceUnitTest {
     @Test
     void testGeneratePlanWithoutParticipants() {
         // result should be an empty plan
-        PlanDummyData dummyData = new PlanDummyData(false);
+        PlanDummyData dummyData = new PlanDummyData(false, 0);
 
         when(planRepository.findById(dummyData.getPlan().getId())).thenReturn(Optional.of(dummyData.getPlan()));
         when(planRepository.save(any(Plan.class))).thenAnswer(i -> i.getArgument(0));
@@ -137,8 +137,8 @@ class PlanServiceUnitTest {
 
         // make sure each plan entry has the correct start and end time
         for (PlanEntry entry : plan.getEntries()) {
-            Assertions.assertThat(entry.getStartTime().toLocalTime().equals(LocalTime.of(10, 0)));
-            Assertions.assertThat(entry.getEndTime().toLocalTime().equals(LocalTime.of(12, 0)));
+            Assertions.assertThat(entry.getStartTime().toLocalTime()).isEqualTo(LocalTime.of(10, 0));
+            Assertions.assertThat(entry.getEndTime().toLocalTime()).isEqualTo(LocalTime.of(12, 0));
         }
     }
 
@@ -351,7 +351,7 @@ class PlanServiceUnitTest {
 
         byte[] file = planService.generatePlanPDF(plan.getId());
 
-        Assertions.assertThat(file.length).isGreaterThan(0);
+        Assertions.assertThat(file).hasSizeGreaterThan(0);
     }
 
     @Test
@@ -371,12 +371,59 @@ class PlanServiceUnitTest {
         }
     }
 
+    @Test
+    void testMaximumAssignmentsAreConsidered() {
+        // gernate plan without maximum assignments
+        Plan plan = generatePlan();
+
+        // get the number of assignments for participant 5
+        int assignments = plan.getEntries().stream()
+            .filter(entry -> entry.getParticipant().getFirstname().endsWith(".5"))
+            .toList()
+            .size();
+        Assertions.assertThat(assignments).isEqualTo(4);
+
+        // set maximum assignments to 2 and regnerate the plan
+        plan = generatePlan(false, 2);
+
+        // get the number of assignments for participant 5
+        assignments = plan.getEntries().stream()
+            .filter(entry -> entry.getParticipant().getFirstname().endsWith(".5"))
+            .toList()
+            .size();
+        Assertions.assertThat(assignments).isEqualTo(2);
+    }
+
+    @Test
+    void testGeneratePlanStatistics() {
+        Plan plan = generatePlan();
+
+        List<PlanStatistics> statistics = planService.getPlanStatistics(plan.getId());
+
+        Assertions.assertThat(statistics).isNotNull().hasSize(33); // number of participants
+
+        // participant with id 5 should have 4 assignments
+        Assertions.assertThat(statistics.stream()
+            .filter(stat -> stat.getParticipant().getFirstname().endsWith(".5"))
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Participant 5 not found"))
+            .getServiceCount()
+            .values()
+            .stream()
+            .mapToLong(Long::longValue)
+            .sum()).isEqualTo(4);
+    }
+
     private Plan generatePlan() {
         return generatePlan(false);
     }
 
     private Plan generatePlan(boolean withSpecialRequestDates) {
-        PlanDummyData dummyData = new PlanDummyData(withSpecialRequestDates);
+        return generatePlan(withSpecialRequestDates, 0);
+    }
+
+    private Plan generatePlan(boolean withSpecialRequestDates, int maxAssignments) {
+        PlanDummyData dummyData = new PlanDummyData(withSpecialRequestDates, maxAssignments);
 
         List<DateParticipantAvailability> participantAvailability = new ArrayList<>();
         for (ParticipantAssignment pa : dummyData.getParticipantAvailability()) {
@@ -431,17 +478,17 @@ class PlanServiceUnitTest {
         private List<Date> assignableDates;
         private List<ParticipantAssignment> participantAvailability;
 
-        public PlanDummyData(boolean withSpecialRequestDates) {
-            generateDummyData(withSpecialRequestDates);
+        public PlanDummyData(boolean withSpecialRequestDates, int maxAssignments) {
+            generateDummyData(withSpecialRequestDates, maxAssignments);
         }
 
-        private void generateDummyData(boolean withSpecialRequestDates) {
+        private void generateDummyData(boolean withSpecialRequestDates, int maxAssignments) {
             generateDummyPlan();
             generateDummyServices();
             generateDummyDates();
             generateDummyServiceDates();
 
-            assignDummyAvailabilities(generateDummyParticipants(), withSpecialRequestDates);
+            assignDummyAvailabilities(generateDummyParticipants(maxAssignments), withSpecialRequestDates);
         }
 
         private void generateDummyPlan() {
@@ -501,7 +548,7 @@ class PlanServiceUnitTest {
             Assertions.assertThat(this.assignableDates).hasSize(52);
         }
 
-        private List<Participant> generateDummyParticipants() {
+        private List<Participant> generateDummyParticipants(int maxAssignments) {
             List<Participant> participants = new ArrayList<>();
 
             for (int i = 0; i < 35; i++) {
@@ -512,6 +559,10 @@ class PlanServiceUnitTest {
                 participant.setEmail("john.doe." + i + "@funwithflags.com");
                 // create 5 minors (under the age of 18): Birthyear starting 13 years before 2020 increasing by 1 year each loop
                 participant.setDateOfBirth(Date.from(LocalDate.of(2020, Month.APRIL, 1).minusYears(13 + i).atStartOfDay(ZoneId.systemDefault()).toInstant()));
+
+                if (i == 5) { // only participant 5 will have a maximum assignment count
+                    participant.setMaxAssignments(maxAssignments);
+                }
                 participants.add(participant);
             }
 

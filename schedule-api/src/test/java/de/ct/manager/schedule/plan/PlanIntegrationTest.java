@@ -300,7 +300,7 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Sql(scripts = "classpath:scripts/test-duplicate-assignment.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(scripts = "classpath:scripts/delete-duplicate-assignment.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-    void testGeneratePlanWithoutDuplicateASsignments() throws Exception {
+    void testGeneratePlanWithoutDuplicateAssignments() {
         HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<Plan> plan = restTemplate.exchange(
@@ -327,4 +327,22 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
         Assertions.assertThat(uniqueEmailCount).isEqualTo(entryCount);
     }
 
+    @Test
+    @Sql(scripts = "classpath:scripts/test-plans.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(scripts = "classpath:scripts/delete-test-plans.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void testPlanStatistics() {
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
+
+        // fetch a plan
+        ResponseEntity<List<PlanStatistics>> response = restTemplate.exchange(
+            createURLWithPort("plan/") + "statistics/6000",
+            HttpMethod.GET,
+            entity,
+            new ParameterizedTypeReference<List<PlanStatistics>>() {});
+
+        Assertions.assertThat(response).isNotNull();
+        Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(response.getBody()).isNotNull();
+        Assertions.assertThat(response.getBody()).hasSize(3);
+    }
 }

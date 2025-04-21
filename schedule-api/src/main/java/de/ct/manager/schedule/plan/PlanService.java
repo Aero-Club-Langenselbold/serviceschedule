@@ -103,7 +103,7 @@ public class PlanService {
         // Identify service dates to delete
         List<ServiceDate> serviceDatesToDelete = existingServiceDates.stream()
             .filter(sd -> !newServiceDateIds.contains(sd.getId()))
-            .collect(Collectors.toList());
+            .toList();
 
         // Delete missing service dates
         serviceDatesToDelete.forEach(sd -> serviceDateRepository.deleteById(sd.getId()));
@@ -150,9 +150,10 @@ public class PlanService {
             .collect(Collectors.toSet());
 
         // Delete all DateParticipantAvailability entries for those participants for the given plan
-        dateParticipantAvailabilityRepository.findByPlan(plan).orElse(new ArrayList<>()).stream()
+        List<DateParticipantAvailability> existingDpaList = dateParticipantAvailabilityRepository.findByPlan(plan).orElse(new ArrayList<>()).stream()
             .filter(existingDpa -> participantIds.contains(existingDpa.getParticipant().getId()))
-            .forEach(existingDpa -> dateParticipantAvailabilityRepository.deleteById(existingDpa.getId()));
+            .toList();
+        dateParticipantAvailabilityRepository.deleteAll(existingDpaList);
 
         dpa.forEach(da -> {
             da.setPlan(plan);
@@ -178,7 +179,7 @@ public class PlanService {
 
         return dateParticipantAvailabilityRepository.findByPlan(plan).orElse(new ArrayList<>()).stream()
             .filter(dpa -> dpa.getParticipant().getId().equals(userId))
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public List<DateParticipantAvailability> getDateParticipantAvailability(String planId, String date, String serviceId) {
@@ -187,7 +188,7 @@ public class PlanService {
         return dateParticipantAvailabilityRepository.findByPlan(plan).orElse(new ArrayList<>()).stream()
             .filter(dpa -> dpa.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().toString().equals(date) &&
                 dpa.getParticipant().getServices().stream().anyMatch(service -> service.getId().equals(serviceId)))
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public List<ServiceDate> listServiceDatesByPlan(String planId) {
@@ -198,6 +199,27 @@ public class PlanService {
         }
 
         return serviceDateRepository.findByPlan(plan).orElse(new ArrayList<>());
+    }
+
+    public List<PlanStatistics> getPlanStatistics(String planId) {
+        Plan plan = planRepository.findById(planId).orElseThrow();
+
+        Map<Participant, Map<String, Long>> participantServiceAssignments = plan.getEntries().stream()
+            .collect(
+                Collectors.groupingBy(PlanEntry::getParticipant, Collectors.groupingBy(entry -> entry.getService().getId(), Collectors.counting()))
+            );
+
+        return participantServiceAssignments.entrySet().stream()
+            .map(participantEntry -> {
+                Participant participant = participantEntry.getKey();
+                Map<String, Long> serviceCounts = participantEntry.getValue();
+
+                PlanStatistics stat = new PlanStatistics();
+                stat.setParticipant(participant);
+                stat.setServiceCount(serviceCounts);
+                return stat;
+            })
+            .toList();
     }
 
     public byte[] generatePlanPDF(String id) {
@@ -270,7 +292,7 @@ public class PlanService {
         // Group plan entries by startTime, endTime, and service
         Map<LocalDateTime, List<PlanEntry>> groupedEntries = plan.getEntries().stream()
             .filter(planEntry -> planEntry.getService().getId().equals(serviceId))
-            .collect(Collectors.groupingBy(planEntry -> planEntry.getStartTime()));
+            .collect(Collectors.groupingBy(PlanEntry::getStartTime));
 
         groupedEntries = groupedEntries.entrySet().stream()
             .sorted(Map.Entry.comparingByKey())
@@ -318,6 +340,9 @@ public class PlanService {
             throw new IllegalArgumentException("No services and dates provided");
         }
 
+        // delete existing planEntries for this plan
+        plan.getEntries().clear();
+
         // if a participant has no availability set (they did not report any), all serviceDates are available by default
         generateAvailabilitiesForPlan(plan, serviceDates);
 
@@ -353,7 +378,7 @@ public class PlanService {
 
         planEntries.forEach(planEntry -> {
             serviceRepository.findById(planEntry.getService().getId())
-                    .ifPresentOrElse(service -> planEntry.setService(service), () -> {
+                    .ifPresentOrElse(planEntry::setService, () -> {
                         throw new IllegalArgumentException("Service not found");
                     });
             // delete plan entries for given date and service
@@ -547,7 +572,7 @@ public class PlanService {
 
         // pick candidates with special requests for this date first
         ParticipantAssignment selectedParticipant = possibleParticipants.stream()
-            .filter(pa -> pa.getDatesRequested().size() > 0 && pa.getDatesRequested().contains(serviceDate.getDate()))
+            .filter(pa -> !pa.getDatesRequested().isEmpty() && pa.getDatesRequested().contains(serviceDate.getDate()))
             .min(Comparator.comparingInt(pa -> pa.getDatesRequested().size()))
             .orElse(null);
 

@@ -52,7 +52,10 @@ public class ParticipantAssignment {
     }
 
     public boolean canAssignService(Service service) {
-        if (availableServices.contains(service) && datesAssigned.isEmpty()) {
+        if (participant.getMaxAssignments() > 0 && datesAssigned.size() >= participant.getMaxAssignments()) {
+            return false; // only return true if the participant has not reached their max assignments (0 max assignments means unlimited)
+        }
+        else if (availableServices.contains(service) && datesAssigned.isEmpty()) {
             return true;
         } else {
             return availableServices.get(this.nextServiceIndex).equals(service);

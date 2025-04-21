@@ -161,6 +161,26 @@ const columns = computed<TableColumn<Participant>[]>(() => {
           )
       }
     }, {
+      accessorKey: 'maxAssignments',
+      header: t('participants.maxAssignments'),
+      cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
+        const rowId = row.original.id
+        const isEditing = ref(editingState[rowId] || false)
+
+        return isEditing.value ?
+          h(UInput, {
+            modelValue: editedRows[rowId]?.maxAssignments || row.original.maxAssignments,
+            type: 'number',
+            'onUpdate:modelValue': (value: number) => {
+              if (!editedRows[rowId]) {
+                editedRows[rowId] = { ...row.original }
+              }
+              editedRows[rowId].maxAssignments = value
+            }
+          }) :
+          row.getValue('maxAssignments')
+      }
+    }, {
       accessorKey: 'services',
       header: t('participants.services'),
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
@@ -188,7 +208,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
   ]
 
   // push registration key only if the proper feature is disabled
-  if (!features.some(feature => feature.id === 'vfLoginFeature')) {
+  if (!features || !features.some(feature => feature.id === 'vfLoginFeature')) {
     baseColumns.push({
       accessorKey: 'registrationKey',
       header: t('participants.registrationKey'),

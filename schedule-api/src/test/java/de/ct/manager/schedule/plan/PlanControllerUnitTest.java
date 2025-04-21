@@ -155,6 +155,30 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest {
             .andExpect(status().isOk());
     }
 
+    @Test
+    void testGetPlanStatistics() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_ADMIN);
+
+        Plan plan = generatePlan(0);
+        PlanEntry planEntry1 = new PlanEntry();
+        planEntry1.setService(generateService(0));
+        planEntry1.setParticipant(generateParticipant(0));
+        planEntry1.setPlan(plan);
+        plan.getEntries().add(planEntry1);
+
+        when(planRepository.findById("4711")).thenReturn(Optional.of(plan));
+
+        mockMvc.perform(
+            get("/plan/statistics/4711")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ADMIN))
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$", hasSize(1)));
+    }
+
     private List<Plan> generateListResponse() {
         List<Plan> plans = new ArrayList<>();
 

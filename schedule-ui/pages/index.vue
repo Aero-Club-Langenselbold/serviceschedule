@@ -25,6 +25,7 @@ const userData = ref<Participant | null>({
   email: '',
   dateOfBirth: new Date(),
   status: 'INACTIVE',
+  maxAssignments: 0,
   registrationKey: '',
   services: []
 })

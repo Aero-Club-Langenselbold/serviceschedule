@@ -21,7 +21,7 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo Starting Docker Compose...
-call docker compose up -d
+echo call docker compose up -d
 if %ERRORLEVEL% NEQ 0 (
     echo Docker Compose failed to start. Exiting.
     exit /b %ERRORLEVEL%

@@ -233,6 +233,7 @@ const columns = computed<TableColumn<PlanTableEntryRow>[]>(() => [
               email: '',
               dateOfBirth: new Date(),
               status: 'INACTIVE',
+              maxAssignments: 0,
               registrationKey: '',
               services: []
             },

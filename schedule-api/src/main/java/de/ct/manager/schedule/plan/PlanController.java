@@ -18,6 +18,7 @@ import de.ct.manager.schedule.participant.DateParticipantAvailability;
 import de.ct.manager.schedule.service.ServiceDate;
 
 
+
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/plan")
@@ -121,4 +122,11 @@ public class PlanController {
     public ResponseEntity<List<DateParticipantAvailability>> getAllParticipantAvailability(@PathVariable String planId, @PathVariable String serviceId, @PathVariable String date) {
         return ResponseEntity.ok(planService.getDateParticipantAvailability(planId, date, serviceId));
     }
+
+    @GetMapping("/statistics/{planId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<PlanStatistics>> getPlanStatistics(@PathVariable String planId) {
+        return ResponseEntity.ok(planService.getPlanStatistics(planId));
+    }
+
 }

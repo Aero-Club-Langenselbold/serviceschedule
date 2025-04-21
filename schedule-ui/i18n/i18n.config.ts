@@ -89,9 +89,11 @@ export default defineI18nConfig(() => ({
         actions: 'Actions',
         firstname: 'First Name',
         lastname: 'Last Name',
+        fullname: 'Name',
         email: 'Email',
         dateOfBirth: 'Date of Birth',
         status: 'Status',
+        maxAssignments: 'Max. Assignments/Service Plan',
         registrationKey: 'Registration Key',
         services: 'Assigned Services',
         save: 'Save',
@@ -150,6 +152,7 @@ export default defineI18nConfig(() => ({
         pdfInfo: 'Download as PDF',
         csvInfo: 'Download as CSV',
         generatedDetailsInfo: 'Details of the final service plan',
+        statisticsInfo: 'View statistics of this plan',
         editDetails: 'Details',
         saveSuccess: 'Service plan saved successfully',
         saveError: 'Error saving service plan',
@@ -170,6 +173,9 @@ export default defineI18nConfig(() => ({
             available: 'Available (not saved yet)',
             requested: 'Requested (not saved yet)'
           }
+        },
+        statistics: {
+          totalCount: 'Gesamtanzahl Dienste'
         }
       },
       availabilities: {
@@ -332,9 +338,11 @@ export default defineI18nConfig(() => ({
         actions: 'Aktionen',
         firstname: 'Vorname',
         lastname: 'Nachname',
+        fullname: 'Name',
         email: 'Email',
         dateOfBirth: 'Geburtsdatum',
         status: 'Status',
+        maxAssignments: 'Maximale Dienste/Dienstplan',
         registrationKey: 'Registrierungsschlüssel',
         services: 'Zugeordnete Dienste',
         save: 'Speichern',
@@ -391,6 +399,7 @@ export default defineI18nConfig(() => ({
         pdfInfo: 'Download als PDF',
         csvInfo: 'Download als CSV',
         generatedDetailsInfo: 'Details des finalen Dienstplans',
+        statisticsInfo: 'Statistiken dieses Plans einsehen',
         generateInfo: 'Dienstplan final generieren',
         deleteInfo: 'Dienstplan löschen',
         editDetails: 'Details',
@@ -413,6 +422,9 @@ export default defineI18nConfig(() => ({
             available: 'Verfügbar (noch nicht gespeichert)',
             requested: 'Terminwunsch (noch nicht gespeichert)'
           }
+        },
+        statistics: {
+          totalCount: 'Gesamtanzahl Dienste'
         }
       },
       availabilities: {
