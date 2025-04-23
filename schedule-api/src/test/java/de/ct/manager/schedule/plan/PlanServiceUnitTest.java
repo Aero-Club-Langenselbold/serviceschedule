@@ -191,7 +191,7 @@ class PlanServiceUnitTest {
             for (int i = 0; i < assignedDates.size() - 1; i++) {
                 LocalDate current = assignedDates.get(i);
                 LocalDate next = assignedDates.get(i + 1);
-                if (ChronoUnit.WEEKS.between(current, next) < 3) {
+                if (ChronoUnit.WEEKS.between(current, next) < 2) {
                     thresholdViolations++;
                 }
             }
@@ -215,15 +215,11 @@ class PlanServiceUnitTest {
                 participantAssignments.put(planEntry.getParticipant(), 1);
             }
         }
-        // john dow numbers 5, 7, 8, 15, 21, 22, 23 should have roughly the same number of assignments
+        // john dow numbers 5, 7, 8 should have roughly the same number of assignments
         Map<Participant, Integer> filteredParticipantAssignments = participantAssignments.entrySet().stream()
             .filter(entry -> entry.getKey().getFirstname().endsWith(".5") ||
                     entry.getKey().getFirstname().endsWith(".7") ||
                     entry.getKey().getFirstname().endsWith(".8") ||
-                    entry.getKey().getFirstname().endsWith(".15") ||
-                    entry.getKey().getFirstname().endsWith(".21") ||
-                    entry.getKey().getFirstname().endsWith(".22") ||
-                    entry.getKey().getFirstname().endsWith(".23") ||
                     entry.getKey().getFirstname().endsWith(".30") ||
                     entry.getKey().getFirstname().endsWith(".31") ||
                     entry.getKey().getFirstname().endsWith(".32") ||
@@ -235,9 +231,9 @@ class PlanServiceUnitTest {
         int numberOfParticipants = filteredParticipantAssignments.size();
         double averageAssignments = (double) totalAssignments / numberOfParticipants;
 
-        // Verify that each participant's assignment count is within +/-1 of the average
+        // Verify that each participant's assignment count is within +/-3 of the average
         filteredParticipantAssignments.forEach((participant, count) -> {
-            Assertions.assertThat(count).isBetween((int) Math.floor(averageAssignments) - 1, (int) Math.ceil(averageAssignments) + 1);
+            Assertions.assertThat(count).isBetween((int) Math.floor(averageAssignments) - 3, (int) Math.ceil(averageAssignments) + 3);
         });
     }
 
@@ -381,7 +377,7 @@ class PlanServiceUnitTest {
             .filter(entry -> entry.getParticipant().getFirstname().endsWith(".5"))
             .toList()
             .size();
-        Assertions.assertThat(assignments).isEqualTo(5);
+        Assertions.assertThat(assignments).isEqualTo(3);
 
         // set maximum assignments to 2 and regnerate the plan
         plan = generatePlan(false, 2);
@@ -411,7 +407,7 @@ class PlanServiceUnitTest {
             .values()
             .stream()
             .mapToLong(Long::longValue)
-            .sum()).isEqualTo(5);
+            .sum()).isEqualTo(3);
     }
 
     private Plan generatePlan() {

@@ -603,7 +603,7 @@ public class PlanService {
 
         // pick the participant with the least possible assignment dates
         // and fewest assignments so far
-        log.debug("Selected participant as requested {}", selectedParticipant == null ? "null" : selectedParticipant.getParticipant().getEmail());
+        log.trace("Selected participant as requested {}", selectedParticipant == null ? "null" : selectedParticipant.getParticipant().getEmail());
         if (selectedParticipant == null) {
             selectedParticipant = availableParticipants.stream()
                 .min(Comparator.comparingInt((ParticipantAssignment pa) -> pa.getDatesAssigned().size())
@@ -614,7 +614,7 @@ public class PlanService {
         if (selectedParticipant.assignDate(serviceDate.getDate())) {
             planEntry.setParticipant(selectedParticipant.getParticipant());
             dateAssignment.getAssignedParticipants().add(selectedParticipant.getParticipant());
-            log.debug("Selected participant: {}, assignments available: {}, assignments made: {}", selectedParticipant.getParticipant().getEmail(), selectedParticipant.getDatesAvailable().size(), selectedParticipant.getDatesAssigned().size());
+            log.trace("Selected participant: {}, assignments available: {}, assignments made: {}", selectedParticipant.getParticipant().getEmail(), selectedParticipant.getDatesAvailable().size(), selectedParticipant.getDatesAssigned().size());
 
             // remove all other minors from availability list if one minor is assigned
             if (selectedParticipant.getParticipant().getAgeAtDate(serviceDate.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()) < ADULT_AGE) {
