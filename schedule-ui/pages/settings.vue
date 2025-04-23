@@ -25,7 +25,7 @@
           <USelect v-model="selectedStateId" value-key="id" :items="availableStates" class="w-full" />
         </div>
         <div v-if="selectedStateId" class="text-center mt-4">
-          <UButton trailing-icon="i-lucide-arrow-right" size="md" :label="$t('settings.save')" type="submit" />
+          <UButton trailing-icon="i-lucide-arrow-right" size="md" :label="$t('settings.save')" type="submit" :loading="loading" />
         </div>
       </form>
     </div>
@@ -37,8 +37,10 @@ const { t } = useI18n()
 const errorMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
 import type { Country } from '~/types/country'
-import type { State } from '~/types/state'
 import type { SelectedState } from '~/types/selectedState'
+import type { State } from '~/types/state'
+
+const loading = ref(false)
 
 type DisplayCountry = {
   id: string
@@ -107,6 +109,7 @@ const fetchAvailableStates = async (countryId: string) => {
 const onSubmit = async () => {
   errorMessage.value = null
   successMessage.value = null
+  loading.value = true
 
   if (selectedCountryId.value && selectedStateId.value) {
     const selectedStateData = {
@@ -121,12 +124,16 @@ const onSubmit = async () => {
     .then(async (response) => {
       if (response.status.value === "error") {
         errorMessage.value = 'An error occurred while saving the data.'
+      } else {
         successMessage.value = t('settings.success')
         errorMessage.value = null
       }
     })
     .catch((error) => {
       errorMessage.value = 'An error occurred while saving the data.'
+    })
+    .finally(() => {
+      loading.value = false
     })
   }
 }

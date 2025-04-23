@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,6 +22,12 @@ public class RequestService {
     public Request createOrUpdateRequest(Request request) {
         if (request.getId() == null || request.getId().isEmpty()) {
             request.setId(UUID.randomUUID().toString());
+        } else {
+            Request existingRequest = requestRepository.findById(request.getId()).orElse(null);
+            if (existingRequest != null) {
+                request.setAuthor(existingRequest.getAuthor());
+                request.setCreatedAt(existingRequest.getCreatedAt());
+            }
         }
         return requestRepository.save(request);
     }
@@ -34,7 +41,7 @@ public class RequestService {
     }
 
     public List<Request> getAllRequests() {
-        return requestRepository.findAll();
+        return requestRepository.findAll(Sort.by("createdAt").descending());
     }
 
     public Page<Request> getRequestsByPage(Pageable pageable) {

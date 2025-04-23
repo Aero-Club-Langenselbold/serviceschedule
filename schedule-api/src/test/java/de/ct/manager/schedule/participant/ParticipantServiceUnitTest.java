@@ -19,6 +19,7 @@ import org.mockito.Mockito;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -52,7 +53,7 @@ class ParticipantServiceUnitTest {
 
     @Test
     void testLoadParticipantsList() {
-        when(participantRepository.findAll()).thenReturn(generateListResponse());
+        when(participantRepository.findAll(Sort.by("lastname").ascending().and(Sort.by("firstname").ascending()))).thenReturn(generateListResponse());
 
         List<Participant> result = participantService.listParticipants();
 

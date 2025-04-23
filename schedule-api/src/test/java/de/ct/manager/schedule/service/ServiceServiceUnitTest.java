@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ExtendWith(SpringExtension.class)
@@ -27,7 +28,7 @@ class ServiceServiceUnitTest {
 
     @Test
     void testLoadServicesList() {
-        when(serviceRepository.findAll()).thenReturn(generateListResponse());
+        when(serviceRepository.findAll(Sort.by("servicename").ascending())).thenReturn(generateListResponse());
 
         List<Service> result = serviceService.listServices();
 

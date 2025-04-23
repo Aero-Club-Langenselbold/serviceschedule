@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.web.SortDefault;
 import org.springframework.http.ResponseEntity;
@@ -33,11 +34,11 @@ public class RequestController {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<List<Request>> listRequests() {
         return ResponseEntity.ok(requestService.getAllRequests());
-    }
+        }
 
-    @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    public ResponseEntity<Page<Request>> getRequestsByPage(@SortDefault(sort = "createdAt") @PageableDefault(size = 20) final Pageable pageable) {
+        @GetMapping("/page")
+        @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+        public ResponseEntity<Page<Request>> getRequestsByPage(@SortDefault(sort = "createdAt", direction = Direction.DESC) @PageableDefault(size = 20) final Pageable pageable) {
         return ResponseEntity.ok(requestService.getRequestsByPage(pageable));
     }
 

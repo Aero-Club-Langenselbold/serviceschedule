@@ -5,6 +5,9 @@
   <div class="flex items-start justify-center min-h-screen mt-6 mb-6">
     <div class="p-8 rounded-4xl shadow-md w-full max-w-max border-2">
       <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('plan.statisticsInfo') }}</h2>
+      <UButton color="neutral" variant="subtle" icon="i-lucide-arrow-left" @click="navigateTo('/plan/list')" class="mr-4">
+        {{ $t('plan.backToList') }}
+      </UButton>
       <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
 
       <Spinner v-if="loading" />

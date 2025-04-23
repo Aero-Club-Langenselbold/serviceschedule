@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ParticipantAssignment {
 
-    private static final long ASSIGNMENT_THRESHOLD = 21L * 24 * 60 * 60 * 1000; // 21 days
+    private static final long ASSIGNMENT_THRESHOLD = 14L * 24 * 60 * 60 * 1000; // 14 days
 
     private Participant participant;
     private List<Date> datesRequested = new CopyOnWriteArrayList<>();
@@ -38,7 +38,7 @@ public class ParticipantAssignment {
     }
 
     public boolean assignDate(Date date) {
-        if (!datesAvailable.contains(date) && !datesRequested.contains(date)) {
+        if (!datesAvailable.contains(date) && !datesRequested.contains(date) && !datesWithinAssignmentThreshold.contains(date)) {
             return false;
         }
 
@@ -52,7 +52,7 @@ public class ParticipantAssignment {
     }
 
     public boolean canAssignService(Service service) {
-        if (participant.getMaxAssignments() > 0 && datesAssigned.size() >= participant.getMaxAssignments()) {
+        if (availableServices.isEmpty() || (participant.getMaxAssignments() > 0 && datesAssigned.size() >= participant.getMaxAssignments())) {
             return false; // only return true if the participant has not reached their max assignments (0 max assignments means unlimited)
         }
         else if (availableServices.contains(service) && datesAssigned.isEmpty()) {
@@ -62,8 +62,24 @@ public class ParticipantAssignment {
         }
     }
 
+    /**
+     * when all dates for a specific service are assigned, that service need to be removed for every participant
+     * @param service
+     */
+    public void removeFromAvailableServices(Service service) {
+        if (availableServices.isEmpty()) {
+            return;
+        }
+        if (availableServices.contains(service)) {
+            availableServices.remove(service);
+            determineNextService();
+        }
+    }
+
     private void determineNextService() {
-        if (nextServiceIndex + 1 >= availableServices.size()) {
+        if (availableServices.isEmpty()) {
+            return;
+        } else  if (nextServiceIndex + 1 >= availableServices.size()) {
             nextServiceIndex = 0;
         } else {
             nextServiceIndex++;

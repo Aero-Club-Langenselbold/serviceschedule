@@ -14,6 +14,7 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,7 +31,7 @@ public class ParticipantService {
     }
 
     public List<Participant> listParticipants() {
-        return participantRepository.findAll();
+        return participantRepository.findAll(Sort.by("lastname").ascending().and(Sort.by("firstname").ascending()));
     }
 
     public Page<Participant> listParticipants(Pageable pageable) {

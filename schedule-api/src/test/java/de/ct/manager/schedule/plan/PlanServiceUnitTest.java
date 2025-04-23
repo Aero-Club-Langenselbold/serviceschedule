@@ -381,7 +381,7 @@ class PlanServiceUnitTest {
             .filter(entry -> entry.getParticipant().getFirstname().endsWith(".5"))
             .toList()
             .size();
-        Assertions.assertThat(assignments).isEqualTo(4);
+        Assertions.assertThat(assignments).isEqualTo(5);
 
         // set maximum assignments to 2 and regnerate the plan
         plan = generatePlan(false, 2);
@@ -411,7 +411,7 @@ class PlanServiceUnitTest {
             .values()
             .stream()
             .mapToLong(Long::longValue)
-            .sum()).isEqualTo(4);
+            .sum()).isEqualTo(5);
     }
 
     private Plan generatePlan() {

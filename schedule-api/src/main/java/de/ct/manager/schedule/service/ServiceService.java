@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Sort;
+
 @org.springframework.stereotype.Service
 public class ServiceService {
 
@@ -16,7 +18,7 @@ public class ServiceService {
     }
 
     public List<Service> listServices() {
-        return serviceRepository.findAll();
+        return serviceRepository.findAll(Sort.by("servicename").ascending());
     }
 
     public Service getService(String id) {

@@ -8,6 +8,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -344,5 +346,31 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
         Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         Assertions.assertThat(response.getBody()).isNotNull();
         Assertions.assertThat(response.getBody()).hasSize(3);
+    }
+
+    @Test
+    @Sql(scripts = "classpath:scripts/test-even-distribution.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(scripts = "classpath:scripts/delete-duplicate-assignment.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void testEvenDistribution() {
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
+
+        ResponseEntity<Plan> plan = restTemplate.exchange(
+            createURLWithPort("plan/") + "generate/5ef2162a-25c7-4f1c-beaa-f78c6e9907f7", // plan id as in test-even-distribution.sql
+            HttpMethod.POST,
+            entity,
+            new ParameterizedTypeReference<Plan>() {});
+
+        Assertions.assertThat(plan.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(plan.getBody()).isNotNull();
+
+        // bug report: on April 22th, 2025 one person has way too many assignments
+        Plan p = plan.getBody();
+        Map<String, Long> participantEntryCounts = p.getEntries().stream()
+            .collect(Collectors.groupingBy(entry -> entry.getParticipant().getEmail(), Collectors.counting()));
+
+        long maxEntries = participantEntryCounts.values().stream().max(Long::compare).orElse(0L);
+        long minEntries = participantEntryCounts.values().stream().min(Long::compare).orElse(0L);
+
+        Assertions.assertThat(maxEntries - minEntries).isLessThanOrEqualTo(3);
     }
 }

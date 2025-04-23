@@ -219,6 +219,7 @@ public class PlanService {
                 stat.setServiceCount(serviceCounts);
                 return stat;
             })
+            .sorted(Comparator.comparing(stat -> stat.getParticipant().getFullname()))
             .toList();
     }
 
@@ -350,14 +351,22 @@ public class PlanService {
 
         Set<PlanEntry> planEntries = new HashSet<>();
         List<DateAssignment> dateAssignments = generateDateAssignments(serviceDates, availability);
+        List<Service> services = serviceRepository.findAll();
+
+        // to avoid wanting to assign services that are not even in the plan, remove those from the participants
+        services.forEach(service -> {
+            if (!doesServiceHaveAvailableDates(service, dateAssignments)) {
+                removeFromAvailableServices(availability, service);
+            }
+        });
 
         while (dateAssignments.stream().anyMatch(da -> da.getPossibleAssignees() > 0 || da.getAssignedParticipants().size() < da.getServiceDate().getMandatoryAssignees())) {
             try {
                 // assign the next date given the smallest number of possible assignees
                 planEntries.addAll(assignDate(availability, dateAssignments).orElseThrow(() ->
                     new IllegalArgumentException("Plan Entry is empty")));
-                log.debug("Assignment made");
-                dateAssignments.forEach(da -> log.debug(da.toString()));
+                log.trace("Assignment made");
+                dateAssignments.forEach(da -> log.trace(da.toString()));
             } catch (IllegalArgumentException e) {
                 log.error("No assignment possible for date: {}", e.getMessage());
                 break;
@@ -449,7 +458,23 @@ public class PlanService {
         if (pe.isEmpty()) {
             return Optional.empty();
         }
+
+        if (!doesServiceHaveAvailableDates(da.getServiceDate().getService(), dateAssignments)) {
+            removeFromAvailableServices(availability, da.getServiceDate().getService());
+        }
+
         return Optional.of(pe);
+    }
+
+    private boolean doesServiceHaveAvailableDates(Service service, List<DateAssignment> dateAssignments) {
+        return dateAssignments.stream()
+            .anyMatch(da -> da.getServiceDate().getService().getId().equals(service.getId()) && da.getPossibleAssignees() > 0);
+    }
+
+    private void removeFromAvailableServices(List<ParticipantAssignment> availability, Service service) {
+        for (ParticipantAssignment pa : availability) {
+            pa.removeFromAvailableServices(service);
+        }
     }
 
     private List<DateAssignment> generateDateAssignments(List<ServiceDate> serviceDates, List<ParticipantAssignment> availability) {
@@ -556,12 +581,12 @@ public class PlanService {
             return false;
         }
 
-        log.debug("Participant {} may be assigned to date {}, age at date: {}", pa.getParticipant().getEmail(), dateAssignment.getServiceDate().getDate(), pa.getParticipant().getAgeAtDate(dateAssignment.getServiceDate().getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()));
+        log.trace("Participant {} may be assigned to date {}, age at date: {}", pa.getParticipant().getEmail(), dateAssignment.getServiceDate().getDate(), pa.getParticipant().getAgeAtDate(dateAssignment.getServiceDate().getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()));
 
         return true;
     }
 
-    private PlanEntry generatePlanEntry(ServiceDate serviceDate, List<ParticipantAssignment> possibleParticipants, DateAssignment dateAssignment) {
+    private PlanEntry generatePlanEntry(ServiceDate serviceDate, List<ParticipantAssignment> availableParticipants, DateAssignment dateAssignment) {
         PlanEntry planEntry = new PlanEntry();
         planEntry.setService(serviceDate.getService());
 
@@ -571,30 +596,32 @@ public class PlanService {
         planEntry.setEndTime(localDate.atTime(serviceDate.getEndTime()));
 
         // pick candidates with special requests for this date first
-        ParticipantAssignment selectedParticipant = possibleParticipants.stream()
+        ParticipantAssignment selectedParticipant = availableParticipants.stream()
             .filter(pa -> !pa.getDatesRequested().isEmpty() && pa.getDatesRequested().contains(serviceDate.getDate()))
             .min(Comparator.comparingInt(pa -> pa.getDatesRequested().size()))
             .orElse(null);
 
         // pick the participant with the least possible assignment dates
         // and fewest assignments so far
+        log.debug("Selected participant as requested {}", selectedParticipant == null ? "null" : selectedParticipant.getParticipant().getEmail());
         if (selectedParticipant == null) {
-            selectedParticipant = possibleParticipants.stream()
+            selectedParticipant = availableParticipants.stream()
                 .min(Comparator.comparingInt((ParticipantAssignment pa) -> pa.getDatesAssigned().size())
                     .thenComparingInt(pa -> pa.getDatesAvailable().size()))
                 .orElseThrow(() -> new IllegalArgumentException("No available participants"));
         }
 
-        planEntry.setParticipant(selectedParticipant.getParticipant());
+        if (selectedParticipant.assignDate(serviceDate.getDate())) {
+            planEntry.setParticipant(selectedParticipant.getParticipant());
+            dateAssignment.getAssignedParticipants().add(selectedParticipant.getParticipant());
+            log.debug("Selected participant: {}, assignments available: {}, assignments made: {}", selectedParticipant.getParticipant().getEmail(), selectedParticipant.getDatesAvailable().size(), selectedParticipant.getDatesAssigned().size());
 
-        selectedParticipant.assignDate(serviceDate.getDate());
-        dateAssignment.getAssignedParticipants().add(selectedParticipant.getParticipant());
-
-        // remove all other minors from availability list if one minor is assigned
-        if (selectedParticipant.getParticipant().getAgeAtDate(serviceDate.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()) < ADULT_AGE) {
-            possibleParticipants.removeIf(pa -> pa.getParticipant().getAgeAtDate(serviceDate.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()) < ADULT_AGE);
+            // remove all other minors from availability list if one minor is assigned
+            if (selectedParticipant.getParticipant().getAgeAtDate(serviceDate.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()) < ADULT_AGE) {
+                availableParticipants.removeIf(pa -> pa.getParticipant().getAgeAtDate(serviceDate.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()) < ADULT_AGE);
+            }
+            availableParticipants.remove(selectedParticipant);
         }
-        possibleParticipants.remove(selectedParticipant);
 
         return planEntry;
     }

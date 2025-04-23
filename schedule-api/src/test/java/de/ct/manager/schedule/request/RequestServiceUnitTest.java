@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ExtendWith(SpringExtension.class)
@@ -27,7 +28,7 @@ class RequestServiceUnitTest {
 
     @Test
     void testLoadRequestList() {
-        when(requestRepository.findAll()).thenReturn(generateListResponse());
+        when(requestRepository.findAll(Sort.by("createdAt").descending())).thenReturn(generateListResponse());
 
         List<Request> result = requestService.getAllRequests();
 

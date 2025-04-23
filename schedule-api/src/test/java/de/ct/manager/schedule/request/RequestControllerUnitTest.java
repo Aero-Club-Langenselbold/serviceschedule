@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -40,7 +41,7 @@ public class RequestControllerUnitTest extends AbstractControllerUnitTest {
     void testListRequests() throws Exception {
         mockValidAuthentication(UserRole.ROLE_ADMIN);
 
-        when(requestRepository.findAll()).thenReturn(generateListResponse());
+        when(requestRepository.findAll(Sort.by("createdAt").descending())).thenReturn(generateListResponse());
 
         mockMvc.perform(
             get("/request/list")
