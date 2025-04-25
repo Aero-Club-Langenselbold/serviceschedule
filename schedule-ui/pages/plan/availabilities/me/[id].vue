@@ -137,33 +137,35 @@ const savePreferences = async () => {
   successMessage.value = null
   saving.value = true
 
-  try {
-    const payload = data.value
-      .filter(row => row.currentState === 'yes' || row.currentState === 'please')
-      .map(row => {
-        return {
-          date: new Date(row.date),
-          requested: row.currentState === 'please',
-          participant: {
-            id: row.participant.id
-          },
-          plan: {
-            id: id
-          }
+  const payload = data.value
+    .filter(row => row.currentState === 'yes' || row.currentState === 'please')
+    .map(row => {
+      return {
+        date: new Date(row.date),
+        requested: row.currentState === 'please',
+        participant: {
+          id: row.participant.id
+        },
+        plan: {
+          id: id
         }
-      })
+      }
+    })
 
+  try {
     const { error } = await useAPI('/plan/participantAvailability/save/' + id, { method: 'POST', body: JSON.stringify(payload) })
-    if (error.value) {
+    if (error.value?.statusCode == 400) {
+      errorMessage.value = t(error.value.data.message) + error.value.data.value
+    } else if (error.value) {
       errorMessage.value = 'An error occurred while saving the preferences.'
     } else {
       successMessage.value = 'Preferences saved successfully.'
+      fetchData()
     }
   } catch (err) {
     errorMessage.value = 'An error occurred while saving the preferences.'
   } finally {
     saving.value = false
-    fetchData()
   }
 }
 

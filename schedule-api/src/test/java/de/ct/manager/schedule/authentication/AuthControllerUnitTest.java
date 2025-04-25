@@ -18,13 +18,18 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import de.ct.manager.schedule.participant.Participant;
+import de.ct.manager.schedule.settings.SettingsService;
 import de.ct.manager.schedule.user.UserRole;
 import de.ct.manager.schedule.util.AbstractControllerUnitTest;
 
 @WebMvcTest(AuthController.class)
 public class AuthControllerUnitTest extends AbstractControllerUnitTest {
+
+    @MockitoBean
+    private SettingsService settingsService;
 
     @Test
     void testSignInSuccess() throws Exception {
@@ -32,7 +37,7 @@ public class AuthControllerUnitTest extends AbstractControllerUnitTest {
 
         mockMvc.perform(
             post("/auth/signin")
-                .content(objectMapper.writeValueAsString(new LoginRequest(TEST_ADMIN, TEST_ADMIN_PW, null)))
+                .content(objectMapper.writeValueAsString(new LoginRequest(TEST_ADMIN, TEST_ADMIN_PW, null, null)))
                 .contentType("application/json")
             )
             .andDo(print())
@@ -53,7 +58,7 @@ public class AuthControllerUnitTest extends AbstractControllerUnitTest {
 
         mockMvc.perform(
             post("/auth/signin")
-                .content(objectMapper.writeValueAsString(new LoginRequest(TEST_ADMIN, "I'm_pretty_wrong", null)))
+                .content(objectMapper.writeValueAsString(new LoginRequest(TEST_ADMIN, "I'm_pretty_wrong", null, null)))
                 .contentType("application/json")
             )
             .andDo(print())

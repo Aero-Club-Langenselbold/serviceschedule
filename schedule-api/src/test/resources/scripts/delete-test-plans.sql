@@ -5,3 +5,4 @@ DELETE FROM participant_service;
 DELETE FROM participant;
 DELETE FROM service;
 DELETE FROM plan;
+DELETE FROM common_settings;

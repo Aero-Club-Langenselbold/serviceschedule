@@ -32,12 +32,18 @@ import de.ct.manager.schedule.service.Service;
 import de.ct.manager.schedule.service.ServiceDate;
 import de.ct.manager.schedule.service.ServiceDateRepository;
 import de.ct.manager.schedule.service.ServiceRepository;
+import de.ct.manager.schedule.settings.CommonSettings;
+import de.ct.manager.schedule.settings.CommonSettingsRepository;
+import de.ct.manager.schedule.settings.SettingConstants;
+import de.ct.manager.schedule.settings.SettingsRepository;
+import de.ct.manager.schedule.settings.SettingsService;
 import de.ct.manager.schedule.user.UserRole;
 import de.ct.manager.schedule.util.AbstractControllerUnitTest;
 
 @WebMvcTest(PlanController.class)
 @Import({
-    PlanService.class
+    PlanService.class,
+    SettingsService.class
 })
 class PlanControllerUnitTest extends AbstractControllerUnitTest {
 
@@ -52,6 +58,12 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest {
 
     @MockitoBean
     private DateParticipantAvailabilityRepository dateParticipantAvailabilityRepository;
+
+    @MockitoBean
+    private SettingsRepository settingsRepository;
+
+    @MockitoBean
+    private CommonSettingsRepository commonSettingsRepository;
 
     @Test
     void testListPlans() throws Exception {
@@ -126,6 +138,7 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest {
         when(participantRepository.findById("4714")).thenReturn(Optional.of(p1));
         when(participantRepository.findById("4715")).thenReturn(Optional.of(p2));
         when(dateParticipantAvailabilityRepository.findByPlan(plan)).thenReturn(Optional.of(generatePlanDetails(s1, s2, p1, p2)));
+        when(commonSettingsRepository.findSettingByKey(SettingConstants.MIN_PARTICIPATION_COUNT)).thenReturn(Optional.of(new CommonSettings(SettingConstants.MIN_PARTICIPATION_COUNT, "1")));
 
         // when a plan is saved return the plan that was saved
         when(planRepository.save(any(Plan.class))).thenAnswer(invocation -> invocation.getArgument(0));

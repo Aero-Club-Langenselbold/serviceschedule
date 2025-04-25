@@ -3,7 +3,7 @@
     <NavMenu />
   </div>
   <div class="flex items-center justify-center min-h-screen">
-    <div class="p-8 rounded-4xl shadow-md w-full max-w-md border-2">
+    <div class="p-8 rounded-4xl shadow-md w-full max-w-3/12 border-2">
       <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('settings.title') }}</h2>
       <form @submit.prevent="onSubmit">
         <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
@@ -24,6 +24,9 @@
           </label>
           <USelect v-model="selectedStateId" value-key="id" :items="availableStates" class="w-full" />
         </div>
+        <div class="mb-6">
+          <UTable :data="data" :columns="columns" class="flex-1" />
+        </div>
         <div v-if="selectedStateId" class="text-center mt-4">
           <UButton trailing-icon="i-lucide-arrow-right" size="md" :label="$t('settings.save')" type="submit" :loading="loading" />
         </div>
@@ -33,12 +36,15 @@
 </template>
 
 <script lang="ts" setup>
-const { t } = useI18n()
-const errorMessage = ref<string | null>(null)
-const successMessage = ref<string | null>(null)
+import type { TableColumn } from '@nuxt/ui'
 import type { Country } from '~/types/country'
 import type { SelectedState } from '~/types/selectedState'
 import type { State } from '~/types/state'
+const { t } = useI18n()
+const errorMessage = ref<string | null>(null)
+const successMessage = ref<string | null>(null)
+
+const UInput = resolveComponent('UInput')
 
 const loading = ref(false)
 
@@ -55,19 +61,44 @@ const selectedCountryId = ref<string | undefined>(undefined)
 const selectedStateId = ref<string | undefined>(undefined)
 const availableCountries = ref<DisplayCountry[]>([])
 const availableStates = ref<DisplayState[]>([])
+const data = ref<any[]>([])
+
+const columns = computed<TableColumn<any>[]>(() => [
+  {
+    accessorKey: 'settingsKey',
+    header: t('settings.name'),
+    cell: ({ row }) => {
+      return t('settings.keys.' + row.original.settingKey)
+    }
+  }, {
+    accessorKey: 'settingsValue',
+    header: t('settings.value'),
+    cell: ({ row }) => {
+      return h(UInput, {
+        modelValue: row.original.settingValue,
+        'onUpdate:modelValue': (value: string) => {
+          data.value[row.index].settingValue = value
+        },
+        class: 'w-full',
+      })
+    }
+  }
+])
 
 const fetchData = async () => {
   try {
     await fetchAvailableCountries()
     const { data: ss, error: ess } = await useAPI<SelectedState>(`/settings/selected-state`, { method: 'GET' })
-    if (ess.value) {
-      errorMessage.value = ess.value.message
-    } else if (ss.value) {
+    const { data: customSettingsData, error: customSettingsError } = await useAPI<any>(`/settings/common-settings`, { method: 'GET' })
+    if (ess.value || customSettingsError.value) {
+      errorMessage.value = 'Error fetching data'
+    } else if (ss.value && customSettingsData.value) {
       if (ss.value.country.id) {
         selectedCountryId.value = ss.value.country.id
         await fetchAvailableStates(selectedCountryId.value)
       }
       selectedStateId.value = ss.value.state.id
+      data.value = customSettingsData.value
     }
   } catch (err) {
     errorMessage.value = 'An error occurred while fetching the data.'
@@ -111,6 +142,21 @@ const onSubmit = async () => {
   successMessage.value = null
   loading.value = true
 
+  // save common settings
+  if (data.value.length > 0) {
+    try {
+      const { error: saveError } = await useAPI('/settings/common-settings', { method: 'POST', body: JSON.stringify(data.value) })
+      if (saveError.value) {
+        errorMessage.value = 'An error occurred while saving common settings.'
+        return
+      }
+    } catch (err) {
+      errorMessage.value = 'An error occurred while saving common settings.'
+      return
+    }
+  }
+
+  // save selected state
   if (selectedCountryId.value && selectedStateId.value) {
     const selectedStateData = {
       country: {

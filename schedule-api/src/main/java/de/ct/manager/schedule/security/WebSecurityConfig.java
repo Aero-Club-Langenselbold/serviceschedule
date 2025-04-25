@@ -72,6 +72,7 @@ public class WebSecurityConfig {
                     .requestMatchers("/api-docs/**").permitAll()
                     .requestMatchers("/actuator/**").permitAll()
                     .requestMatchers("/featureflag/**").permitAll()
+                    .requestMatchers("/settings/common-setting/*").permitAll()
                     .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
                     .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                     .anyRequest().authenticated()

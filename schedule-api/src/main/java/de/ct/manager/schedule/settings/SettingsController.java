@@ -8,14 +8,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.ct.manager.schedule.plan.Plan;
 import de.ct.manager.schedule.plan.PlanService;
-
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -35,6 +34,23 @@ public class SettingsController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SelectedState> getSelectedState() {
         return ResponseEntity.ok(settingsService.getSelectedState());
+    }
+
+    @GetMapping("/common-settings")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<CommonSettings>> getAllCommonSettings() {
+        return ResponseEntity.ok(settingsService.getAllCommonSettings());
+    }
+
+    @GetMapping("/common-setting/{key}")
+    public ResponseEntity<CommonSettings> getCommonSetting(@PathVariable String key) {
+        return ResponseEntity.ok(settingsService.getCommonSetting(key));
+    }
+
+    @PostMapping("/common-settings")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<CommonSettings>> saveCommonSettings(@RequestBody List<CommonSettings> commonSettings) {
+        return ResponseEntity.ok(settingsService.saveCommonSettings(commonSettings));
     }
 
     @PostMapping("/selected-state")

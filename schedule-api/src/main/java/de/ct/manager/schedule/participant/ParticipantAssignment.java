@@ -1,5 +1,6 @@
 package de.ct.manager.schedule.participant;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -38,7 +39,19 @@ public class ParticipantAssignment {
     }
 
     public boolean assignDate(Date date) {
-        if (!datesAvailable.contains(date) && !datesRequested.contains(date) && !datesWithinAssignmentThreshold.contains(date)) {
+        String dateFormat = "yyyy-MM-dd";
+        String isoDate = new SimpleDateFormat(dateFormat).format(date);
+        boolean isDateAvailable = datesAvailable.stream()
+            .map(d -> new SimpleDateFormat(dateFormat).format(d))
+            .anyMatch(d -> d.equals(isoDate));
+        boolean isDateRequested = datesRequested.stream()
+            .map(d -> new SimpleDateFormat(dateFormat).format(d))
+            .anyMatch(d -> d.equals(isoDate));
+        boolean isDateWithinThreshold = datesWithinAssignmentThreshold.stream()
+            .map(d -> new SimpleDateFormat(dateFormat).format(d))
+            .anyMatch(d -> d.equals(isoDate));
+
+        if (!isDateAvailable && !isDateRequested && !isDateWithinThreshold) {
             return false;
         }
 

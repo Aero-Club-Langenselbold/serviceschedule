@@ -1,0 +1,2 @@
+INSERT INTO common_settings (id, version, setting_key, setting_value) VALUES ('650e8400-e29b-41d4-a716-446655440000', 0, 'security_feature_question', 'What is your favorite color?');
+INSERT INTO common_settings (id, version, setting_key, setting_value) VALUES ('750e8400-e29b-41d4-a716-446655440000', 0, 'security_feature_answer', 'Blue');

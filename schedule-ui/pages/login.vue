@@ -38,6 +38,12 @@
           </label>
           <UInput v-model="credentials.authSecret" type="text" trailing-icon="i-lucide-key" :placeholder="$t('login.authSecret')" class="w-full" />
         </div>
+        <div v-if="features.some(feature => feature.id === 'securityQuestionFeature')" class="mb-4">
+          <label class="block text-sm font-bold mb-2">
+            {{ securityQuestion }}
+          </label>
+          <UInput v-model="credentials.securityAnswer" type="text" trailing-icon="i-lucide-key" :placeholder="$t('login.securityAnswer')" class="w-full" />
+        </div>
         <div class="mb-6 text-right">
           <ULink v-if="!features.some(feature => feature.id === 'vfLoginFeature')" to="#" >{{ $t('login.forgot') }}</ULink>
         </div>
@@ -69,8 +75,22 @@ await validateFeatures()
 const credentials = reactive({
   username: ref<string | number>(''),
   password: ref<string | number>(''),
-  authSecret: ref<string | number>('')
+  authSecret: ref<string | number>(''),
+  securityAnswer: ref<string | number>('')
 })
+
+const securityQuestion = ref<string | null>(null)
+
+const fetchData = async () => {
+  if (features.some(feature => feature.id === 'securityQuestionFeature')) {
+    const { data: settingData, error: settingError } = await useAPI<any>('/settings/common-setting/security_feature_question', { method: 'GET' })
+    if (settingError.value) {
+      loginError.value = 'Error fetching settings data'
+    } else {
+      securityQuestion.value = settingData.value?.settingValue
+    }
+  }
+}
 
 const onSubmit = async () => {
   working.value = true
@@ -91,6 +111,10 @@ const show = ref(false)
 const { t } = useI18n()
 const loginError = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
+
+watchEffect(() => {
+  fetchData()
+})
 </script>
 
 

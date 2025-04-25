@@ -5,16 +5,25 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
+import org.ff4j.FF4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import de.ct.manager.schedule.plugins.FeatureConstants;
 
 @Service
 public class SettingsService {
 
     private final SettingsRepository settingsRepository;
+    private final CommonSettingsRepository commonSettingsRepository;
+    private final FF4j ff4j;
 
-    public SettingsService(SettingsRepository settingsRepository) {
+    public SettingsService(SettingsRepository settingsRepository, CommonSettingsRepository commonSettingsRepository, FF4j ff4j) {
         this.settingsRepository = settingsRepository;
+        this.commonSettingsRepository = commonSettingsRepository;
+        this.ff4j = ff4j;
     }
 
     public SelectedState getSelectedState() {
@@ -40,6 +49,35 @@ public class SettingsService {
     public List<State> findAllStatesByCountry(String countryId) {
         Country country = settingsRepository.findCountryById(countryId).orElseThrow();
         return settingsRepository.findAllStatesByCountry(country).orElse(Collections.emptyList());
+    }
+
+    public String getCommonSettingValue(String key) {
+        Optional<CommonSettings> setting = commonSettingsRepository.findSettingByKey(key);
+
+        if (setting.isPresent()) {
+            return setting.get().getSettingValue();
+        } else {
+            return null;
+        }
+    }
+
+    public List<CommonSettings> getAllCommonSettings() {
+        if (!this.ff4j.check(FeatureConstants.SECURITY_QUESTION_FEATURE)) {
+            return commonSettingsRepository.findAll(Sort.by("settingKey").descending()).stream()
+                    .filter(commonSetting -> !commonSetting.getSettingKey().equals(SettingConstants.SECURITY_QUESTION)
+                            && !commonSetting.getSettingKey().equals(SettingConstants.SECURITY_ANSWER))
+                    .toList();
+        } else {
+            return commonSettingsRepository.findAll(Sort.by("settingKey").descending());
+        }
+    }
+
+    public CommonSettings getCommonSetting(String key ) {
+        return commonSettingsRepository.findSettingByKey(key).orElse(null);
+    }
+
+    public List<CommonSettings> saveCommonSettings(List<CommonSettings> commonSettings) {
+        return commonSettingsRepository.saveAll(commonSettings);
     }
 
     public List<LocalDate> calculateHolidayDates(List<Holiday> holidays, Date dateFrom, Date dateTo) {

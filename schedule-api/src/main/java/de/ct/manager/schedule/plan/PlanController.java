@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.ct.manager.schedule.participant.DateParticipantAvailability;
 import de.ct.manager.schedule.service.ServiceDate;
+import de.ct.manager.schedule.settings.SettingConstants;
+import de.ct.manager.schedule.settings.SettingsService;
 
 
 
@@ -25,9 +28,11 @@ import de.ct.manager.schedule.service.ServiceDate;
 public class PlanController {
 
     private final PlanService planService;
+    private final SettingsService settingsService;
 
-    public PlanController(PlanService planService) {
+    public PlanController(PlanService planService, SettingsService settingsService) {
         this.planService = planService;
+        this.settingsService = settingsService;
     }
 
     @GetMapping("/list")
@@ -100,7 +105,19 @@ public class PlanController {
 
     @PostMapping("/participantAvailability/save/{id}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    public ResponseEntity<Void> createOrUpdateParticipantAvailability(@PathVariable String id, @RequestBody List<DateParticipantAvailability> participantAvailability) {
+    public ResponseEntity<String> createOrUpdateParticipantAvailability(@PathVariable String id, @RequestBody List<DateParticipantAvailability> participantAvailability) {
+        String minValue = settingsService.getCommonSettingValue(SettingConstants.MIN_PARTICIPATION_COUNT);
+
+        try {
+            int minParticipationCount = Integer.parseInt(minValue);
+            if (minParticipationCount > 0 && participantAvailability.size() < minParticipationCount && SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_USER"))) {
+                return ResponseEntity.badRequest().body("{\"message\": \"availabilities.invalid\", \"value\": \"" + minParticipationCount + "\"}");
+            }
+        } catch (NumberFormatException e) {
+            return ResponseEntity.internalServerError().body("invalid setting value");
+        }
+
         planService.addDateParticipantAvailability(id, participantAvailability);
         return ResponseEntity.ok().build();
     }

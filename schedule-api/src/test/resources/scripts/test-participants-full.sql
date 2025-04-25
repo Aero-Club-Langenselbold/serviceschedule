@@ -50,3 +50,5 @@ INSERT INTO participant_service (participant_id, service_id) VALUES
     ('4729', '5111'), ('4729', '5112'), ('4729', '5113'), ('4729', '5114'), ('4729', '5115'),
     ('4730', '5111'), ('4730', '5112'), ('4730', '5113'), ('4730', '5114'), ('4730', '5115'),
     ('4731', '5111'), ('4731', '5112'), ('4731', '5113'), ('4731', '5114'), ('4731', '5115');
+
+INSERT INTO common_settings (id, version, setting_key, setting_value) VALUES ('550e8400-e29b-41d4-a716-446655440000', 0, 'min_participation_count', '4');

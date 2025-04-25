@@ -31,7 +31,8 @@ export default defineI18nConfig(() => ({
         submit: 'Login',
         register: 'Register',
         forgot: 'Forgot password?',
-        authSecret: 'Authentication Secret (if 2FA is enabled)'
+        authSecret: 'Authentication Secret (if 2FA is enabled)',
+        securityAnswer: 'Antwort auf Sicherheitsfrage'
       },
       register: {
         title: 'Register to the schedule manager',
@@ -186,7 +187,8 @@ export default defineI18nConfig(() => ({
         please: 'I would like to',
         selectAll: 'Select all',
         save: 'Save',
-        success: 'Availabilities saved successfully'
+        success: 'Availabilities saved successfully',
+        invalid: 'Minimum days to select: '
       },
       settings: {
         title: 'Settings',
@@ -196,6 +198,13 @@ export default defineI18nConfig(() => ({
         save: 'Save',
         success: 'Settings saved successfully',
         error: 'Error saving settings',
+        name: 'Setting',
+        value: 'Value',
+        keys: {
+          min_participation_count: 'Minimum number of available days',
+          security_feature_question: 'Security question',
+          security_feature_answer: 'Answer'
+        },
         countries: {
           germany: 'Germany'
         },
@@ -280,7 +289,8 @@ export default defineI18nConfig(() => ({
         submit: 'Anmelden',
         register: 'Registrieren',
         forgot: 'Password vergessen?',
-        authSecret: 'Sicherheitscode (bei aktivierter 2FA)'
+        authSecret: 'Sicherheitscode (bei aktivierter 2FA)',
+        securityAnswer: 'Antwort auf Sicherheitsfrage'
       },
       register: {
         title: 'Registrieren beim Dienstplanmanager',
@@ -435,7 +445,8 @@ export default defineI18nConfig(() => ({
         please: 'Möchte ich gerne',
         selectAll: 'Alle auswählen',
         save: 'Speichern',
-        success: 'Verfügbarkeiten erfolgreich gespeichert'
+        success: 'Verfügbarkeiten erfolgreich gespeichert',
+        invalid: 'Minimale Anzahl an verfügbaren Tagen: '
       },
       settings: {
         title: 'Einstellungen',
@@ -447,6 +458,13 @@ export default defineI18nConfig(() => ({
         error: 'Fehler beim Speichern der Einstellungen',
         countries: {
           germany: 'Deutschland'
+        },
+        name: 'Einstellung',
+        value: 'Wert',
+        keys: {
+          min_participation_count: 'Minimale Anzahl an verfügbaren Tagen',
+          security_feature_question: 'Sicherheitsfrage',
+          security_feature_answer: 'Antwort'
         },
         states: {
           badenwürttemberg: 'Baden-Württemberg',

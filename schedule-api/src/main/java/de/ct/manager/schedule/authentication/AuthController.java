@@ -18,8 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.ct.manager.schedule.participant.Participant;
 import de.ct.manager.schedule.participant.ParticipantRepository;
+import de.ct.manager.schedule.plugins.FeatureConstants;
 import de.ct.manager.schedule.plugins.vf.VFConnector;
 import de.ct.manager.schedule.security.JwtUtils;
+import de.ct.manager.schedule.settings.SettingConstants;
+import de.ct.manager.schedule.settings.SettingsService;
 import de.ct.manager.schedule.user.User;
 import de.ct.manager.schedule.user.UserDetailsImpl;
 import de.ct.manager.schedule.user.UserRepository;
@@ -30,8 +33,6 @@ import jakarta.validation.Valid;
 @RequestMapping("/auth")
 public class AuthController {
 
-    private static final String VF_LOGIN_FEATURE = "vfLoginFeature";
-
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final ParticipantRepository participantRepository;
@@ -39,8 +40,9 @@ public class AuthController {
     private final JwtUtils jwtUtils;
     private final FF4j ff4j;
     private final VFConnector vfConnector;
+    private final SettingsService settingsService;
 
-    public AuthController(AuthenticationManager authenticationManager, UserRepository userRepository, ParticipantRepository participantRepository, PasswordEncoder encoder, JwtUtils jwtUtils, FF4j ff4j, VFConnector vfConnector) {
+    public AuthController(AuthenticationManager authenticationManager, UserRepository userRepository, ParticipantRepository participantRepository, PasswordEncoder encoder, JwtUtils jwtUtils, FF4j ff4j, VFConnector vfConnector, SettingsService settingsService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.participantRepository = participantRepository;
@@ -48,13 +50,23 @@ public class AuthController {
         this.jwtUtils = jwtUtils;
         this.ff4j = ff4j;
         this.vfConnector = vfConnector;
+        this.settingsService = settingsService;
     }
 
     @PostMapping("/signin")
     public ResponseEntity<JwtResponse> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         Authentication authentication;
 
-        if (this.ff4j.check(VF_LOGIN_FEATURE)) {
+        if (this.ff4j.check(FeatureConstants.SECURITY_QUESTION_FEATURE)) {
+            String correctAnswer = settingsService.getCommonSettingValue(SettingConstants.SECURITY_ANSWER);
+            if (correctAnswer == null || !correctAnswer.toLowerCase().equals(loginRequest.getSecurityAnswer().toLowerCase())) {
+                return ResponseEntity
+                    .badRequest()
+                    .build();
+            }
+        }
+
+        if (this.ff4j.check(FeatureConstants.VF_LOGIN_FEATURE)) {
             authentication = vfConnector.signIn(loginRequest);
         } else {
             authentication = authenticationManager.authenticate(

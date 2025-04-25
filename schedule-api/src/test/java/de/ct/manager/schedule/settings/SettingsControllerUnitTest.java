@@ -1,13 +1,14 @@
 package de.ct.manager.schedule.settings;
 
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-
-import static org.hamcrest.Matchers.is;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -17,6 +18,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -31,13 +33,16 @@ import de.ct.manager.schedule.util.AbstractControllerUnitTest;
 
 @WebMvcTest(SettingsController.class)
 @Import({
-    SettingsService.class,
-    PlanService.class
+    PlanService.class,
+    SettingsService.class
 })
 public class SettingsControllerUnitTest extends AbstractControllerUnitTest {
 
     @MockitoBean
     private SettingsRepository settingsRepository;
+
+    @MockitoBean
+    private CommonSettingsRepository commonSettingsRepository;
 
     @MockitoBean
     private PlanRepository planRepository;
@@ -71,6 +76,24 @@ public class SettingsControllerUnitTest extends AbstractControllerUnitTest {
     }
 
     @Test
+    void testGetCommonSettings() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_ADMIN);
+
+        List<CommonSettings> commonSettings = List.of(new CommonSettings("test", "testValue"));
+        when(commonSettingsRepository.findAll(Sort.by("settingKey").descending())).thenReturn(commonSettings);
+
+        mockMvc.perform(
+            get("/settings/common-settings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ADMIN))
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$[0].settingValue", is("testValue")));
+    }
+
+    @Test
     void testSaveSelectedState() throws Exception {
         mockValidAuthentication(UserRole.ROLE_ADMIN);
 
@@ -86,6 +109,24 @@ public class SettingsControllerUnitTest extends AbstractControllerUnitTest {
             post("/settings/selected-state")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(selectedState))
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ADMIN))
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    void testSaveCommonSettings() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_ADMIN);
+
+        List<CommonSettings> commonSettings = List.of(new CommonSettings("test", "testValue"));
+        when(commonSettingsRepository.saveAll(any())).thenReturn(commonSettings);
+
+        mockMvc.perform(
+            post("/settings/common-settings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(commonSettings))
                 .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ADMIN))
             )
             .andDo(print())

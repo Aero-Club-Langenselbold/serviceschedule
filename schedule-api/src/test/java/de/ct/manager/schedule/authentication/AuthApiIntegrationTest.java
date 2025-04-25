@@ -24,7 +24,7 @@ class AuthApiIntegrationTest extends AbstractIntegrationTest {
         HttpEntity<SignupRequest> signUpEntity = new HttpEntity<>(signupRequest, createHeadersWithToken(null));
         restTemplate.exchange(createURLWithPort("auth/") + "signup", HttpMethod.POST, signUpEntity, new ParameterizedTypeReference<String>() {});
 
-        LoginRequest loginRequest = new LoginRequest("test@test.com", "Hallo", null);
+        LoginRequest loginRequest = new LoginRequest("test@test.com", "Hallo", null, null);
         HttpEntity<LoginRequest> loginEntity = new HttpEntity<>(loginRequest, createHeadersWithToken(null));
         ResponseEntity<JwtResponse> signInResponse = restTemplate.exchange(createURLWithPort("auth/") + "signin", HttpMethod.POST, loginEntity, new ParameterizedTypeReference<JwtResponse>() {});
         JwtResponse jwtResponse = signInResponse.getBody();
@@ -47,7 +47,7 @@ class AuthApiIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void testLoginFails() {
-        LoginRequest loginRequest = new LoginRequest("test@test.com", "Hallo_again", null);
+        LoginRequest loginRequest = new LoginRequest("test@test.com", "Hallo_again", null, null);
         HttpEntity<LoginRequest> loginEntity = new HttpEntity<>(loginRequest, createHeadersWithToken(null));
 
         try {

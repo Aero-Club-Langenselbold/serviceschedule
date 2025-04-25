@@ -167,7 +167,6 @@ const fetchData = async () => {
     const { data: planData, error: planError } = await useAPI<Plan>(`/plan/fetch/` + id, { method: 'GET' })
     const { data: availabilityData, error: availabilityError } = await useAPI<ParticipantAvailability[]>(`/plan/participantAvailability/fetch/${id}`, { method: 'GET' })
     const { data: serviceData, error: serviceError } = await useAPI<Service[]>(`/service/list`, { method: 'GET' })
-
     if (participantError.value || planError.value || availabilityError.value || serviceError.value) {
       errorMessage.value = "error while fetching data"
     } else if(participantsData.value) {
@@ -181,31 +180,25 @@ const fetchData = async () => {
 
       planData.value?.serviceDates.sort((a: ServiceDate, b: ServiceDate) => new Date(a.date).getTime() - new Date(b.date).getTime())
       const uniqueDates = new Set<string>()
-
       planData.value?.serviceDates.forEach((serviceDate: any) => {
         uniqueDates.add(serviceDate.date)
       })
-
-      const availabilityMap = new Map<string, Map<string, any>>();
-      availabilityData.value?.forEach((availability: any) => {
-        if (!availabilityMap.has(availability.participant.id)) {
-          availabilityMap.set(availability.participant.id, new Map())
-        }
-        availabilityMap.get(availability.participant.id)?.set(availability.date, availability)
-      })
-
       data.value = Array.from(uniqueDates).map(date => {
         const row: any = { date }
         participants.value.forEach(participant => {
-          const participantAvailability = availabilityMap.get(participant.id)?.get(date);
-          const savedAvailability = !!participantAvailability;
-          const status = savedAvailability
-            ? participantAvailability.requested
-              ? 'please'
-              : 'yes'
-            : participant.status === 'ACTIVE'
-            ? 'yes'
-            : 'no';
+          const savedAvailability = (availabilityData.value ?? []).filter(av => av.participant.id === participant.id).length > 0
+          let status = 'no'
+
+          if (savedAvailability) {
+            const savedDate = availabilityData.value?.find((availability: any) => availability.date === date && availability.participant.id === participant.id)
+            if (savedDate) {
+              status = savedDate.requested ? 'please' : 'yes'
+            } else {
+              status = 'no'
+            }
+          } else {
+            status = participant.status === 'ACTIVE' ? 'yes' : 'no'
+          }
 
           row[participant.id] = {
             currentState: status,

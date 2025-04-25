@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.assertj.core.api.Assertions;
+import org.ff4j.FF4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,6 +23,12 @@ class SettingsServiceUnitTest {
 
     @Mock
     SettingsRepository settingsRepository;
+
+    @Mock
+    CommonSettingsRepository commonSettingsRepository;
+
+    @Mock
+    FF4j ff4j;
 
     @InjectMocks
     SettingsService settingsService;
@@ -52,6 +59,28 @@ class SettingsServiceUnitTest {
         selectedState = settingsService.saveSelectedState(selectedState);
 
         Assertions.assertThat(selectedState).isNotNull();
+    }
+
+    @Test
+    void testGetCommonSettings() {
+        List<CommonSettings> commonSettings = List.of(new CommonSettings("key", "value"));
+
+        when(commonSettingsRepository.findAll()).thenReturn(commonSettings);
+
+        commonSettings = settingsService.getAllCommonSettings();
+
+        Assertions.assertThat(commonSettings).isNotNull();
+    }
+
+    @Test
+    void testSaveCommonSettings() {
+        List<CommonSettings> commonSettings = List.of(new CommonSettings("key", "value"));
+
+        when(commonSettingsRepository.saveAll(commonSettings)).thenReturn(commonSettings);
+
+        commonSettings = settingsService.saveCommonSettings(commonSettings);
+
+        Assertions.assertThat(commonSettings).isNotNull();
     }
 
     @Test
