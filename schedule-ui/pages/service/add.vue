@@ -13,6 +13,12 @@
           </label>
           <UInput v-model="service.servicename" type="text" :placeholder="$t('service.name')" class="w-full" />
         </div>
+        <div class="mb-4">
+          <label class="block text-sm font-bold mb-2">
+            {{ $t('service.addAtImport') }}
+          </label>
+          <UCheckbox v-model="service.addAtImport" />
+        </div>
 
         <UButton @click.prevent="addSetting" color="neutral" variant="subtle" class="mt-4">
           {{ $t('service.addSetting') }}
@@ -84,6 +90,7 @@ const dateRangeItems = useDateRangeItems()
 const service = ref<Service>({
   id: '',
   servicename: '',
+  addAtImport: false,
   settings: [
     {
       rangeFrom: '',

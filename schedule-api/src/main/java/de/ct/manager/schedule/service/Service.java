@@ -28,6 +28,9 @@ public class Service extends AbstractPersistentEntity {
     @NotNull
     private String servicename;
 
+    @Column
+    private boolean addAtImport;
+
     @OneToMany(mappedBy = "service", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
     private Set<ServiceSettings> settings;
 

@@ -4,3 +4,6 @@ INSERT INTO request (id, version, headline, description, type, status, created_a
 ('3c4d5e6f-7890-12cd-efgh-3456789012cd', 0, 'UI Improvement: Button Alignment', 'The submit button is misaligned on the registration page.', 'FEATURE', 'CLOSED', '2025-04-04 09:45:00'),
 ('4d5e6f7g-8901-23de-fghi-4567890123de', 0, 'Bug in Report Generation', 'Reports are not generated for dates in the past.', 'BUG', 'OPEN', '2025-04-03 14:20:00'),
 ('5e6f7g8h-9012-34ef-ghij-5678901234ef', 0, 'Feature Request: Export to CSV', 'Allow exporting data to CSV format for offline analysis.', 'FEATURE', 'OPEN', '2025-04-02 11:10:00');
+
+INSERT INTO participant (id, version, firstname, lastname, email, status, date_of_birth, max_assignments) VALUES
+    ('4711', 0, 'Donald', 'Duck', 'test@test.com', 'ACTIVE', '1934-06-09', 0);

@@ -69,7 +69,9 @@ public class ParticipantService {
         participantRepository.deleteById(id);
     }
 
-    public void importParticipants(MultipartFile file) {
+    public ParticipantDiff importParticipants(MultipartFile file) {
+        ParticipantDiff participantDiff = new ParticipantDiff();
+        List<String> csvEmails = new ArrayList<>();
         try (var reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.ISO_8859_1))) {
             reader.lines().skip(1).forEach(line -> {
                 String[] columns = line.replace("\"", "").split(";");
@@ -81,12 +83,17 @@ public class ParticipantService {
                 String firstName = nameParts.length > 1 ? nameParts[1] : "";
                 LocalDate dateOfBirth = LocalDate.parse(columns[2], DateTimeFormatter.ofPattern("dd.MM.yyyy"));
                 String email = columns[3];
+                csvEmails.add(email);
 
                 List<de.ct.manager.schedule.service.Service> serviceList = new ArrayList<>();
                 if (columns.length > 5) {
                     String[] services = columns[5].split(", ");
                     serviceList = serviceRepository.findAll().stream()
-                        .filter(service -> List.of(services).contains(service.getServicename()))
+                        .filter(service -> List.of(services).contains(service.getServicename()) || service.isAddAtImport())
+                        .toList();
+                } else {
+                    serviceList = serviceRepository.findAll().stream()
+                        .filter(service -> service.isAddAtImport())
                         .toList();
                 }
 
@@ -97,12 +104,24 @@ public class ParticipantService {
                 participant.setEmail(email);
                 participant.setRegistrationKey(UUID.randomUUID().toString());
                 participant.setServices(serviceList);
-                if (participantRepository.findByEmail(participant.getEmail()).isEmpty()) {
-                    participantRepository.save(participant);
-                }
+
+                participantRepository.findByEmail(email).ifPresentOrElse(existingParticipant -> {
+                    if (!existingParticipant.equalsForDiff(participant)) {
+                        participantDiff.getUpdatedParticipants().add(participant);
+                    } else {
+                        participantDiff.getUnchangedParticipants().add(participant);
+                    }
+                }, () -> participantDiff.getNewParticipants().add(participant));
             });
         } catch (IOException e) {
             throw new RuntimeException("Failed to read CSV file", e);
         }
+
+        List<Participant> allParticipants = participantRepository.findAll();
+        allParticipants.stream()
+            .filter(participant -> !csvEmails.contains(participant.getEmail()))
+            .forEach(participantDiff.getMissingParticipants()::add);
+
+        return participantDiff;
     }
 }

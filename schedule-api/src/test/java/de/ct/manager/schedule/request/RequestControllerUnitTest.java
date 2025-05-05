@@ -25,6 +25,7 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import de.ct.manager.schedule.participant.Participant;
 import de.ct.manager.schedule.user.UserRole;
 import de.ct.manager.schedule.util.AbstractControllerUnitTest;
 
@@ -55,6 +56,25 @@ public class RequestControllerUnitTest extends AbstractControllerUnitTest {
     }
 
     @Test
+    void testListUserRequests() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_USER);
+
+        Participant participant = new Participant();
+        when(participantRepository.findByEmail("test@test.com")).thenReturn(Optional.of(participant));
+        when(requestRepository.findAllByAuthor(Sort.by("createdAt").descending(), participant)).thenReturn(generateListResponse());
+
+        mockMvc.perform(
+            get("/request/list")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$[0].headline", is("Anger Management 0")));
+    }
+
+    @Test
     void testPageRequests() throws Exception {
         mockValidAuthentication(UserRole.ROLE_ADMIN);
         PageRequest pr = PageRequest.of(2, 10, Direction.DESC, "headline");
@@ -68,6 +88,31 @@ public class RequestControllerUnitTest extends AbstractControllerUnitTest {
                 .param("sort", "headline,desc")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ADMIN))
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.page.size", is(10)))
+            .andExpect(jsonPath("$.page.totalElements", is(100)))
+            .andExpect(jsonPath("$.content[0].headline", is("Anger Management 0")));
+    }
+
+    @Test
+    void testPageUserRequests() throws Exception {
+        mockValidAuthentication(UserRole.ROLE_USER);
+        PageRequest pr = PageRequest.of(2, 10, Direction.DESC, "headline");
+
+        Participant participant = new Participant();
+        when(participantRepository.findByEmail("test@test.com")).thenReturn(Optional.of(participant));
+        when(requestRepository.findAllByAuthor(pr, participant)).thenReturn(generatePageResponse());
+
+        mockMvc.perform(
+            get("/request/page")
+                .param("page", "2")
+                .param("size", "10")
+                .param("sort", "headline,desc")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
             )
             .andDo(print())
             .andExpect(status().isOk())

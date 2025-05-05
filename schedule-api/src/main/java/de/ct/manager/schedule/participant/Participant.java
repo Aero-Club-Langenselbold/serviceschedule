@@ -104,4 +104,14 @@ public class Participant extends AbstractPersistentEntity {
             ", status=" + status +
             '}';
     }
+
+    public boolean equalsForDiff(Participant other) {
+        return this.getFirstname().equals(other.getFirstname()) &&
+            this.getLastname().equals(other.getLastname()) &&
+            this.getEmail().equals(other.getEmail()) &&
+            this.getDateOfBirth().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+            .equals(other.getDateOfBirth().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()) &&
+            this.services.size() == other.services.size() &&
+            this.services.stream().allMatch(service -> other.services.stream().anyMatch(otherService -> service.equals(otherService)));
+    }
 }

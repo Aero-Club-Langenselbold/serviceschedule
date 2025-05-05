@@ -215,8 +215,6 @@ class ParticipantIntegrationTest extends AbstractIntegrationTest {
             getClass().getResourceAsStream("/testimport.csv").readAllBytes(),
             "UTF-8");
 
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
-
         MockMultipartFile file = new MockMultipartFile(
             "file",
             "participants.csv",
@@ -239,24 +237,5 @@ class ParticipantIntegrationTest extends AbstractIntegrationTest {
 
         Assertions.assertThat(response).isNotNull();
         Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        // verify import
-        ResponseEntity<List<Participant>> participants = restTemplate.exchange(
-            createURLWithPort("participant/") + "list",
-            HttpMethod.GET,
-            entity,
-            new ParameterizedTypeReference<List<Participant>>() {});
-
-        Assertions.assertThat(participants).isNotNull();
-        Assertions.assertThat(participants.getStatusCode()).isEqualTo(HttpStatus.OK);
-        Assertions.assertThat(participants.getBody()).isNotNull();
-        Assertions.assertThat(participants.getBody()).hasSize(5);
-
-        participants.getBody().forEach(participant -> {
-            if (participant.getEmail().equals("olivia.green@example.com")) {
-                Assertions.assertThat(participant.getFirstname()).isEqualTo("Olivia");
-                Assertions.assertThat(participant.getRegistrationKey()).isNotNull();
-            }
-        });
     }
 }

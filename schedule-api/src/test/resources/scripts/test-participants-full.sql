@@ -1,9 +1,9 @@
-INSERT INTO service (id, version, servicename) VALUES
-    ('5111', 0, 'Funky Service'),
-    ('5112', 0, 'Cool Service'),
-    ('5113', 0, 'Awesome Service'),
-    ('5114', 0, 'Super Service'),
-    ('5115', 0, 'Mega Service');
+INSERT INTO service (id, version, servicename, add_at_import) VALUES
+    ('5111', 0, 'Funky Service', false),
+    ('5112', 0, 'Cool Service', false),
+    ('5113', 0, 'Awesome Service', false),
+    ('5114', 0, 'Super Service', false),
+    ('5115', 0, 'Mega Service', false);
 
 INSERT INTO participant (id, version, firstname, lastname, email, status, date_of_birth, max_assignments) VALUES
     ('4711', 0, 'Donald', 'Duck', 'donald@angermanagementissues.com', 'ACTIVE', '1934-06-09', 0),

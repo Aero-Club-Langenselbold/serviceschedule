@@ -1,4 +1,4 @@
-import type { Holiday } from './holiday';
+import type { Holiday } from './holiday'
 
 type State = {
     id: string

@@ -9,12 +9,12 @@ INSERT INTO participant (id, version, firstname, lastname, email, status, date_o
     ('4718', 0, 'Huey', 'Duck', 'huey@funwithtests.com', 'ACTIVE', '1937-10-17', 0),
     ('4719', 0, 'Dewey', 'Duck', 'dewey@funwithtests.com', 'ACTIVE', '1937-10-17', 0);
 
-INSERT INTO service (id, version, servicename) VALUES
-    ('5111', 0, 'Funky Service'),
-    ('5112', 0, 'Cool Service'),
-    ('5113', 0, 'Awesome Service'),
-    ('5114', 0, 'Super Service'),
-    ('5115', 0, 'Mega Service');
+INSERT INTO service (id, version, servicename, add_at_import) VALUES
+    ('5111', 0, 'Funky Service', false),
+    ('5112', 0, 'Cool Service', false),
+    ('5113', 0, 'Awesome Service', false),
+    ('5114', 0, 'Super Service', false),
+    ('5115', 0, 'Mega Service', false);
 
 INSERT INTO plan (id, version, name, description, date_from, date_until, published) VALUES
     ('6000', 0, 'World Domination tour', 'Schedule for all team members trying to take over the world', '2020-01-01 00:00:00', '2020-07-01 00:00:00', false),

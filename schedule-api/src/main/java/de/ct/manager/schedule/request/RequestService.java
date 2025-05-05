@@ -7,6 +7,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import de.ct.manager.schedule.participant.Participant;
+import de.ct.manager.schedule.participant.ParticipantRepository;
 import lombok.extern.slf4j.Slf4j;
 
 @org.springframework.stereotype.Service
@@ -14,9 +16,11 @@ import lombok.extern.slf4j.Slf4j;
 public class RequestService {
 
     private final RequestRepository requestRepository;
+    private final ParticipantRepository participantRepository;
 
-    public RequestService(RequestRepository requestRepository) {
+    public RequestService(RequestRepository requestRepository, ParticipantRepository participantRepository) {
         this.requestRepository = requestRepository;
+        this.participantRepository = participantRepository;
     }
 
     public Request createOrUpdateRequest(Request request) {
@@ -44,7 +48,19 @@ public class RequestService {
         return requestRepository.findAll(Sort.by("createdAt").descending());
     }
 
+    public List<Request> getUserRequests(String username) {
+        Participant author = participantRepository.findByEmail(username).orElseThrow();
+
+        return requestRepository.findAllByAuthor(Sort.by("createdAt").descending(), author);
+    }
+
     public Page<Request> getRequestsByPage(Pageable pageable) {
         return requestRepository.findAll(pageable);
+    }
+
+    public Page<Request> getUserRequestsByPage(String username, Pageable pageable) {
+        Participant author = participantRepository.findByEmail(username).orElseThrow();
+
+        return requestRepository.findAllByAuthor(pageable, author);
     }
 }

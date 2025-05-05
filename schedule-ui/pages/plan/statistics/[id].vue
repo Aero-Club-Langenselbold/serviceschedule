@@ -19,6 +19,7 @@
 
 <script lang="ts" setup>
 import type { TableColumn } from '@nuxt/ui'
+import type { Column } from '@tanstack/vue-table'
 const route = useRoute()
 
 const { t } = useI18n()
@@ -29,6 +30,8 @@ const loading = ref(true)
 
 import type { Participant } from '~/types/participant'
 import type { Service } from '~/types/service'
+
+const UButton = resolveComponent('UButton')
 
 type PlanStatistics = {
   participant: Participant,
@@ -41,12 +44,12 @@ const data = ref<any[]>([])
 const columns = computed<TableColumn<any>[]>(() => {
   const participantColumn : TableColumn<any> = {
     accessorKey: 'participant',
-    header: t('participants.fullname')
+    header: ({ column }) => getHeader(column, t('participants.fullname'))
   }
 
   const serviceColumns: TableColumn<any>[] = services.value?.map(service => ({
-    accessorKey: 'service.servicename',
-    header: service.servicename,
+    accessorKey: service.servicename,
+    header: ({ column }) => getHeader(column, service.servicename),
     cell: ({ row }: { row: { getValue: (key: string) => any; original: any } }) => {
       const serviceCount = row.original[service.servicename]
       return serviceCount || 0
@@ -55,7 +58,7 @@ const columns = computed<TableColumn<any>[]>(() => {
 
   const totalCountColumn: TableColumn<any> = {
     accessorKey: 'totalCount',
-    header: t('plan.statistics.totalCount')
+    header: ({ column }) => getHeader(column, t('plan.statistics.totalCount'))
   }
 
   return [participantColumn, ...serviceColumns, totalCountColumn]
@@ -96,6 +99,33 @@ const fetchData = async () => {
   } finally {
     loading.value = false
   }
+}
+
+function getHeader(column: Column<any>, label: string) {
+  const isSorted = column.getIsSorted()
+
+  return h(
+    UButton,
+    {
+      color: 'neutral',
+      variant: 'ghost',
+      label,
+      icon: isSorted
+        ? isSorted === 'asc'
+          ? 'i-lucide-arrow-up-narrow-wide'
+          : 'i-lucide-arrow-down-wide-narrow'
+        : 'i-lucide-arrow-up-down',
+      onclick: () => {
+        if (!isSorted || isSorted === 'desc') {
+          column.toggleSorting(false)
+        } else if (isSorted === 'asc') {
+          column.toggleSorting(true)
+        }
+      },
+      class: '-mx-2.5',
+      'aria-label': `Sort by ${isSorted === 'asc' ? 'descending' : 'ascending'}`
+    }
+  )
 }
 
 onMounted(() => {

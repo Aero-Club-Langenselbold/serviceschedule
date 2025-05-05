@@ -34,11 +34,11 @@ public class ParticipantController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Participant>> listParticipants() {
         return ResponseEntity.ok(participantService.listParticipants());
-        }
+    }
 
-        @GetMapping("/page")
-        @PreAuthorize("hasRole('ADMIN')")
-        public ResponseEntity<Page<Participant>> listParticipants(@SortDefault.SortDefaults({
+    @GetMapping("/page")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<Participant>> listParticipants(@SortDefault.SortDefaults({
                 @SortDefault(sort = "lastname", direction = org.springframework.data.domain.Sort.Direction.ASC),
                 @SortDefault(sort = "firstname", direction = org.springframework.data.domain.Sort.Direction.ASC)
             }) @PageableDefault(size = 20) final Pageable pageable) {
@@ -72,10 +72,9 @@ public class ParticipantController {
 
     @PostMapping("/import")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> importParticipants(@RequestBody MultipartFile file) {
+    public ResponseEntity<ParticipantDiff> importParticipants(@RequestBody MultipartFile file) {
         try {
-            participantService.importParticipants(file);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok(participantService.importParticipants(file));
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }

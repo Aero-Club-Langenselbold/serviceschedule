@@ -1,13 +1,14 @@
-import type { Service } from './service';
 import type { Participant } from './participant';
+import type { Service } from './service';
 
 type PlanEntry = {
-    id: string;
-    date: Date;
-    startTime: Date;
-    endTime: Date;
-    service: Service;
-    participant: Participant;
+    id: string
+    date: Date
+    startTime: Date
+    endTime: Date
+    service: Service
+    participant: Participant
 }
 
-export type { PlanEntry }
+export type { PlanEntry };
+

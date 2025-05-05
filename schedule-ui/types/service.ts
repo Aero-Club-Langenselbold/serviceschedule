@@ -1,9 +1,11 @@
-import type { Settings } from './settings';
+import type { Settings } from './settings'
 
 type Service = {
-    id: string;
-    servicename: string;
-    settings: Settings[];
+    id: string
+    servicename: string
+    addAtImport: boolean
+    settings: Settings[]
 }
 
 export type { Service }
+

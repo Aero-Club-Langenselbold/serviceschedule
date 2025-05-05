@@ -118,6 +118,7 @@ const successMessage = ref<string | null>(null)
 const UButton = resolveComponent('UButton')
 const UBadge = resolveComponent('UBadge')
 const UInput = resolveComponent('UInput')
+const UCheckbox = resolveComponent('UCheckbox')
 
 const dateRangeItems = useDateRangeItems()
 
@@ -165,6 +166,24 @@ const columns = computed<TableColumn<Service>[]>(() => [
           }
         }) :
         row.getValue('servicename')
+    }
+  }, {
+    accessorKey: 'addAtImport',
+    header: t('service.addAtImport'),
+    cell: ({ row }) => {
+      const rowId = row.original.id
+      const isEditing = ref(editingState[rowId] || false)
+
+      return h(UCheckbox, {
+        modelValue: editedRows[rowId]?.addAtImport || row.original.addAtImport,
+        'onUpdate:modelValue': (value: boolean) => {
+          if (!editedRows[rowId]) {
+            editedRows[rowId] = { ...row.original }
+          }
+          editedRows[rowId].addAtImport = value
+        },
+        disabled: !isEditing.value,
+      })
     }
   }, {
     accessorKey: 'actions',
@@ -264,7 +283,7 @@ const addSetting = (rowId: string) => {
     if (foundRow) {
       editedRows[rowId] = { ...foundRow }
     } else {
-      editedRows[rowId] = { id: rowId, servicename: '', settings: [] }
+      editedRows[rowId] = { id: rowId, servicename: '', addAtImport: false, settings: [] }
     }
   }
   if (!editedRows[rowId].settings) {

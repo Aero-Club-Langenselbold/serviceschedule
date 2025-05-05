@@ -102,8 +102,8 @@ export default defineI18nConfig(() => ({
         error: 'Error saving participant',
         exists: 'Participant already exists',
         list: 'Participant List',
-        active: 'Active',
-        passive: 'Passive',
+        active: 'Active Participant',
+        inactive: 'Passive Participant',
         statusInfo: 'Active participants (or members) are automatically considered for all available days in new service plans. Passive participants (or members) are only considered for days for which they explicitly register.',
         updateFailure: 'Error updating participant',
         updateSuccess: 'Participant updated successfully',
@@ -112,11 +112,18 @@ export default defineI18nConfig(() => ({
         import: 'Import Participants',
         importSuccess: 'Participants imported successfully',
         importFailure: 'Error importing participants',
-        registrationKeyCopied: 'The registration key has been copied to the clipboard.'
+        registrationKeyCopied: 'The registration key has been copied to the clipboard.',
+        diff: {
+          success: 'No changes',
+          warning: 'Changes',
+          error: 'Missing in import',
+          secondary: 'New in import'
+        }
       },
       service: {
         add: 'Add new Service',
         name: 'Service name',
+        addAtImport: 'Add at import',
         save: 'Save',
         list: 'Service list',
         success: 'Service saved successfully',
@@ -360,8 +367,8 @@ export default defineI18nConfig(() => ({
         error: 'Fehler beim Speichern des Teilnehmers',
         exists: 'Teilnehmer existiert bereits',
         list: 'Teilnehmerliste',
-        active: 'Aktiv',
-        passive: 'Passiv',
+        active: 'Aktiver Teilnehmer',
+        inactive: 'Passiver Teilnehmer',
         statusInfo: 'Aktive Teilnehmer (bzw. Mitglieder) werden automatisch bei neuen Dienstplänen für alle verfügbaren Tage berücksichtigt. Passive Teilnehmer (bzw. Mitglieder) werden nur für Tage berücksichtigt, für die sie sich explizit eintragen.',
         updateFailure: 'Fehler beim Aktualisieren des Teilnehmers',
         updateSuccess: 'Teilnehmer erfolgreich aktualisiert',
@@ -370,11 +377,18 @@ export default defineI18nConfig(() => ({
         import: 'Teilnehmer importieren',
         importSuccess: 'Teilnehmer erfolgreich importiert',
         importFailure: 'Fehler beim Importieren der Teilnehmer',
-        registrationKeyCopied: 'Der Registrierungsschlüssel wurde in die Zwischenablage kopiert.'
+        registrationKeyCopied: 'Der Registrierungsschlüssel wurde in die Zwischenablage kopiert.',
+        diff: {
+          success: 'Keine Änderungen',
+          warning: 'Änderungen',
+          error: 'Fehlend im Import',
+          secondary: 'Neu im Import'
+        }
       },
       service: {
         add: 'Neuen Dienst hinzufügen',
         name: 'Dienst',
+        addAtImport: 'Bei Import hinzufügen',
         save: 'Speichern',
         list: 'Dienstliste',
         success: 'Dienst erfolgreich gespeichert',

@@ -58,11 +58,11 @@ INSERT INTO public.participant (id, version, firstname, lastname, email, date_of
 INSERT INTO public.participant (id, version, firstname, lastname, email, date_of_birth, status, registration_key, max_assignments) VALUES('949f0ef8-b56c-4ed5-960e-14aaccc62292', 1, 'Amy', 'Carter', 'amy.carter@example.com', '1968-05-29', 'ACTIVE', 'd595f91a-b699-40f8-86ec-849664787185', 0);
 INSERT INTO public.participant (id, version, firstname, lastname, email, date_of_birth, status, registration_key, max_assignments) VALUES('a872d9b5-702e-48e0-8544-f7126ed545c0', 0, 'Easy', 'T', 'easy.t@gmail.com', '1982-01-27', 'INACTIVE', '513e4461-c796-4e53-93a1-3c46dbc62420', 0);
 
-INSERT INTO public.service (id, version, servicename) VALUES('195e5a6a-fc6f-4fdb-80ec-58d0dada49b6', 0, 'Distributor Test');
-INSERT INTO public.service (id, version, servicename) VALUES('6f3e85d5-f78c-4a49-b58f-939dd56df321', 0, 'No assignments #1');
-INSERT INTO public.service (id, version, servicename) VALUES('485ef88d-9777-40b9-85ea-664a4e254593', 0, 'No assignments #2');
-INSERT INTO public.service (id, version, servicename) VALUES('e4605e0d-60e7-4417-b0ce-b04fa27bfd3b', 0, 'No assignments #3');
-INSERT INTO public.service (id, version, servicename) VALUES('6f90c890-55b4-478c-af36-679fa1c375d0', 1, 'No assignments #4');
+INSERT INTO public.service (id, version, servicename, add_at_import) VALUES('195e5a6a-fc6f-4fdb-80ec-58d0dada49b6', 0, 'Distributor Test', false);
+INSERT INTO public.service (id, version, servicename, add_at_import) VALUES('6f3e85d5-f78c-4a49-b58f-939dd56df321', 0, 'No assignments #1', false);
+INSERT INTO public.service (id, version, servicename, add_at_import) VALUES('485ef88d-9777-40b9-85ea-664a4e254593', 0, 'No assignments #2', false);
+INSERT INTO public.service (id, version, servicename, add_at_import) VALUES('e4605e0d-60e7-4417-b0ce-b04fa27bfd3b', 0, 'No assignments #3', false);
+INSERT INTO public.service (id, version, servicename, add_at_import) VALUES('6f90c890-55b4-478c-af36-679fa1c375d0', 1, 'No assignments #4', false);
 
 INSERT INTO public.participant_service (participant_id, service_id) VALUES('376a5557-18c3-4e12-8398-1eabe28fff41', '485ef88d-9777-40b9-85ea-664a4e254593');
 INSERT INTO public.participant_service (participant_id, service_id) VALUES('2f60f946-14df-4e35-b574-4def164ef13f', '485ef88d-9777-40b9-85ea-664a4e254593');

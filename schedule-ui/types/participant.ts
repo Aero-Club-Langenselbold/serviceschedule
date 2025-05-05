@@ -14,3 +14,4 @@ type Participant = {
 }
 
 export type { Participant };
+

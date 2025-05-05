@@ -20,7 +20,7 @@ class RequestIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @Sql(scripts = "classpath:scripts/test-requests.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-    @Sql(statements = "DELETE FROM request", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = { "DELETE FROM request", "DELETE FROM participant" }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testPageRequestsWithoutParams() {
         HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
@@ -39,7 +39,26 @@ class RequestIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @Sql(scripts = "classpath:scripts/test-requests.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-    @Sql(statements = "DELETE FROM request", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = { "DELETE FROM request", "DELETE FROM participant" }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void testPageRequestsWithoutParamsAsUser() {
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
+
+        ResponseEntity<RestPageImpl<Request>> response = restTemplate.exchange(
+            createURLWithPort("request/") + "page",
+            HttpMethod.GET,
+            entity,
+            new ParameterizedTypeReference<RestPageImpl<Request>>() {});
+
+        Assertions.assertThat(response).isNotNull();
+        Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(response.getBody()).isNotNull();
+        Assertions.assertThat(response.getBody().getNumberOfElements()).isEqualTo(0);
+        Assertions.assertThat(response.getBody().getContent()).isEmpty();
+    }
+
+    @Test
+    @Sql(scripts = "classpath:scripts/test-requests.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(statements = { "DELETE FROM request", "DELETE FROM participant" }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testPageRequestsWithParams() {
         HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
@@ -59,7 +78,7 @@ class RequestIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @Sql(scripts = "classpath:scripts/test-requests.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-    @Sql(statements = "DELETE FROM request", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = { "DELETE FROM request", "DELETE FROM participant" }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testListRequests() {
         HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
@@ -78,7 +97,26 @@ class RequestIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @Sql(scripts = "classpath:scripts/test-requests.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-    @Sql(statements = "DELETE FROM request", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = { "DELETE FROM request", "DELETE FROM participant" }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void testListRequestsAsUser() {
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
+
+        ResponseEntity<List<Request>> response = restTemplate.exchange(
+            createURLWithPort("request/") + "list",
+            HttpMethod.GET,
+            entity,
+            new ParameterizedTypeReference<List<Request>>() {});
+
+        Assertions.assertThat(response).isNotNull();
+        Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(response.getBody()).isNotNull();
+        Assertions.assertThat(response.getBody()).hasSize(0);
+        Assertions.assertThat(response.getBody()).isEmpty();
+    }
+
+    @Test
+    @Sql(scripts = "classpath:scripts/test-requests.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(statements = { "DELETE FROM request", "DELETE FROM participant" }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testFetchRequest() {
         HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
@@ -96,7 +134,7 @@ class RequestIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @Sql(scripts = "classpath:scripts/test-requests.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-    @Sql(statements = "DELETE FROM request", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = { "DELETE FROM request", "DELETE FROM participant" }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testDeleteRequest() {
         HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
@@ -121,7 +159,7 @@ class RequestIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @Sql(statements = "DELETE FROM request", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = { "DELETE FROM request", "DELETE FROM participant" }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testCreateRequest() throws Exception {
         Request newby = new Request();
         newby.setHeadline("Anger Management");
@@ -154,7 +192,7 @@ class RequestIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @Sql(scripts = "classpath:scripts/test-requests.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-    @Sql(statements = "DELETE FROM request", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = { "DELETE FROM request", "DELETE FROM participant" }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testUpdateRequest() throws Exception {
         HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
