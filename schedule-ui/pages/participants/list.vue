@@ -16,6 +16,7 @@
 import type { TableColumn } from '@nuxt/ui'
 import type { Page } from '~/types/page'
 import type { Participant } from '~/types/participant'
+import type { ParticipantService } from '~/types/participantService'
 import type { Service } from '~/types/service'
 
 const { t, locale } = useI18n()
@@ -30,13 +31,12 @@ const successMessage = ref<string | null>(null)
 const page = ref(1)
 const pageSize = ref(20)
 const listData = ref<Page<Participant> | null>(null)
-const serviceItems = ref<Service[] | null>([])
+const serviceItems = ref<ParticipantService[] | null>([])
 
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UInput = resolveComponent('UInput')
 const UCheckbox = resolveComponent('UCheckbox')
-const USelect = resolveComponent('USelect')
 
 const editingState = reactive<{ [key: string]: boolean }>({})
 const editedRows = reactive<{ [key: string]: Participant }>({})
@@ -188,21 +188,46 @@ const columns = computed<TableColumn<Participant>[]>(() => {
         const isEditing = ref(editingState[rowId] || false)
 
         return isEditing.value ?
-          h(USelect, {
-              modelValue: editedRows[rowId]?.services?.map((service: Service) => service.id) || row.original.services?.map((service: Service) => service.id),
-              'onUpdate:modelValue': (value: string[]) => {
-              if (!editedRows[rowId]) {
-                editedRows[rowId] = { ...row.original }
-              }
-              editedRows[rowId].services = serviceItems.value?.filter((service: Service) => value.includes(service.id))
-            },
-            multiple: true,
-            valueKey: 'id',
-            labelKey: 'servicename',
-            items: serviceItems.value,
-            class: 'w-full'
-          }) :
-          row.original.services?.map((service: { servicename: string }) => service.servicename).join(', ')
+          h('div', {}, [
+            h('div', { class: 'flex items-center mb-2 w-full' }, [
+              h('span', { class: 'text-sm font-bold mr-auto' }, t('participants.services')),
+              h('span', { class: 'text-sm font-bold ml-auto' }, t('participants.autoAssign'))
+            ]),
+            h('div', {}, serviceItems.value?.map((item) =>
+              h('div', { key: item.service.id, class: 'flex items-center mb-2 w-full' }, [
+                h(UCheckbox, {
+                  modelValue: editedRows[rowId]?.participantServices?.some((ps) => ps.service.id === item.service.id) || row.original.participantServices?.some((ps) => ps.service.id === item.service.id),
+                  onChange: () => {
+                    if (!editedRows[rowId]) {
+                      editedRows[rowId] = { ...row.original }
+                    }
+                    const serviceExists = editedRows[rowId].participantServices?.some((ps: ParticipantService) => ps.service.id === item.service.id)
+                    if (serviceExists) {
+                      editedRows[rowId].participantServices = editedRows[rowId].participantServices?.filter((ps: ParticipantService) => ps.service.id !== item.service.id)
+                    } else {
+                      editedRows[rowId].participantServices = [...(editedRows[rowId].participantServices || []), item]
+                    }
+                  },
+                  class: 'mr-2'
+                }),
+                h('span', { class: 'mr-4' }, item.service.servicename),
+                h(UCheckbox, {
+                  modelValue: editedRows[rowId]?.participantServices?.find((ps) => ps.service.id === item.service.id)?.autoAssign || row.original.participantServices?.find((ps) => ps.service.id === item.service.id)?.autoAssign,
+                  'onUpdate:modelValue': (value: boolean) => {
+                    if (!editedRows[rowId]) {
+                      editedRows[rowId] = { ...row.original }
+                    }
+                    const service = editedRows[rowId].participantServices?.find((ps) => ps.service.id === item.service.id)
+                    if (service) {
+                      service.autoAssign = value
+                    }
+                  },
+                  class: 'ml-auto'
+                })
+              ])
+            ))
+          ]):
+          row.original.participantServices?.map((ps: ParticipantService) => ps.service.servicename).join(', ')
       }
     }
   ]
@@ -244,7 +269,8 @@ const columns = computed<TableColumn<Participant>[]>(() => {
           editingState[rowId] = true
           if (!editedRows[rowId]) {
             editedRows[rowId] = {
-              ...row.original
+                ...row.original,
+                services: undefined
             }
           }
         }
@@ -313,7 +339,11 @@ const fetchData = async () => {
     } else {
       listData.value = participantData.value
     }
-    serviceItems.value = serviceData.value
+    serviceItems.value = (serviceData.value ?? []).map(service => ({
+      participant: null,
+      service: service,
+      autoAssign: true
+    }))
   } catch (err) {
     errorMessage.value = 'An error occurred while fetching the data.'
   }

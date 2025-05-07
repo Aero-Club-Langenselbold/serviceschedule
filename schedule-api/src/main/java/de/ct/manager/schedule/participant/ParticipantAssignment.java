@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 import de.ct.manager.schedule.service.Service;
 import lombok.Data;
@@ -35,7 +36,10 @@ public class ParticipantAssignment {
             this.datesRequested = new CopyOnWriteArrayList<>(datesRequested);
             this.datesAvailable.removeAll(datesRequested);
         }
-        this.availableServices = new ArrayList<>(participant.getServices());
+        this.availableServices = participant.getParticipantServices().stream()
+            .filter(ParticipantServiceEntity::isAutoAssign)
+            .map(ParticipantServiceEntity::getService)
+            .collect(Collectors.toCollection(CopyOnWriteArrayList::new));
     }
 
     public boolean assignDate(Date date) {

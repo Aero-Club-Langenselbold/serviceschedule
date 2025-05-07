@@ -103,7 +103,7 @@ const toggleService = (event: Event) => {
   console.log('Triggered')
   const selectedServiceIds = Object.keys(serviceSelect.value).filter(serviceId => serviceSelect.value[serviceId])
   filteredParticipants.value = participants.value.filter(participant => {
-    const participantServices = participant.services?.map(service => service.id)
+    const participantServices = participant.participantServices?.map(ps => ps.service.id)
     return selectedServiceIds.some(serviceId => participantServices?.includes(serviceId))
   })
   tableKey.value++;

@@ -55,10 +55,20 @@
           <UInput v-model="participant.maxAssignments" type="number" :placeholder="$t('participants.maxAssignments')" class="w-full" />
         </div>
         <div class="mb-6">
-          <label class="block text-sm font-bold mb-2">
-            {{ $t('participants.services') }}
-          </label>
-          <USelect multiple v-model="serviceValue" value-key="id" :items="serviceItems" label-key="servicename" class="w-full" />
+          <!-- Labels for the columns -->
+          <div class="flex items-center mb-2 w-full">
+            <span class="text-sm font-bold mr-auto">
+              {{ $t('participants.services') }}
+            </span>
+            <span class="text-sm font-bold ml-auto">
+              {{ $t('participants.autoAssign') }}
+            </span>
+          </div>
+          <div v-for="(item, index) in serviceItems" :key="item.service.id" class="flex items-center mb-2 w-full">
+            <UCheckbox :checked="serviceValue.includes(item.service.id)" @change="toggleService(item.service.id)" class="mr-2" />
+            <span class="mr-4">{{ item.service.servicename }}</span>
+            <UCheckbox v-model="item.autoAssign" class="ml-auto" />
+          </div>
         </div>
         <div class="flex items-center justify-between">
           <UButton trailing-icon="i-lucide-arrow-right" size="md" :label="$t('participants.save')" type="submit" />
@@ -72,6 +82,7 @@
 import type { DateValue } from '@internationalized/date'
 import { CalendarDate, DateFormatter, getLocalTimeZone } from '@internationalized/date'
 import type { Participant } from '~/types/participant'
+import type { ParticipantService } from '~/types/participantService'
 import type { Service } from '~/types/service'
 const { t } = useI18n()
 
@@ -89,7 +100,8 @@ const participant = ref<Participant> ({
   status: 'ACTIVE',
   maxAssignments: 0,
   registrationKey: '',
-  services: []
+  participantServices: [],
+  services: undefined
 })
 
 const dateOfBirth = shallowRef<CalendarDate | DateValue | undefined>(undefined)
@@ -97,7 +109,7 @@ const status = ref<boolean>(true)
 
 const errorMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
-const serviceItems = ref<Service[]>([])
+const serviceItems = ref<ParticipantService[]>([])
 const serviceValue = ref<string[]>([])
 
 const onSubmit = async () => {
@@ -106,7 +118,7 @@ const onSubmit = async () => {
 
   participant.value.dateOfBirth = dateOfBirth.value ? dateOfBirth.value.toDate(getLocalTimeZone()) : undefined
   participant.value.status = status.value ? 'ACTIVE' : 'INACTIVE'
-  participant.value.services = serviceItems.value.filter((service: { id: string }) => serviceValue.value.includes(service.id))
+  participant.value.participantServices = serviceItems.value.filter((item) => serviceValue.value.includes(item.service.id))
 
   await useAPI('/participant/save', { method: 'POST', body: JSON.stringify(participant.value) })
   .then(async (response) => {
@@ -130,13 +142,24 @@ const onSubmit = async () => {
   })
 }
 
+const toggleService = (id: string) => {
+  if (serviceValue.value.includes(id)) {
+    serviceValue.value = serviceValue.value.filter(serviceId => serviceId !== id)
+  } else {
+    serviceValue.value.push(id)
+  }
+}
+
 try {
   const { data, error } = await useAPI<Service[]>(`/service/list`, { method: 'GET' })
   if (error.value) {
     errorMessage.value = error.value.message
   } else {
-    participant.value.services = data.value ?? []
-    serviceItems.value = data.value ?? []
+    serviceItems.value = (data.value ?? []).map(service => ({
+      participant: null,
+      service: service,
+      autoAssign: true
+    }))
   }
 } catch (err) {
   errorMessage.value = 'An error occurred while fetching the data.'

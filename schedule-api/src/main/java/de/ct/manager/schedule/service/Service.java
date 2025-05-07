@@ -5,13 +5,12 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import de.ct.manager.schedule.participant.Participant;
+import de.ct.manager.schedule.participant.ParticipantServiceEntity;
 import de.ct.manager.schedule.util.AbstractPersistentEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
@@ -39,8 +38,8 @@ public class Service extends AbstractPersistentEntity {
     private List<ServiceDate> serviceDates;
 
     @JsonIgnore
-    @ManyToMany(mappedBy = "services", fetch = FetchType.LAZY)
-    private Set<Participant> participants;
+    @OneToMany(mappedBy = "service", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<ParticipantServiceEntity> participantServices;
 
     @Override
     public boolean equals(Object o) {

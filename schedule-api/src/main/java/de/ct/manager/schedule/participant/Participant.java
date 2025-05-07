@@ -12,14 +12,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.ct.manager.schedule.plan.PlanEntry;
 import de.ct.manager.schedule.service.Service;
 import de.ct.manager.schedule.util.AbstractPersistentEntity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
@@ -62,13 +60,8 @@ public class Participant extends AbstractPersistentEntity {
     @Column(length = 36)
     private String registrationKey;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-        name = "participant_service",
-        joinColumns = @JoinColumn(name = "participant_id"),
-        inverseJoinColumns = @JoinColumn(name = "service_id")
-    )
-    private List<Service> services = new ArrayList<>();
+    @OneToMany(mappedBy = "participant", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ParticipantServiceEntity> participantServices = new ArrayList<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "participant", fetch = FetchType.LAZY, orphanRemoval = true)
@@ -80,6 +73,27 @@ public class Participant extends AbstractPersistentEntity {
 
     public String getFullname() {
         return lastname + ", " + firstname;
+    }
+
+    public List<Service> getServices() {
+        return participantServices.stream()
+            .map(ParticipantServiceEntity::getService)
+            .toList();
+    }
+
+    public void addService(Service service) {
+        ParticipantServiceEntity participantServiceEntity = new ParticipantServiceEntity(this, service);
+        this.participantServices.add(participantServiceEntity);
+    }
+
+    public void setServices(List<Service> services) {
+        this.participantServices.clear();
+        if (services != null) {
+            for (Service service : services) {
+                ParticipantServiceEntity participantServiceEntity = new ParticipantServiceEntity(this, service);
+                this.participantServices.add(participantServiceEntity);
+            }
+        }
     }
 
     @JsonIgnore
@@ -111,7 +125,7 @@ public class Participant extends AbstractPersistentEntity {
             this.getEmail().equals(other.getEmail()) &&
             this.getDateOfBirth().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
             .equals(other.getDateOfBirth().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()) &&
-            this.services.size() == other.services.size() &&
-            this.services.stream().allMatch(service -> other.services.stream().anyMatch(otherService -> service.equals(otherService)));
+            this.getServices().size() == other.getServices().size() &&
+            this.getServices().stream().allMatch(service -> other.getServices().stream().anyMatch(otherService -> service.equals(otherService)));
     }
 }

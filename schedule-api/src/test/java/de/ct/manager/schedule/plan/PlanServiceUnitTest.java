@@ -199,7 +199,7 @@ class PlanServiceUnitTest {
             checkedParticipants.add(planEntry.getParticipant());
         }
         if (thresholdViolations > 5) {
-            Assertions.fail("There are too many violations of the 3 week threshold between assignments (" + thresholdViolations + ")");
+            Assertions.fail("There are too many violations of the 2 week threshold between assignments (" + thresholdViolations + ")");
         }
     }
 
@@ -515,11 +515,11 @@ class PlanServiceUnitTest {
 
             Service service1 = new Service();
             service1.setServicename("Fancy Funky Service");
-            service1.setParticipants(null);
+            service1.setParticipantServices(null);
 
             Service service2 = new Service();
             service2.setServicename("Not so Funky Service");
-            service2.setParticipants(null);
+            service2.setParticipantServices(null);
 
             this.services.add(service1);
             this.services.add(service2);
@@ -572,20 +572,20 @@ class PlanServiceUnitTest {
             // assign services to participants
             for (int i = 0;i < 5;i++) {
                 // minors are only assigned to one service
-                participants.get(i).getServices().add(services.get(0));
+                participants.get(i).addService(services.get(0));
             }
             for (int i = 5;i < 12;i++) {
                 // some adults are assigned to both services
-                participants.get(i).getServices().add(services.get(0));
-                participants.get(i).getServices().add(services.get(1));
+                participants.get(i).addService(services.get(0));
+                participants.get(i).addService(services.get(1));
             }
             for (int i = 12;i < 24;i++) {
                 // some adults are assigned to the first service only
-                participants.get(i).getServices().add(services.get(0));
+                participants.get(i).addService(services.get(0));
             }
             for (int i = 24;i < 35;i++) {
                 // some adults are assigned to the second service only
-                participants.get(i).getServices().add(services.get(1));
+                participants.get(i).addService(services.get(1));
             }
 
             // every sunday

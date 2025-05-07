@@ -158,8 +158,8 @@ const columns = computed<TableColumn<PlanTableEntryRow>[]>(() => [
 
       const allParticipants = Array.from(
         new Map(
-          availabilityData.value?.filter(availability => availability.participant.services?.some(s => s.id === service.id))
-          .map(availability => [availability.participant.id, availability.participant])
+          availabilityData.value?.filter(availability => availability.participant.participantServices?.some(s => s.service.id === service.id))
+            .map(availability => [availability.participant.id, availability.participant])
         ).values()
       )
 
@@ -235,11 +235,12 @@ const columns = computed<TableColumn<PlanTableEntryRow>[]>(() => [
               status: 'INACTIVE',
               maxAssignments: 0,
               registrationKey: '',
-              services: []
+              participantServices: []
             },
             service: {
               id: service.id,
               servicename: service.servicename,
+              addAtImport: false,
               settings: []
             }
           })

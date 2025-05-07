@@ -27,7 +27,7 @@ const userData = ref<Participant | null>({
   status: 'INACTIVE',
   maxAssignments: 0,
   registrationKey: '',
-  services: []
+  participantServices: []
 })
 
 definePageMeta({

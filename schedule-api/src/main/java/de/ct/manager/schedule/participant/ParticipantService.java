@@ -50,13 +50,15 @@ public class ParticipantService {
         if (participant.getId().isEmpty()) {
             participant.setId(UUID.randomUUID().toString());
         }
-        if (participant.getServices() != null) {
-            participant.setServices(participant.getServices().stream().map(service -> {
-                if (service.getId() != null) {
-                    return serviceRepository.findById(service.getId())
-                        .orElseThrow(() -> new IllegalArgumentException("Service not found with id: " + service.getId()));
+        if (participant.getParticipantServices() != null) {
+            participant.setParticipantServices(participant.getParticipantServices().stream().map(ps -> {
+                if (ps.getService().getId() != null) {
+                    de.ct.manager.schedule.service.Service service = serviceRepository.findById(ps.getService().getId())
+                        .orElseThrow(() -> new IllegalArgumentException("Service not found with id: " + ps.getService().getId()));
+                    ps.setParticipant(participant);
+                    ps.setService(service);
                 }
-                return service;
+                return ps;
             }).toList());
         }
         if (participant.getRegistrationKey() == null || participant.getRegistrationKey().isEmpty()) {

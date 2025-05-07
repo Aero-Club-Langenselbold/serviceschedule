@@ -305,17 +305,17 @@ const columns = computed<TableColumn<Participant>[]>(() => {
 
         if (updatedParticipant) {
           // Compare values and show both old and new values
-          const equal = updatedParticipant.services?.map((service: { servicename: string }) => service.servicename).join(', ') === row.original.services?.map((service: { servicename: string }) => service.servicename).join(', ')
+          const equal = updatedParticipant.participantServices?.map((ps) => ps.service.servicename).join(', ') === row.original.participantServices?.map((ps) => ps.service.servicename).join(', ')
 
           if (!equal) {
             return h('div', { class: 'flex flex-col' }, [
-              h('span', { class: 'text-white line-through' }, row.original.services?.map((service: { servicename: string }) => service.servicename).join(', ')), // Old value
-              h('span', { class: 'text-white font-bold' }, updatedParticipant.services?.map((service: { servicename: string }) => service.servicename).join(', ')), // New value
+              h('span', { class: 'text-white line-through' }, row.original.participantServices?.map((ps) => ps.service.servicename).join(', ')), // Old value
+              h('span', { class: 'text-white font-bold' }, updatedParticipant.participantServices?.map((ps) => ps.service.servicename).join(', ')), // New value
             ])
           }
         }
 
-        return row.original.services?.map((service: { servicename: string }) => service.servicename).join(', ')
+        return row.original.participantServices?.map((ps) => ps.service.servicename).join(', ')
       }
     }
   ]
