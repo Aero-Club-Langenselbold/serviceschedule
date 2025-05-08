@@ -3,7 +3,7 @@
     <NavMenu />
   </div>
   <div class="flex items-start justify-center min-h-screen mt-4">
-    <div class="p-8 rounded-4xl shadow-md max-w-1/2 border-2">
+    <div class="p-8 rounded-4xl shadow-md max-w-full border-2">
       <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('availabilities.list') }}</h2>
       <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
 
@@ -33,6 +33,7 @@ import type { TableColumn } from '@nuxt/ui'
 import type { Participant } from '~/types/participant'
 import type { ParticipantAvailability } from '~/types/participantAvailability'
 import type { Plan } from '~/types/plan'
+import type { Service } from '~/types/service'
 import type { ServiceDate } from '~/types/serviceDate'
 
 const { t } = useI18n()
@@ -40,6 +41,7 @@ const userStore = useUserStore()
 const { user } = storeToRefs(userStore)
 
 const UButton = resolveComponent('UButton')
+const USelect = resolveComponent('USelect')
 
 const route = useRoute()
 const errorMessage = ref<string | null>(null)
@@ -48,7 +50,8 @@ const id = route.params.id
 const loading = ref(true)
 const saving = ref(false)
 
-const data = ref<{ date: string; currentState: string; preferencesSaved: boolean; participant: Participant }[]>([])
+const data = ref<{ date: string, currentState: string, selectedService: Service, preferencesSaved: boolean, participant: Participant }[]>([])
+const availableServices = ref<Record<string, Service[]>>({})
 
 const columns = computed<TableColumn<any>[]>(() => [
   {
@@ -68,9 +71,17 @@ const columns = computed<TableColumn<any>[]>(() => [
       const currentState = row.original.currentState
       const preferencesSaved = row.original.preferencesSaved
 
-      const toggleState = () => {
+      const toggleState = async () => {
         const currentIndex = toggleStates.indexOf(currentState)
         row.original.currentState = toggleStates[(currentIndex + 1) % toggleStates.length]
+
+        if (row.original.currentState === 'please') {
+          const { data: serviceData } = await useAPI<Service[]>(`/plan/availableServices/${id}/${row.original.date}`, { method: 'GET' })
+
+          if (serviceData.value) {
+            availableServices.value[row.original.date] = serviceData.value
+          }
+        }
       }
 
       return h(UButton, {
@@ -79,6 +90,38 @@ const columns = computed<TableColumn<any>[]>(() => [
         color: currentState === 'yes' ? 'primary' : currentState === 'no' ? 'error' : 'secondary',
         icon: currentState === 'yes' ? 'i-lucide-thumbs-up' : currentState === 'no' ? 'i-lucide-thumbs-down' : 'i-lucide-plane'
       }, () => t(`availabilities.${currentState}`))
+    }
+  }, {
+    accessorKey: 'selectedService',
+    header: t('availabilities.requestedService'),
+    cell: ({ row }) =>{
+      if (row.original.currentState === 'please') {
+        // fetch available services for this participant
+        let services = row.original.participant.services
+        let selectedService = services[0].id
+
+        services = services.filter((service: Service) =>
+          availableServices.value[row.original.date]?.some(availableService => availableService.id === service.id)
+        )
+        if (services.length === 0) {
+          return h('span', {}, t('availabilities.noServiceAvailable'))
+        }
+
+        return h(USelect, {
+          defaultValue: row.original.selectedService?.id || selectedService,
+          items: services,
+          labelKey: 'servicename',
+          valueKey: 'id',
+          class: 'w-40',
+          'onUpdate:open': (selectedId: string) => {
+            selectedService = selectedId || services[0]?.id
+            row.original.selectedService = services.find((service: Service) => service.id === selectedService)
+            console.log('selectedService', row.original.selectedService)
+          },
+        })
+      }
+
+      return null
     }
   }
 ])
@@ -104,11 +147,13 @@ const fetchData = async () => {
       data.value = Array.from(uniqueDates).map(date => {
         const savedAvailability = (availabilityData.value ?? []).length > 0
         let status = 'no'
+        let savedService = null
 
         if (savedAvailability) {
           const savedDate = availabilityData.value?.find((availability: any) => availability.date === date)
           if (savedDate) {
-            status = savedDate.requested ? 'please' : 'yes'
+            status = savedDate.requestedService !== null ? 'please' : 'yes'
+            savedService = savedDate.requestedService
           } else {
             status = 'no'
           }
@@ -116,11 +161,16 @@ const fetchData = async () => {
           status = participantData.value?.status === 'ACTIVE' ? 'yes' : 'no'
         }
 
+        if (status === 'please') {
+          fetchAvailableServices(date)
+        }
+
         const row: any = {
           date: date,
           currentState: status,
           preferencesSaved: savedAvailability,
-          participant: participantData.value
+          participant: participantData.value,
+          selectedService: savedService
         }
         return row
       })
@@ -129,6 +179,13 @@ const fetchData = async () => {
     errorMessage.value = 'An error occurred while fetching the data.'
   } finally {
     loading.value = false
+  }
+}
+
+const fetchAvailableServices = async (date: string) => {
+  const { data: serviceData } = await useAPI<Service[]>(`/plan/availableServices/${id}/${date}`, { method: 'GET' })
+  if (serviceData.value) {
+    availableServices.value[date] = serviceData.value || []
   }
 }
 
@@ -142,7 +199,7 @@ const savePreferences = async () => {
     .map(row => {
       return {
         date: new Date(row.date),
-        requested: row.currentState === 'please',
+        requestedService: row.selectedService,
         participant: {
           id: row.participant.id
         },

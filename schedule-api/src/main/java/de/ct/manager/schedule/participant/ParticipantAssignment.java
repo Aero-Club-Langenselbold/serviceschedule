@@ -7,7 +7,10 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
+import org.springframework.data.util.Pair;
+
 import de.ct.manager.schedule.service.Service;
+import de.ct.manager.schedule.service.ServiceDate;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -18,7 +21,7 @@ public class ParticipantAssignment {
     private static final long ASSIGNMENT_THRESHOLD = 14L * 24 * 60 * 60 * 1000; // 14 days
 
     private Participant participant;
-    private List<Date> datesRequested = new CopyOnWriteArrayList<>();
+    private List<Pair<Date, Service>> datesRequested = new CopyOnWriteArrayList<>();
     private List<Date> datesAvailable = new CopyOnWriteArrayList<>();
     private List<Date> datesAssigned = new ArrayList<>();
     private List<Date> datesWithinAssignmentThreshold = new ArrayList<>();
@@ -29,15 +32,16 @@ public class ParticipantAssignment {
         this(participant, datesAvailable, null);
     }
 
-    public ParticipantAssignment(Participant participant, List<Date> datesAvailable, List<Date> datesRequested) {
+    public ParticipantAssignment(Participant participant, List<Date> datesAvailable, List<Pair<Date, Service>>  datesRequested) {
         this.participant = participant;
         this.datesAvailable = new CopyOnWriteArrayList<>(datesAvailable);
         if (datesRequested != null) {
             this.datesRequested = new CopyOnWriteArrayList<>(datesRequested);
-            this.datesAvailable.removeAll(datesRequested);
+            this.datesAvailable.removeAll(datesRequested.stream()
+                .map(Pair::getFirst)
+                .collect(Collectors.toList()));
         }
         this.availableServices = participant.getParticipantServices().stream()
-            .filter(ParticipantServiceEntity::isAutoAssign)
             .map(ParticipantServiceEntity::getService)
             .collect(Collectors.toCollection(CopyOnWriteArrayList::new));
     }
@@ -49,7 +53,7 @@ public class ParticipantAssignment {
             .map(d -> new SimpleDateFormat(dateFormat).format(d))
             .anyMatch(d -> d.equals(isoDate));
         boolean isDateRequested = datesRequested.stream()
-            .map(d -> new SimpleDateFormat(dateFormat).format(d))
+            .map(d -> new SimpleDateFormat(dateFormat).format(d.getFirst()))
             .anyMatch(d -> d.equals(isoDate));
         boolean isDateWithinThreshold = datesWithinAssignmentThreshold.stream()
             .map(d -> new SimpleDateFormat(dateFormat).format(d))
@@ -60,7 +64,10 @@ public class ParticipantAssignment {
         }
 
         datesAssigned.add(date);
-        datesRequested.remove(date);
+        datesRequested.remove(datesRequested.stream()
+            .filter(d -> d.getFirst().equals(date))
+            .findFirst()
+            .orElse(null));
         datesAvailable.remove(date);
         moveDatesWithinThreshold(date);
         determineNextService();
@@ -68,7 +75,26 @@ public class ParticipantAssignment {
         return true;
     }
 
-    public boolean canAssignService(Service service) {
+    public boolean canAssignService(ServiceDate serviceDate) {
+        Service service = serviceDate.getService();
+        Date date = serviceDate.getDate();
+        if (availableServices.contains(service)) {
+            // Find the corresponding ParticipantServiceEntity
+            ParticipantServiceEntity participantServiceEntity = participant.getParticipantServices().stream()
+                .filter(ps -> ps.getService().equals(service))
+                .findFirst()
+                .orElse(null);
+
+            // If autoAssign is false, check if the service was specifically requested
+            if (participantServiceEntity != null && !participantServiceEntity.isAutoAssign()) {
+                if (datesRequested.stream().anyMatch(pair -> pair.getFirst().equals(date) && pair.getSecond().equals(service))) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        }
+
         if (availableServices.isEmpty() || (participant.getMaxAssignments() > 0 && datesAssigned.size() >= participant.getMaxAssignments())) {
             return false; // only return true if the participant has not reached their max assignments (0 max assignments means unlimited)
         }

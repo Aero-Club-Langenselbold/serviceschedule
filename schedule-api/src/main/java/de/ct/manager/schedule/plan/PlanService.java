@@ -20,6 +20,8 @@ import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
+import org.springframework.data.util.Pair;
+
 import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
@@ -411,6 +413,33 @@ public class PlanService {
         return newEntries;
     }
 
+    public List<Service> getAvailableServices(String planId, String date, String currentUsername) {
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        Plan plan = planRepository.findById(planId).orElseThrow();
+        List<DateParticipantAvailability> dpas = dateParticipantAvailabilityRepository.findByPlan(plan).orElseThrow().stream()
+            .filter(d -> df.format(d.getDate()).equals(date))
+            .toList();
+        List<ServiceDate> serviceDates = serviceDateRepository.findByPlan(plan).orElseThrow().stream()
+            .filter(sd -> df.format(sd.getDate()).equals(date))
+            .toList();
+        List<Service> availableServices = new ArrayList<>();
+
+        for (ServiceDate serviceDate : serviceDates) {
+            long requestedCount = dpas.stream()
+                .filter(dpa -> dpa.getRequestedService() != null && dpa.getRequestedService().getId().equals(serviceDate.getService().getId()))
+                .count();
+
+            if (requestedCount < serviceDate.getMandatoryAssignees() || dpas.stream().filter(dpa -> dpa.getParticipant().getEmail().equals(currentUsername) && dpa.getRequestedService() != null).count() > 0) {
+                availableServices.add(serviceDate.getService());
+            }
+        }
+
+        return availableServices.stream()
+            .distinct()
+            .sorted(Comparator.comparing(Service::getServicename))
+            .toList();
+    }
+
     private Optional<List<PlanEntry>> assignDate(List<ParticipantAssignment> availability, List<DateAssignment> dateAssignments) {
         List<PlanEntry> pe = new ArrayList<>();
 
@@ -502,8 +531,10 @@ public class PlanService {
                 .map(date -> date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
                 .anyMatch(date -> date.equals(serviceDate));
             boolean isRequested = pa.getDatesRequested().stream()
-                .map(date -> date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
-                .anyMatch(date -> date.equals(serviceDate));
+                .map(pair -> Map.entry(
+                    pair.getFirst().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
+                    pair.getSecond()))
+                .anyMatch(pair -> pair.getKey().equals(serviceDate) && pair.getValue().getId().equals(da.getServiceDate().getService().getId()));
             if ((isAvailable || isRequested)
                 && pa.getParticipant().getServices().contains(da.getServiceDate().getService())) {
                 da.setPossibleAssignees(da.getPossibleAssignees() + 1);
@@ -539,13 +570,15 @@ public class PlanService {
             .map(date -> date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
             .anyMatch(date -> date.equals(serviceDate));
         boolean isRequested = pa.getDatesRequested().stream()
-            .map(date -> date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
-            .anyMatch(date -> date.equals(serviceDate));
+            .map(pair -> Map.entry(
+                pair.getFirst().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
+                pair.getSecond()))
+            .anyMatch(pair -> pair.getKey().equals(serviceDate) && pair.getValue().getId().equals(dateAssignment.getServiceDate().getService().getId()));
 
         // participant is available if: service is available, date is available, and next service to assign is the same as the service of the date
         return pa.getParticipant().getServices().contains(dateAssignment.getServiceDate().getService()) &&
             (isAvailable || isRequested) &&
-            pa.canAssignService(dateAssignment.getServiceDate().getService());
+            pa.canAssignService(dateAssignment.getServiceDate());
     }
 
     private boolean isParticipantAvailableForServiceAndDateOutsideThreshold(ParticipantAssignment pa, DateAssignment dateAssignment) {
@@ -557,9 +590,11 @@ public class PlanService {
         boolean isAvailable = pa.getDatesAvailable().stream()
             .map(date -> date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
             .anyMatch(date -> date.equals(serviceDate));
-        boolean isRequested = pa.getDatesRequested().stream()
-            .map(date -> date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
-            .anyMatch(date -> date.equals(serviceDate));
+            boolean isRequested = pa.getDatesRequested().stream()
+            .map(pair -> Map.entry(
+                pair.getFirst().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
+                pair.getSecond()))
+            .anyMatch(pair -> pair.getKey().equals(serviceDate) && pair.getValue().getId().equals(dateAssignment.getServiceDate().getService().getId()));
         boolean isInThreshold = pa.getDatesWithinAssignmentThreshold().stream()
             .map(date -> date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
             .anyMatch(date -> date.equals(serviceDate));
@@ -597,7 +632,8 @@ public class PlanService {
 
         // pick candidates with special requests for this date first
         ParticipantAssignment selectedParticipant = availableParticipants.stream()
-            .filter(pa -> !pa.getDatesRequested().isEmpty() && pa.getDatesRequested().contains(serviceDate.getDate()))
+            .filter(pa -> !pa.getDatesRequested().isEmpty() && pa.getDatesRequested().stream()
+                .anyMatch(pair -> pair.getFirst().equals(serviceDate.getDate()) && pair.getSecond().getId().equals(serviceDate.getService().getId())))
             .min(Comparator.comparingInt(pa -> pa.getDatesRequested().size()))
             .orElse(null);
 
@@ -636,15 +672,15 @@ public class PlanService {
                 .findFirst();
 
             if (existingAssignment.isPresent()) {
-                if (dpa.isRequested()) {
-                    existingAssignment.get().getDatesRequested().add(dpa.getDate());
+                if (dpa.getRequestedService() != null) {
+                    existingAssignment.get().getDatesRequested().add(Pair.of(dpa.getDate(), dpa.getRequestedService()));
                 } else {
                     existingAssignment.get().getDatesAvailable().add(dpa.getDate());
                 }
             } else {
                 ParticipantAssignment pa = new ParticipantAssignment(dpa.getParticipant(), new ArrayList<>(), new ArrayList<>());
-                if (dpa.isRequested()) {
-                    pa.getDatesRequested().add(dpa.getDate());
+                if (dpa.getRequestedService() != null) {
+                    pa.getDatesRequested().add(Pair.of(dpa.getDate(), dpa.getRequestedService()));
                 } else {
                     pa.getDatesAvailable().add(dpa.getDate());
                 }
@@ -678,7 +714,6 @@ public class PlanService {
                 dpa.setParticipant(p);
                 dpa.setPlan(plan);
                 dpa.setDate(sd.getDate());
-                dpa.setRequested(false);
                 availabilities.add(dpa);
             }
             dateParticipantAvailabilityRepository.saveAll(availabilities);

@@ -28,6 +28,7 @@ public class DateParticipantAvailabilityRepositoryUnitTest {
 
     private Plan plan;
     private Participant participant;
+    private Date date = new Date();
 
     @BeforeEach
     void setup() {
@@ -51,8 +52,7 @@ public class DateParticipantAvailabilityRepositoryUnitTest {
         dateParticipantAvailability.setId("mydateparticipantavailability");
         dateParticipantAvailability.setPlan(this.plan);
         dateParticipantAvailability.setParticipant(this.participant);
-        dateParticipantAvailability.setRequested(true);
-        dateParticipantAvailability.setDate(new Date());
+        dateParticipantAvailability.setDate(this.date);
         dateParticipantAvailabilityRepository.save(dateParticipantAvailability);
     }
 
@@ -68,7 +68,6 @@ public class DateParticipantAvailabilityRepositoryUnitTest {
         dateParticipantAvailability.setId("wonderfulavailability");
         dateParticipantAvailability.setPlan(this.plan);
         dateParticipantAvailability.setParticipant(this.participant);
-        dateParticipantAvailability.setRequested(true);
         dateParticipantAvailability.setDate(new Date());
         dateParticipantAvailabilityRepository.save(dateParticipantAvailability);
 

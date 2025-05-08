@@ -12,10 +12,10 @@
 </template>
 
 <script lang="ts" setup>
-import type { TableColumn } from '@nuxt/ui';
-import iconv from 'iconv-lite';
-import type { Plan } from '~/types/plan';
-import type { Service } from '~/types/service';
+import type { TableColumn } from '@nuxt/ui'
+import iconv from 'iconv-lite'
+import type { Plan } from '~/types/plan'
+import type { Service } from '~/types/service'
 
 const UButton = resolveComponent('UButton')
 const UTooltip = resolveComponent('UTooltip')
@@ -60,7 +60,7 @@ const columns = computed<TableColumn<Plan>[]>(() => [
   }, {
     header: t('plan.actions'),
     cell: ({ row }) => {
-      const hasServiceDates = row.original.serviceDates.length > 0;
+      const hasServiceDates = row.original.serviceDates.length > 0
       if (user.value?.roles.includes('ROLE_ADMIN')) {
         return [
           h(UTooltip, {
@@ -274,8 +274,8 @@ const downloadPdf = async (id: string) => {
       errorMessage.value = error.value.message
     }
 
-    const file = window.URL.createObjectURL(data.value as Blob);
-    window.open(file, '_blank');
+    const file = window.URL.createObjectURL(data.value as Blob)
+    window.open(file, '_blank')
   } catch (err) {
     errorMessage.value = 'An error occurred while downloading the PDF.'
   }
@@ -300,16 +300,16 @@ const downloadCsv = async (id: string) => {
       }
 
       // Convert the data to ISO-8859-1 using iconv-lite
-      const csvContent = data.value as string; // Assuming the API returns CSV content as a string
-      const isoEncodedContent = iconv.encode(csvContent, 'ISO-8859-1');
+      const csvContent = data.value as string // Assuming the API returns CSV content as a string
+      const isoEncodedContent = iconv.encode(csvContent, 'ISO-8859-1')
 
-      const blob = new Blob([isoEncodedContent], { type: 'text/csv;charset=ISO-8859-1' });
-      const link = document.createElement('a');
-      link.href = window.URL.createObjectURL(blob);
-      link.download = `${service.servicename}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const blob = new Blob([isoEncodedContent], { type: 'text/csv;charset=ISO-8859-1' })
+      const link = document.createElement('a')
+      link.href = window.URL.createObjectURL(blob)
+      link.download = `${service.servicename}.csv`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
     })
   } catch (err) {
     errorMessage.value = 'An error occurred while downloading the PDF.'

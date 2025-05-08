@@ -276,7 +276,7 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
             new ParameterizedTypeReference<List<ServiceDate>>() {});
         // add availability dates
         for (Participant p : participants) {
-            DateParticipantAvailability availability = new DateParticipantAvailability(calendar.getTime(), false, p, plan.getBody());
+            DateParticipantAvailability availability = new DateParticipantAvailability(calendar.getTime(), null, p, plan.getBody());
             entity = new HttpEntity<>(objectMapper.writeValueAsString(List.of(availability)), createHeadersWithToken(UserRole.ROLE_ADMIN));
 
             restTemplate.exchange(

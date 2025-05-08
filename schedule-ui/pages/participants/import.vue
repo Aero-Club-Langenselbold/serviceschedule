@@ -105,8 +105,8 @@ const columns = computed<TableColumn<Participant>[]>(() => {
   {
       accessorKey: 'acknowledge',
       header: '',
-      cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
-        const email = row.original.email;
+      cell: ({ row }: { row: { original: Participant, getValue: (key: string) => any } }) => {
+        const email = row.original.email
         if (diff.value?.unchangedParticipants.some(participant => participant.email === email)) {
           return ''
         }
@@ -122,18 +122,18 @@ const columns = computed<TableColumn<Participant>[]>(() => {
                 row.original.services = updatedParticipant?.services || row.original.services
                 await useAPI('/participant/save', { method: 'POST', body: JSON.stringify(row.original), headers: { 'Content-Type': 'application/json' }})
                 diff.value!.updatedParticipants = diff.value!.updatedParticipants.filter(participant => participant.email !== row.original.email)
-                await fetchData();
+                await fetchData()
                 toast.add({
                   title: t('participants.updateSuccess'),
                   icon: 'i-lucide-circle-check',
                   color: 'primary'
-                });
+                })
               } catch (error) {
                 toast.add({
                   title: t('participants.updateFailure'),
                   icon: 'i-lucide-circle-x',
                   color: 'error'
-                });
+                })
               }
             }
           })
@@ -150,13 +150,13 @@ const columns = computed<TableColumn<Participant>[]>(() => {
                     title: t('participants.importSuccess'),
                     icon: 'i-lucide-circle-check',
                     color: 'primary'
-                  });
+                  })
               } catch (error) {
                 toast.add({
                   title: t('participants.importFailure'),
                   icon: 'i-lucide-circle-x',
                   color: 'error'
-                });
+                })
               }
             }
           })
@@ -179,7 +179,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
                   title: t('participants.deleteFailure'),
                   icon: 'i-lucide-circle-x',
                   color: 'error'
-                });
+                })
               }
             }
           })
@@ -200,7 +200,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
       accessorKey: 'lastname',
       header: t('participants.lastname'),
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
-        const email = row.original.email;
+        const email = row.original.email
         const updatedParticipant = diff.value?.updatedParticipants.find(participant => participant.email === email)
 
         if (updatedParticipant) {

@@ -1,5 +1,5 @@
-import type { Participant } from './participant';
-import type { Service } from './service';
+import type { Participant } from './participant'
+import type { Service } from './service'
 
 type PlanEntry = {
     id: string
@@ -10,5 +10,5 @@ type PlanEntry = {
     participant: Participant
 }
 
-export type { PlanEntry };
+export type { PlanEntry }
 

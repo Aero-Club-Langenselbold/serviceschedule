@@ -77,8 +77,8 @@ const selectedDate = shallowRef<CalendarDate | DateValue | undefined>(undefined)
 
 const services = ref<any[]>([])
 interface DateEntry {
-  localeString: string;
-  originalDate: Date;
+  localeString: string
+  originalDate: Date
 }
 
 const dates = ref<DateEntry[]>([])

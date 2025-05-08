@@ -213,8 +213,8 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest {
         calendar.add(Calendar.DAY_OF_MONTH, 1);
         ServiceDate serviceDate2 = new ServiceDate(calendar.getTime(), s2, 1, LocalTime.of(10, 0), LocalTime.of(12, 0));
 
-        dpa.add(new DateParticipantAvailability(serviceDate1.getDate(), false, p1, null));
-        dpa.add(new DateParticipantAvailability(serviceDate2.getDate(), false, p2, null));
+        dpa.add(new DateParticipantAvailability(serviceDate1.getDate(), null, p1, null));
+        dpa.add(new DateParticipantAvailability(serviceDate2.getDate(), null, p2, null));
 
         return dpa;
     }

@@ -50,6 +50,12 @@ public class ParticipantService {
         if (participant.getId().isEmpty()) {
             participant.setId(UUID.randomUUID().toString());
         }
+        // clear old participant services list
+        Participant oldParticipant = participantRepository.findById(participant.getId()).orElse(null);
+        if (oldParticipant != null && oldParticipant.getParticipantServices() != null) {
+            oldParticipant.getParticipantServices().clear();
+            participantRepository.save(oldParticipant);
+        }
         if (participant.getParticipantServices() != null) {
             participant.setParticipantServices(participant.getParticipantServices().stream().map(ps -> {
                 if (ps.getService().getId() != null) {

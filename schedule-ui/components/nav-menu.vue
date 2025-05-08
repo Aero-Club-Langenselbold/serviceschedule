@@ -82,7 +82,7 @@ const menu = computed(() => {
       to: '/plan/list'
     })
   }
-  return items;
+  return items
 })
 const sessionInfo = computed(() => {
   const items = []
@@ -134,7 +134,7 @@ const sessionInfo = computed(() => {
       setLocale('en')
     }
   })
-  return items;
+  return items
 })
 const items = ref([
   menu.value,

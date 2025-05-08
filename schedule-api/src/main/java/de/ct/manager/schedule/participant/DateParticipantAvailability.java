@@ -5,6 +5,7 @@ import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.ct.manager.schedule.plan.Plan;
+import de.ct.manager.schedule.service.Service;
 import de.ct.manager.schedule.util.AbstractPersistentEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -30,8 +31,9 @@ public class DateParticipantAvailability extends AbstractPersistentEntity {
     @NotNull
     private Date date;
 
-    @Column
-    private boolean requested;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "requested_service_id")
+    private Service requestedService;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "participant_id")

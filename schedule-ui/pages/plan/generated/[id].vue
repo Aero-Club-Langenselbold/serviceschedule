@@ -235,7 +235,8 @@ const columns = computed<TableColumn<PlanTableEntryRow>[]>(() => [
               status: 'INACTIVE',
               maxAssignments: 0,
               registrationKey: '',
-              participantServices: []
+              participantServices: [],
+              services: undefined
             },
             service: {
               id: service.id,
@@ -244,7 +245,7 @@ const columns = computed<TableColumn<PlanTableEntryRow>[]>(() => [
               settings: []
             }
           })
-        });
+        })
 
         const { data: entryData, error: entryError } = await useAPI<PlanEntry[]>(`/plan/updatePlanEntry/` + id, { method: 'POST', body: JSON.stringify(planEntry.value) })
 

@@ -84,7 +84,7 @@ const filteredParticipants = ref<Participant[]>([])
 const services = ref<Service[] | null>([])
 
 const data = ref<String[]>([])
-const tableKey = ref<number>(0);
+const tableKey = ref<number>(0)
 
 const selectAll = ref<boolean>(true)
 const serviceSelect = ref<Record<string, boolean>>({})
@@ -95,7 +95,7 @@ const toggleSelectAll = (event: Event) => {
 
   console.log('selectAll', selectAll.value)
   filteredParticipants.value = selectAll.value ? participants.value : []
-  tableKey.value++;
+  tableKey.value++
 }
 const toggleService = (event: Event) => {
   selectAll.value = Object.values(serviceSelect.value).every((value) => value)
@@ -106,7 +106,7 @@ const toggleService = (event: Event) => {
     const participantServices = participant.participantServices?.map(ps => ps.service.id)
     return selectedServiceIds.some(serviceId => participantServices?.includes(serviceId))
   })
-  tableKey.value++;
+  tableKey.value++
 }
 
 const columns = computed<TableColumn<any>[]>(() => {
@@ -188,11 +188,13 @@ const fetchData = async () => {
         participants.value.forEach(participant => {
           const savedAvailability = (availabilityData.value ?? []).filter(av => av.participant.id === participant.id).length > 0
           let status = 'no'
+          let savedService = null
 
           if (savedAvailability) {
             const savedDate = availabilityData.value?.find((availability: any) => availability.date === date && availability.participant.id === participant.id)
             if (savedDate) {
-              status = savedDate.requested ? 'please' : 'yes'
+              status = savedDate.requestedService !== null ? 'please' : 'yes'
+              savedService = savedDate.requestedService
             } else {
               status = 'no'
             }
@@ -204,7 +206,8 @@ const fetchData = async () => {
             currentState: status,
             preferencesSaved: savedAvailability,
             participant: participant,
-            edited: savedAvailability
+            edited: savedAvailability,
+            selectedService: savedService
           }
         })
         return row
@@ -228,21 +231,21 @@ const savePreferences = async () => {
     })
     const payload = data.value.flatMap((row: Record<string, any>) => {
       return participants.value.map(participant => {
-        const participantData = row[participant.id];
+        const participantData = row[participant.id]
         if (editedParticipants.some(editedParticipant => editedParticipant.id === participant.id) && (participantData.currentState === 'yes' || participantData.currentState === 'please')) {
           return {
             date: new Date(row.date),
-            requested: participantData.currentState === 'please',
+            requestedService: participantData.selectedService,
             participant: {
               id: participant.id
             },
             plan: {
               id: id
             }
-          };
+          }
         }
-        return null;
-      }).filter(item => item !== null);
+        return null
+      }).filter(item => item !== null)
     })
 
     const { error } = await useAPI('/plan/participantAvailability/save/' + id, { method: 'POST', body: JSON.stringify(payload) })
