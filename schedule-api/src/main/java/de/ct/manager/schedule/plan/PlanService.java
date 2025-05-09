@@ -643,6 +643,7 @@ public class PlanService {
         if (selectedParticipant == null) {
             selectedParticipant = availableParticipants.stream()
                 .min(Comparator.comparingInt((ParticipantAssignment pa) -> pa.getDatesAssigned().size())
+                    .thenComparingInt(pa -> pa.getDatesAssigned().size() - pa.getParticipant().getMinAssignments())
                     .thenComparingInt(pa -> pa.getDatesAvailable().size()))
                 .orElseThrow(() -> new IllegalArgumentException("No available participants"));
         }

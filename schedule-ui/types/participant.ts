@@ -8,6 +8,7 @@ type Participant = {
     email: string
     dateOfBirth: Date | undefined
     status: 'ACTIVE' | 'INACTIVE'
+    minAssignments: number
     maxAssignments: number
     registrationKey: string
     participantServices: ParticipantService[] | undefined

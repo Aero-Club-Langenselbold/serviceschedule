@@ -161,6 +161,26 @@ const columns = computed<TableColumn<Participant>[]>(() => {
           )
       }
     }, {
+      accessorKey: 'minAssignments',
+      header: t('participants.minAssignments'),
+      cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
+        const rowId = row.original.id
+        const isEditing = ref(editingState[rowId] || false)
+
+        return isEditing.value ?
+          h(UInput, {
+            modelValue: editedRows[rowId]?.minAssignments || row.original.minAssignments,
+            type: 'number',
+            'onUpdate:modelValue': (value: number) => {
+              if (!editedRows[rowId]) {
+                editedRows[rowId] = { ...row.original }
+              }
+              editedRows[rowId].minAssignments = value
+            }
+          }) :
+          row.getValue('minAssignments')
+      }
+    }, {
       accessorKey: 'maxAssignments',
       header: t('participants.maxAssignments'),
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {

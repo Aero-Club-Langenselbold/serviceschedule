@@ -50,6 +50,12 @@
         </div>
         <div class="mb-6">
           <label class="block text-sm font-bold mb-2">
+            {{ $t('participants.minAssignments') }}
+          </label>
+          <UInput v-model="participant.minAssignments" type="number" :placeholder="$t('participants.minAssignments')" class="w-full" />
+        </div>
+        <div class="mb-6">
+          <label class="block text-sm font-bold mb-2">
             {{ $t('participants.maxAssignments') }}
           </label>
           <UInput v-model="participant.maxAssignments" type="number" :placeholder="$t('participants.maxAssignments')" class="w-full" />
@@ -98,6 +104,7 @@ const participant = ref<Participant> ({
   email: '',
   dateOfBirth: new Date(),
   status: 'ACTIVE',
+  minAssignments: 0,
   maxAssignments: 0,
   registrationKey: '',
   participantServices: [],
