@@ -71,6 +71,7 @@ import type { Service } from '~/types/service'
 import type { ServiceDate } from '~/types/serviceDate'
 
 const UButton = resolveComponent('UButton')
+const UCheckbox = resolveComponent('UCheckbox')
 
 const route = useRoute()
 const errorMessage = ref<string | null>(null)
@@ -88,25 +89,34 @@ const tableKey = ref<number>(0)
 
 const selectAll = ref<boolean>(true)
 const serviceSelect = ref<Record<string, boolean>>({})
+
 const toggleSelectAll = (event: Event) => {
   Object.keys(serviceSelect.value).forEach((serviceId: string) => {
     serviceSelect.value[serviceId] = selectAll.value
   })
 
-  console.log('selectAll', selectAll.value)
   filteredParticipants.value = selectAll.value ? participants.value : []
   tableKey.value++
 }
+
 const toggleService = (event: Event) => {
   selectAll.value = Object.values(serviceSelect.value).every((value) => value)
 
-  console.log('Triggered')
   const selectedServiceIds = Object.keys(serviceSelect.value).filter(serviceId => serviceSelect.value[serviceId])
   filteredParticipants.value = participants.value.filter(participant => {
     const participantServices = participant.participantServices?.map(ps => ps.service.id)
     return selectedServiceIds.some(serviceId => participantServices?.includes(serviceId))
   })
   tableKey.value++
+}
+
+const toggleStateForColumn = (participantId: string, checked: boolean) => {
+  data.value.forEach((row: Record<string, any>) => {
+    if (row[participantId]) {
+      row[participantId].currentState = checked ? 'yes' : 'no'
+      row[participantId].edited = true
+    }
+  })
 }
 
 const columns = computed<TableColumn<any>[]>(() => {
@@ -124,7 +134,19 @@ const columns = computed<TableColumn<any>[]>(() => {
   const participantColumns: TableColumn<any>[] = participants.value?.map(participant => ({
     accessorKey: participant.id, // Use participant ID as the key
     id: participant.id,
-    header: () => h('th', { class: 'rotate' }, [h('span', `${participant.lastname}, ${participant.firstname}`)]),
+    header: () => h('th', { class: 'h-45' }, [
+      h('div', { class: 'flex flex-col items-left justify-end h-full' }, [
+        h('div', { class: 'rotate mb-2' }, [
+          h('span', {}, `${participant.lastname}, ${participant.firstname}`)
+        ]),
+        h(UCheckbox, {
+          class: 'mt-auto',
+          defaultValue: participant.status === 'ACTIVE',
+          disabled: data.value.some((row: Record<string, any>) => row[participant.id]?.preferencesSaved),
+          'onUpdate:modelValue': (value: boolean) => { toggleStateForColumn(participant.id, value) }
+        })
+      ])
+    ]),
     cell: ({ row }) => {
       // Toggle state for each cell
       const toggleStates = ['yes', 'no', 'please']

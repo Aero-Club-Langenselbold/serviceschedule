@@ -112,6 +112,8 @@ public class ParticipantService {
                 participant.setEmail(email);
                 participant.setRegistrationKey(UUID.randomUUID().toString());
                 participant.setServices(serviceList);
+                participant.setMinAssignments(2);
+                participant.setMaxAssignments(5);
 
                 participantRepository.findByEmail(email).ifPresentOrElse(existingParticipant -> {
                     if (!existingParticipant.equalsForDiff(participant)) {

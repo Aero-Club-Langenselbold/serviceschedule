@@ -104,8 +104,8 @@ const participant = ref<Participant> ({
   email: '',
   dateOfBirth: new Date(),
   status: 'ACTIVE',
-  minAssignments: 0,
-  maxAssignments: 0,
+  minAssignments: 2,
+  maxAssignments: 5,
   registrationKey: '',
   participantServices: [],
   services: undefined

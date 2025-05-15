@@ -291,6 +291,12 @@ const columns = computed<TableColumn<Participant>[]>(() => {
           )
       }
     }, {
+      accessorKey: 'minAssignments',
+      header: t('participants.minAssignments'),
+      cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
+        return row.getValue('minAssignments')
+      }
+    }, {
       accessorKey: 'maxAssignments',
       header: t('participants.maxAssignments'),
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
