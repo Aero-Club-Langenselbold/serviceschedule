@@ -34,7 +34,10 @@ public class ParticipantService {
         return participantRepository.findAll(Sort.by("lastname").ascending().and(Sort.by("firstname").ascending()));
     }
 
-    public Page<Participant> listParticipants(Pageable pageable) {
+    public Page<Participant> listParticipants(Pageable pageable, String search) {
+        if (search != null && !search.isEmpty()) {
+            return participantRepository.findAll(pageable, search);
+        }
         return participantRepository.findAll(pageable);
     }
 
@@ -52,6 +55,10 @@ public class ParticipantService {
         }
         // clear old participant services list
         Participant oldParticipant = participantRepository.findById(participant.getId()).orElse(null);
+        if (oldParticipant != null) {
+            participant.setAvailabilities(oldParticipant.getAvailabilities());
+            participant.setPlanEntries(oldParticipant.getPlanEntries());
+        }
         if (oldParticipant != null && oldParticipant.getParticipantServices() != null) {
             oldParticipant.getParticipantServices().clear();
             participantRepository.save(oldParticipant);

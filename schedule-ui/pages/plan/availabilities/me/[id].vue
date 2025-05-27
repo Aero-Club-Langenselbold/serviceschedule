@@ -107,16 +107,17 @@ const columns = computed<TableColumn<any>[]>(() => [
           return h('span', {}, t('availabilities.noServiceAvailable'))
         }
 
+        row.original.selectedService = row.original.selectedService || services.find((service: Service) => service.id === selectedService)
+
         return h(USelect, {
           defaultValue: row.original.selectedService?.id || selectedService,
           items: services,
           labelKey: 'servicename',
           valueKey: 'id',
           class: 'w-40',
-          'onUpdate:open': (selectedId: string) => {
+          'onUpdate:modelValue': (selectedId: string) => {
             selectedService = selectedId || services[0]?.id
             row.original.selectedService = services.find((service: Service) => service.id === selectedService)
-            console.log('selectedService', row.original.selectedService)
           },
         })
       }

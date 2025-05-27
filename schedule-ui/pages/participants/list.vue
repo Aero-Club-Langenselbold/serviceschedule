@@ -6,6 +6,9 @@
     <div class="p-8 rounded-4xl shadow-md w-full max-w-12/12 border-2">
       <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('participants.list') }}</h2>
       <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
+      <div class="flex px-4 py-3.5 border-b border-accented">
+        <UInput v-model="filterValue" class="max-w-sm" :placeholder="$t('participants.filter')" @update:model-value="fetchDataDebounced" />
+      </div>
       <UTable :data="listData?.content" :columns="columns" class="flex-1" />
       <UPagination v-model:page="page" :items-per-page="pageSize" :total="listData?.totalElements" @update:page="fetchData"/>
     </div>
@@ -40,6 +43,7 @@ const UCheckbox = resolveComponent('UCheckbox')
 
 const editingState = reactive<{ [key: string]: boolean }>({})
 const editedRows = reactive<{ [key: string]: Participant }>({})
+let filterValue = ''
 
 const toast = useToast()
 
@@ -50,11 +54,23 @@ const showToast = () => {
   })
 }
 
+function debounce(func: (...args: any[]) => void, wait: number) {
+  let timeout: ReturnType<typeof setTimeout>
+  return (...args: any[]) => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => func(...args), wait)
+  }
+}
+
+const fetchDataDebounced = debounce(() => {
+  fetchData()
+}, 500)
+
 const columns = computed<TableColumn<Participant>[]>(() => {
   const baseColumns = [
     {
       accessorKey: 'lastname',
-      header: t('participants.lastname'),
+      header: ({ column }: { column: TableColumn<Participant> }) => sortColumn(column, t('participants.lastname'), 'lastname'),
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
         const rowId = row.original.id
         const isEditing = ref(editingState[rowId] || false)
@@ -73,7 +89,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
       }
     }, {
       accessorKey: 'firstname',
-      header: t('participants.firstname'),
+      header: ({ column }: { column: TableColumn<Participant> }) => sortColumn(column, t('participants.firstname'), 'firstname'),
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
         const rowId = row.original.id
         const isEditing = ref(editingState[rowId] || false)
@@ -92,7 +108,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
       }
     }, {
       accessorKey: 'email',
-      header: t('participants.email'),
+      header: ({ column }: { column: TableColumn<Participant> }) => sortColumn(column, t('participants.email'), 'email'),
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
         const rowId = row.original.id
         const isEditing = ref(editingState[rowId] || false)
@@ -112,7 +128,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
       }
     }, {
       accessorKey: 'dateOfBirth',
-      header: t('participants.dateOfBirth'),
+      header: ({ column }: { column: TableColumn<Participant> }) => sortColumn(column, t('participants.dateOfBirth'), 'dateOfBirth'),
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
         const rowId = row.original.id
         const isEditing = ref(editingState[rowId] || false)
@@ -136,7 +152,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
       }
     }, {
       accessorKey: 'status',
-      header: t('participants.status'),
+      header: ({ column }: { column: TableColumn<Participant> }) => sortColumn(column, t('participants.status'), 'status'),
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
         const color = {
           ACTIVE: 'success' as const,
@@ -162,7 +178,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
       }
     }, {
       accessorKey: 'minAssignments',
-      header: t('participants.minAssignments'),
+      header: ({ column }: { column: TableColumn<Participant> }) => sortColumn(column, t('participants.minAssignments'), 'minAssignments'),
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
         const rowId = row.original.id
         const isEditing = ref(editingState[rowId] || false)
@@ -182,7 +198,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
       }
     }, {
       accessorKey: 'maxAssignments',
-      header: t('participants.maxAssignments'),
+      header: ({ column }: { column: TableColumn<Participant> }) => sortColumn(column, t('participants.maxAssignments'), 'maxAssignments'),
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
         const rowId = row.original.id
         const isEditing = ref(editingState[rowId] || false)
@@ -337,22 +353,48 @@ const columns = computed<TableColumn<Participant>[]>(() => {
           }
         }
 
-        return isEditing.value ? [
-          h(UButton, { onClick: saveEdit, variant:"subtle", icon:"i-lucide-save", class: "mr-2" }),
-          h(UButton, { onClick: abortEdit, color:"error", variant:"subtle", icon:"i-lucide-x" })
-        ] : [
-          h(UButton, { onClick: startEdit, variant:"subtle", icon:"i-lucide-pen", class: "mr-2" }),
-          h(UButton, { onClick: deleteRow, color:"error", variant:"subtle", icon:"i-lucide-trash" })
-        ]
+        return isEditing.value ?
+          h('div', {}, [
+            h(UButton, { onClick: saveEdit, variant:"subtle", icon:"i-lucide-save", class: "mr-2" }),
+            h(UButton, { onClick: abortEdit, color:"error", variant:"subtle", icon:"i-lucide-x" })
+          ]) :
+          h('div', {}, [
+            h(UButton, { onClick: startEdit, variant:"subtle", icon:"i-lucide-pen", class: "mr-2" }),
+            h(UButton, { onClick: deleteRow, color:"error", variant:"subtle", icon:"i-lucide-trash" })
+          ])
       }
     })
 
   return baseColumns
 })
 
+let sort = 'lastname'
+let direction = 'asc'
+const sortColumn = (column: any, label: string, accessor: string) => {
+  const isSorted = column.getIsSorted()
+
+  return h(UButton, {
+    color: 'neutral',
+    variant: 'ghost',
+    label: label,
+    icon: isSorted
+      ? isSorted === 'asc'
+        ? 'i-lucide-arrow-up-narrow-wide'
+        : 'i-lucide-arrow-down-wide-narrow'
+      : 'i-lucide-arrow-up-down',
+    class: '-mx-2.5',
+    onClick: () => {
+      column.toggleSorting(column.getIsSorted() === 'asc')
+      sort = accessor
+      direction = isSorted === 'asc' ? 'desc' : 'asc'
+      fetchData()
+    }
+  })
+}
+
 const fetchData = async () => {
   try {
-    const { data: participantData, error: participantError } = await useAPI<Page<Participant>>(`/participant/page?page=${page.value - 1}&size=${pageSize.value}`, { method: 'GET' })
+    const { data: participantData, error: participantError } = await useAPI<Page<Participant>>(`/participant/page?page=${page.value - 1}&size=${pageSize.value}&sort=${sort},${direction}&search=${filterValue}`, { method: 'GET' })
     const { data: serviceData, error: serviceError } = await useAPI<Service[]>(`/service/list`, { method: 'GET' })
     if (participantError.value && participantError.value?.statusCode !== 200) {
       errorMessage.value = participantError.value.data.message

@@ -44,7 +44,7 @@ class ParticipantServiceUnitTest {
 
         when(participantRepository.findAll(pr)).thenReturn(generatePageResponse());
 
-        Page<Participant> result = participantService.listParticipants(pr);
+        Page<Participant> result = participantService.listParticipants(pr, null);
 
         Assertions.assertThat(result).isNotNull();
         Assertions.assertThat(result.getNumberOfElements()).isEqualTo(10);

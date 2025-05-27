@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -41,8 +42,8 @@ public class ParticipantController {
     public ResponseEntity<Page<Participant>> listParticipants(@SortDefault.SortDefaults({
                 @SortDefault(sort = "lastname", direction = org.springframework.data.domain.Sort.Direction.ASC),
                 @SortDefault(sort = "firstname", direction = org.springframework.data.domain.Sort.Direction.ASC)
-            }) @PageableDefault(size = 20) final Pageable pageable) {
-        return ResponseEntity.ok(participantService.listParticipants(pageable));
+            }) @PageableDefault(size = 20) final Pageable pageable, @RequestParam(required = false) String search) {
+        return ResponseEntity.ok(participantService.listParticipants(pageable, search));
     }
 
     @GetMapping("/fetch/{id}")

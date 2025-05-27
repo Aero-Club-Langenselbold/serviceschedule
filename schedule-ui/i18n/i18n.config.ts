@@ -86,6 +86,7 @@ export default defineI18nConfig(() => ({
         }
       },
       participants: {
+        filter: 'Filter',
         add: 'Add new Participant',
         actions: 'Actions',
         firstname: 'First Name',
@@ -355,6 +356,7 @@ export default defineI18nConfig(() => ({
         }
       },
       participants: {
+        filter: 'Filter',
         add: 'Neuen Teilnehmer hinzufügen',
         actions: 'Aktionen',
         firstname: 'Vorname',
