@@ -122,6 +122,7 @@ const columns = computed<TableColumn<any>[]>(() => [
         })
       }
 
+      row.original.selectedService = null
       return null
     }
   }
