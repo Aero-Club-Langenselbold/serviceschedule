@@ -25,7 +25,9 @@ services:
       - ./volumes/schedule-api:/var/log/schedule-api
 
   schedule-ui:
-    image: nginx:latest
+    build:
+      context: ./
+      dockerfile: Dockerfile
     ports:
       - "80:80"
       - "443:443"
