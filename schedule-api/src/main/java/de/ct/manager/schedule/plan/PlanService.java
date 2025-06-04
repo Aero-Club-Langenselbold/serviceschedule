@@ -535,8 +535,12 @@ public class PlanService {
                     pair.getFirst().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
                     pair.getSecond()))
                 .anyMatch(pair -> pair.getKey().equals(serviceDate) && pair.getValue().getId().equals(da.getServiceDate().getService().getId()));
-            if ((isAvailable || isRequested)
-                && pa.getParticipant().getServices().contains(da.getServiceDate().getService())) {
+            // if somebody has requested this date, this service will be given to that participant
+            if (isRequested && pa.getParticipant().getServices().contains(da.getServiceDate().getService())) {
+                da.setPossibleAssignees(1);
+                break;
+            }
+            else if (isAvailable && pa.getParticipant().getServices().contains(da.getServiceDate().getService())) {
                 da.setPossibleAssignees(da.getPossibleAssignees() + 1);
             }
         }

@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ParticipantAssignment {
 
-    private static final long ASSIGNMENT_THRESHOLD = 14L * 24 * 60 * 60 * 1000; // 14 days
+    private static final long ASSIGNMENT_THRESHOLD = 10L * 24 * 60 * 60 * 1000; // 10 days
 
     private Participant participant;
     private List<Pair<Date, Service>> datesRequested = new CopyOnWriteArrayList<>();
@@ -86,10 +86,10 @@ public class ParticipantAssignment {
                 .orElse(null);
 
             // If autoAssign is false, check if the service was specifically requested
-            if (participantServiceEntity != null && !participantServiceEntity.isAutoAssign()) {
+            if (participantServiceEntity != null) {
                 if (datesRequested.stream().anyMatch(pair -> pair.getFirst().equals(date) && pair.getSecond().equals(service))) {
                     return true;
-                } else {
+                } else if (!participantServiceEntity.isAutoAssign()){
                     return false;
                 }
             }

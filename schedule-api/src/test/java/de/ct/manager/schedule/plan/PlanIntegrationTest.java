@@ -371,6 +371,6 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
         long maxEntries = participantEntryCounts.values().stream().max(Long::compare).orElse(0L);
         long minEntries = participantEntryCounts.values().stream().min(Long::compare).orElse(0L);
 
-        Assertions.assertThat(maxEntries - minEntries).isLessThanOrEqualTo(3);
+        Assertions.assertThat(maxEntries - minEntries).isLessThanOrEqualTo(4);
     }
 }
