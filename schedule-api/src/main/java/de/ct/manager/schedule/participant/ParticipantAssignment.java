@@ -74,6 +74,12 @@ public class ParticipantAssignment {
         moveDatesWithinThreshold(date);
         determineNextService();
 
+        // if the participant has reached maxAssignments, remove all other availabilities
+        if (participant.getMaxAssignments() > 0 && datesAssigned.size() >= participant.getMaxAssignments()) {
+            datesAvailable.clear();
+            datesWithinAssignmentThreshold.clear();
+        }
+
         return true;
     }
 

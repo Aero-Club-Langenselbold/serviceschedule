@@ -257,7 +257,7 @@ const savePreferences = async () => {
         if (editedParticipants.some(editedParticipant => editedParticipant.id === participant.id) && (participantData.currentState === 'yes' || participantData.currentState === 'please')) {
           return {
             date: new Date(row.date),
-            requestedService: participantData.selectedService,
+            requestedService: participantData.currentState === 'yes' ? null : participantData.selectedService,
             participant: {
               id: participant.id
             },
