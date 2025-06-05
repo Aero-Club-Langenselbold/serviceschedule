@@ -18,7 +18,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ParticipantAssignment {
 
-    private static final long ASSIGNMENT_THRESHOLD = 10L * 24 * 60 * 60 * 1000; // 10 days
+    private static final long ASSIGNMENT_THRESHOLD = 8L * 24 * 60 * 60 * 1000; // 8 days
+    private static final long NO_WAY_THRESHOLD = 3L * 24 * 60 * 60 * 1000; // 3 days
 
     private Participant participant;
     private List<Pair<Date, Service>> datesRequested = new CopyOnWriteArrayList<>();
@@ -69,6 +70,7 @@ public class ParticipantAssignment {
             .findFirst()
             .orElse(null));
         datesAvailable.remove(date);
+        datesWithinAssignmentThreshold.remove(date);
         moveDatesWithinThreshold(date);
         determineNextService();
 
@@ -100,6 +102,8 @@ public class ParticipantAssignment {
         }
         else if (availableServices.contains(service) && datesAssigned.isEmpty()) {
             return true;
+        } else if (datesWithinAssignmentThreshold.contains(date)) {
+            return false;
         } else {
             return availableServices.get(this.nextServiceIndex).equals(service);
         }
@@ -130,6 +134,13 @@ public class ParticipantAssignment {
     }
 
     private void moveDatesWithinThreshold(Date assignedDate) {
+        // avoid participants being assigned to dates that are too close to the assigned date
+        List<Date> nextDayThreshold = datesAvailable.stream()
+            .filter(date -> Math.abs(date.getTime() - assignedDate.getTime()) < NO_WAY_THRESHOLD)
+            .toList();
+        datesAvailable.removeAll(nextDayThreshold);
+        datesWithinAssignmentThreshold.removeAll(nextDayThreshold);
+
         List<Date> datesWithinThreshold = datesAvailable.stream()
             .filter(date -> Math.abs(date.getTime() - assignedDate.getTime()) < ASSIGNMENT_THRESHOLD)
             .toList();

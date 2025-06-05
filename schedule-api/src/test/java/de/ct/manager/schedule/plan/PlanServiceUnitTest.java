@@ -192,7 +192,7 @@ class PlanServiceUnitTest {
             for (int i = 0; i < assignedDates.size() - 1; i++) {
                 LocalDate current = assignedDates.get(i);
                 LocalDate next = assignedDates.get(i + 1);
-                if (ChronoUnit.DAYS.between(current, next) < 10) {
+                if (ChronoUnit.DAYS.between(current, next) < 8) {
                     thresholdViolations++;
                 }
             }
@@ -378,7 +378,7 @@ class PlanServiceUnitTest {
             .filter(entry -> entry.getParticipant().getFirstname().endsWith(".5"))
             .toList()
             .size();
-        Assertions.assertThat(assignments).isEqualTo(5);
+        Assertions.assertThat(assignments).isEqualTo(3);
 
         // set maximum assignments to 2 and regnerate the plan
         plan = generatePlan(false, 2);
@@ -408,7 +408,7 @@ class PlanServiceUnitTest {
             .values()
             .stream()
             .mapToLong(Long::longValue)
-            .sum()).isEqualTo(5);
+            .sum()).isEqualTo(3);
     }
 
     @Test

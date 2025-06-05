@@ -238,12 +238,13 @@ public class PlanService {
             PdfDocument pdf = new PdfDocument(writer);
             PageSize pageSize = new PageSize(PageSize.A4.rotate());
             Document document = new Document(pdf, pageSize);
+            List<Service> services = plan.getAllServices();
 
-            Table table = new Table(plan.getAllServices().size() + 1);
+            Table table = new Table(services.size() + 1);
             table.setWidth(pageSize.getWidth() - document.getLeftMargin() - document.getRightMargin());
             // add service headers
             table.addHeaderCell(new Cell().add(new Paragraph("Datum")));
-            for (Service service : plan.getAllServices()) {
+            for (Service service : services) {
                 table.addHeaderCell(new Cell().add(new Paragraph(service.getServicename())));
             }
 
@@ -251,7 +252,7 @@ public class PlanService {
             SimpleDateFormat df = new SimpleDateFormat("EE, dd.MM.yyyy", Locale.GERMAN);
             for (Date date : plan.getAllDates()) {
                 table.addCell(new Cell().add(new Paragraph(df.format(date))));
-                for (Service service : plan.getAllServices()) {
+                for (Service service : services) {
                     // Find the PlanEntry with the matching service and start date
                     List<PlanEntry> matchingEntries = plan.getEntries().stream()
                         .filter(entry -> {
@@ -537,6 +538,9 @@ public class PlanService {
                 .anyMatch(pair -> pair.getKey().equals(serviceDate) && pair.getValue().getId().equals(da.getServiceDate().getService().getId()));
             // if somebody has requested this date, this service will be given to that participant
             if (isRequested && pa.getParticipant().getServices().contains(da.getServiceDate().getService())) {
+                // this is not correct if more than one participant can be assigned to this service and date
+                // however this is used to prioritize this date so that requests are fulfilled first
+                // TODO: handle requests first, then handle rest
                 da.setPossibleAssignees(1);
                 break;
             }
@@ -594,7 +598,7 @@ public class PlanService {
         boolean isAvailable = pa.getDatesAvailable().stream()
             .map(date -> date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
             .anyMatch(date -> date.equals(serviceDate));
-            boolean isRequested = pa.getDatesRequested().stream()
+        boolean isRequested = pa.getDatesRequested().stream()
             .map(pair -> Map.entry(
                 pair.getFirst().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
                 pair.getSecond()))
@@ -603,8 +607,7 @@ public class PlanService {
             .map(date -> date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
             .anyMatch(date -> date.equals(serviceDate));
 
-        return pa.getParticipant().getServices().contains(dateAssignment.getServiceDate().getService()) && (
-            isAvailable || isRequested || isInThreshold);
+        return pa.getParticipant().getServices().contains(dateAssignment.getServiceDate().getService()) && (isAvailable || isRequested || isInThreshold);
     }
 
     private boolean mayAssignMinor(ParticipantAssignment pa, DateAssignment dateAssignment) {
@@ -641,15 +644,11 @@ public class PlanService {
             .min(Comparator.comparingInt(pa -> pa.getDatesRequested().size()))
             .orElse(null);
 
+        log.trace("Selected participant as requested {}", selectedParticipant == null ? "null" : selectedParticipant.getParticipant().getEmail());
         // pick the participant with the least possible assignment dates
         // and fewest assignments so far
-        log.trace("Selected participant as requested {}", selectedParticipant == null ? "null" : selectedParticipant.getParticipant().getEmail());
         if (selectedParticipant == null) {
-            selectedParticipant = availableParticipants.stream()
-                .min(Comparator.comparingInt((ParticipantAssignment pa) -> pa.getDatesAssigned().size())
-                    .thenComparingInt(pa -> pa.getDatesAssigned().size() - pa.getParticipant().getMinAssignments())
-                    .thenComparingInt(pa -> pa.getDatesAvailable().size()))
-                .orElseThrow(() -> new IllegalArgumentException("No available participants"));
+            selectedParticipant = getLeastOffensiveParticipant(availableParticipants, dateAssignment);
         }
 
         if (selectedParticipant.assignDate(serviceDate.getDate())) {
@@ -665,6 +664,21 @@ public class PlanService {
         }
 
         return planEntry;
+    }
+
+    private ParticipantAssignment getLeastOffensiveParticipant(List<ParticipantAssignment> availableParticipants, DateAssignment dateAssignment) {
+        // if more than one participants match the min criteria pick the one that doesn't have an assignement date close to the chosen one
+        LocalDate chosenDate = dateAssignment.getServiceDate().getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+        return availableParticipants.stream()
+            .min(Comparator.comparingInt((ParticipantAssignment pa) -> pa.getDatesAssigned().size())
+                .thenComparingInt(pa -> pa.getDatesAssigned().size() - pa.getParticipant().getMinAssignments())
+                .thenComparing(pa -> pa.getDatesAssigned().stream()
+                    .map(date -> date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
+                    .mapToLong(assignedDate -> Math.abs(assignedDate.toEpochDay() - chosenDate.toEpochDay()))
+                    .max()
+                    .orElse(Long.MIN_VALUE)))
+            .orElseThrow(() -> new IllegalArgumentException("No available participants"));
     }
 
     private List<ParticipantAssignment> getAvailabilityForPlan(Plan plan) {

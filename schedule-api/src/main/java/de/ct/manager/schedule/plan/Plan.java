@@ -58,6 +58,7 @@ public class Plan extends AbstractPersistentEntity {
         return entries.stream()
             .map(PlanEntry::getService)
             .distinct()
+            .sorted((service1, service2) -> service1.getServicename().compareToIgnoreCase(service2.getServicename()))
             .toList();
     }
 
