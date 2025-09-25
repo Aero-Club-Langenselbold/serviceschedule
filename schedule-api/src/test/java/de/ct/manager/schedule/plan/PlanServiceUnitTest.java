@@ -415,7 +415,7 @@ class PlanServiceUnitTest {
     void testGetAvailableServices() {
         Plan plan = generatePlan();
 
-        List<Service> availableServices = planService.getAvailableServices(plan.getId(), "2020-01-04", "john.doe.0@funwithflags.com");
+        List<Service> availableServices = planService.getAvailableServices(plan.getId(), "2020-01-04");
 
         Assertions.assertThat(availableServices).isNotNull().hasSize(2);
     }

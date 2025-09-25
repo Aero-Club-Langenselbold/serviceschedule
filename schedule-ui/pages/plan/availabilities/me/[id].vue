@@ -141,7 +141,7 @@ const fetchData = async () => {
       errorMessage.value = "error while fetching data"
     } else {
       planData.value?.serviceDates.sort((a: ServiceDate, b: ServiceDate) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      // Eliminate duplicate entries and
+      // Eliminate duplicate entries
       const uniqueDates = new Set<string>()
       planData.value?.serviceDates.forEach((serviceDate: any) => {
         uniqueDates.add(serviceDate.date)

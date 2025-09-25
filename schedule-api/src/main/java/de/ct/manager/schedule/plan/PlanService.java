@@ -414,25 +414,16 @@ public class PlanService {
         return newEntries;
     }
 
-    public List<Service> getAvailableServices(String planId, String date, String currentUsername) {
+    public List<Service> getAvailableServices(String planId, String date) {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
         Plan plan = planRepository.findById(planId).orElseThrow();
-        List<DateParticipantAvailability> dpas = dateParticipantAvailabilityRepository.findByPlan(plan).orElseThrow().stream()
-            .filter(d -> df.format(d.getDate()).equals(date))
-            .toList();
         List<ServiceDate> serviceDates = serviceDateRepository.findByPlan(plan).orElseThrow().stream()
             .filter(sd -> df.format(sd.getDate()).equals(date))
             .toList();
         List<Service> availableServices = new ArrayList<>();
 
         for (ServiceDate serviceDate : serviceDates) {
-            long requestedCount = dpas.stream()
-                .filter(dpa -> dpa.getRequestedService() != null && dpa.getRequestedService().getId().equals(serviceDate.getService().getId()))
-                .count();
-
-            if (requestedCount < serviceDate.getMandatoryAssignees() || dpas.stream().filter(dpa -> dpa.getParticipant().getEmail().equals(currentUsername) && dpa.getRequestedService() != null).count() > 0) {
-                availableServices.add(serviceDate.getService());
-            }
+            availableServices.add(serviceDate.getService());
         }
 
         return availableServices.stream()
@@ -641,7 +632,7 @@ public class PlanService {
         ParticipantAssignment selectedParticipant = availableParticipants.stream()
             .filter(pa -> !pa.getDatesRequested().isEmpty() && pa.getDatesRequested().stream()
                 .anyMatch(pair -> pair.getFirst().equals(serviceDate.getDate()) && pair.getSecond().getId().equals(serviceDate.getService().getId())))
-            .min(Comparator.comparingInt(pa -> pa.getDatesRequested().size()))
+            .min(Comparator.comparingInt(pa -> pa.getDatesAssigned().size()))
             .orElse(null);
 
         log.trace("Selected participant as requested {}", selectedParticipant == null ? "null" : selectedParticipant.getParticipant().getEmail());

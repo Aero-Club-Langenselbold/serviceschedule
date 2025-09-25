@@ -20,7 +20,6 @@ import de.ct.manager.schedule.service.Service;
 import de.ct.manager.schedule.service.ServiceDate;
 import de.ct.manager.schedule.settings.SettingConstants;
 import de.ct.manager.schedule.settings.SettingsService;
-import de.ct.manager.schedule.user.UserDetailsImpl;
 
 
 
@@ -145,9 +144,7 @@ public class PlanController {
     @GetMapping("/availableServices/{planId}/{date}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<List<Service>> getAvailableServices(@PathVariable String planId, @PathVariable String date) {
-        String currentUser = ((UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
-
-        return ResponseEntity.ok(planService.getAvailableServices(planId, date, currentUser));
+        return ResponseEntity.ok(planService.getAvailableServices(planId, date));
     }
 
     @GetMapping("/statistics/{planId}")
