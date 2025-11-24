@@ -32,17 +32,17 @@
             </template>
           </UInput>
         </div>
-        <div v-if="features.some(feature => feature.id === 'vfLoginFeature')" class="mb-4">
-          <label class="block text-sm font-bold mb-2">
-            {{ $t('login.authSecret') }}
-          </label>
-          <UInput v-model="credentials.authSecret" type="text" trailing-icon="i-lucide-key" :placeholder="$t('login.authSecret')" class="w-full" />
-        </div>
         <div v-if="features.some(feature => feature.id === 'securityQuestionFeature')" class="mb-4">
           <label class="block text-sm font-bold mb-2">
             {{ securityQuestion }}
           </label>
           <UInput v-model="credentials.securityAnswer" type="text" trailing-icon="i-lucide-key" :placeholder="$t('login.securityAnswer')" class="w-full" />
+        </div>
+        <div v-if="features.some(feature => feature.id === 'vfLoginFeature')" class="mb-4">
+          <label class="block text-sm font-bold mb-2">
+            {{ $t('login.authSecret') }}
+          </label>
+          <UInput v-model="credentials.authSecret" type="text" trailing-icon="i-lucide-key" :placeholder="$t('login.authSecret')" class="w-full" />
         </div>
         <div class="mb-6 text-right">
           <ULink v-if="!features.some(feature => feature.id === 'vfLoginFeature')" to="#" >{{ $t('login.forgot') }}</ULink>
