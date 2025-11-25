@@ -251,7 +251,9 @@ public class PlanService {
             // add date rows and contents
             SimpleDateFormat df = new SimpleDateFormat("EE, dd.MM.yyyy", Locale.GERMAN);
             for (Date date : plan.getAllDates()) {
-                table.addCell(new Cell().add(new Paragraph(df.format(date))));
+                Cell cell = new Cell();
+                cell.setKeepTogether(true);
+                table.addCell(cell.add(new Paragraph(df.format(date))));
                 for (Service service : services) {
                     // Find the PlanEntry with the matching service and start date
                     List<PlanEntry> matchingEntries = plan.getEntries().stream()
@@ -268,9 +270,13 @@ public class PlanService {
                         for (PlanEntry e : matchingEntries) {
                             participantNames.append(e.getParticipant().getLastname() + ", " + e.getParticipant().getFirstname() + "\r\n");
                         }
-                        table.addCell(new Cell().add(new Paragraph(participantNames.toString())));
+                        Cell c = new Cell();
+                        c.setKeepTogether(true);
+                        table.addCell(c.add(new Paragraph(participantNames.toString())));
                     } else {
-                        table.addCell(new Cell().add(new Paragraph("-")));
+                        Cell c = new Cell();
+                        c.setKeepTogether(true);
+                        table.addCell(c.add(new Paragraph("-")));
                     }
                 }
             }

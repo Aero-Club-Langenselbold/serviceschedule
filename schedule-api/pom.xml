@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.4.3</version>
+		<version>3.5.5</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>de.ct.manager</groupId>
@@ -28,6 +28,12 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+
+		<jsonwebtoken.version>0.13.0</jsonwebtoken.version>
+		<itext.version>9.3.0</itext.version>
+		<resilience4j.version>2.3.0</resilience4j.version>
+		<ff4j.version>1.9</ff4j.version>
+		<ff4j-web.version>2.1</ff4j-web.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -94,32 +100,32 @@
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
-			<version>0.12.6</version>
+			<version>${jsonwebtoken.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-impl</artifactId>
-			<version>0.12.6</version>
+			<version>${jsonwebtoken.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-jackson</artifactId>
-			<version>0.12.6</version>
+			<version>${jsonwebtoken.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>com.itextpdf</groupId>
 			<artifactId>itext-core</artifactId>
-			<version>9.0.0</version>
+			<version>${itext.version}</version>
 			<type>pom</type>
 		</dependency>
 
 		<dependency>
             <groupId>org.ff4j</groupId>
             <artifactId>ff4j-spring-boot-starter</artifactId>
-            <version>1.9</version>
+            <version>${ff4j.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>io.springfox</groupId>
@@ -138,7 +144,7 @@
         <dependency>
             <groupId>org.ff4j</groupId>
             <artifactId>ff4j-web</artifactId>
-            <version>2.1</version>
+            <version>${ff4j-web.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.yaml</groupId>
@@ -150,12 +156,12 @@
 		<dependency>
 			<groupId>io.github.resilience4j</groupId>
 			<artifactId>resilience4j-circuitbreaker</artifactId>
-			<version>2.2.0</version>
+			<version>${resilience4j.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.github.resilience4j</groupId>
 			<artifactId>resilience4j-all</artifactId>
-			<version>2.2.0</version>
+			<version>${resilience4j.version}</version>
 		</dependency>
 
 		<dependency>
