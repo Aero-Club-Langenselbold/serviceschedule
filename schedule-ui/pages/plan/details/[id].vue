@@ -169,7 +169,11 @@ function createPageFromDB() {
 const createNewPage = async () => {
   const startDate = new Date(plan.value.dateFrom)
   const endDate = new Date(plan.value.dateUntil)
-  const currentDate = new Date(startDate)
+  const currentDate = new Date(Date.UTC(
+    startDate.getUTCFullYear(),
+    startDate.getUTCMonth(),
+    startDate.getUTCDate()
+  ))
 
   // consider holidays
   const { data: holidayData, error: holidayError } = await useAPI<Holiday[]>('/settings/holidays/' + id, { method: 'GET' })
@@ -181,9 +185,10 @@ const createNewPage = async () => {
     })
 
     if (currentDate.getDay() === 6 || currentDate.getDay() === 0 || isHoliday) { // Saturday or Sunday or Holiday
+      const clonedDate = new Date(currentDate)
       dates.value.push({
-        localeString: currentDate.toLocaleDateString(locale.value, { weekday: 'short', month: '2-digit', day: '2-digit', year: 'numeric' }),
-        originalDate: new Date(currentDate)
+        localeString: clonedDate.toLocaleDateString(locale.value, { weekday: 'short', month: '2-digit', day: '2-digit', year: 'numeric' }),
+        originalDate: clonedDate
       })
     }
     currentDate.setDate(currentDate.getDate() + 1)
@@ -231,7 +236,11 @@ const addDate = () => {
   if (selectedDate.value) {
     const newDate = {
       localeString: selectedDate.value.toDate(getLocalTimeZone()).toLocaleDateString(locale.value, { weekday: 'short', month: '2-digit', day: '2-digit', year: 'numeric' }),
-      originalDate: selectedDate.value.toDate(getLocalTimeZone())
+      originalDate: new Date(Date.UTC(
+        selectedDate.value.year,
+        selectedDate.value.month - 1,
+        selectedDate.value.day
+      ))
     }
 
     // Check if the date already exists
@@ -267,7 +276,7 @@ const saveDetails = async () => {
         if (mandatoryAssignees > 0) {
           return {
             id: id,
-            date: date.originalDate,
+            date: date.originalDate.getFullYear() + "-" + String(date.originalDate.getMonth() + 1).padStart(2, '0') + "-" + String(date.originalDate.getDate()).padStart(2, '0') + 'T00:00:00.000Z',
             service: {
               id: service.id
             },
