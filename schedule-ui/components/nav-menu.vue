@@ -6,6 +6,7 @@
 
 const { t, setLocale } = useI18n()
 const localeStore = useLocaleStore()
+const switchLocalePath = useSwitchLocalePath()
 const { setUserLocale } = localeStore
 const userStore = useUserStore()
 const { logout } = userStore
@@ -125,6 +126,7 @@ const sessionInfo = computed(() => {
     onSelect: () => {
       setUserLocale('de')
       setLocale('de')
+      navigateTo(switchLocalePath('de'))
     }
   })
   items.push({
@@ -132,6 +134,7 @@ const sessionInfo = computed(() => {
     onSelect: () => {
       setUserLocale('en')
       setLocale('en')
+      navigateTo(switchLocalePath('en'))
     }
   })
   return items

@@ -11,7 +11,22 @@ export default defineNuxtConfig({
     '@nuxt/test-utils/module'
   ],
   i18n: {
-    vueI18n: './i18n.config.ts'
+    locales: [
+      {
+        code: 'en',
+        file: 'en-US.ts'
+      },
+      {
+        code: 'de',
+        file: 'de-DE.ts'
+      }
+    ],
+    strategy: 'no_prefix',
+    defaultLocale: 'de',
+    detectBrowserLanguage: {
+      useCookie: true,
+      alwaysRedirect: true
+    }
   },
   css: ['~/assets/css/main.css'],
   ssr: false,
@@ -19,5 +34,9 @@ export default defineNuxtConfig({
       public: {
           API_URL: process.env.API_URL ?? 'http://localhost:8080/api/v1/'
       }
+  },
+  experimental: {
+    granularCachedData: false,
+    purgeCachedData: false,
   }
 })

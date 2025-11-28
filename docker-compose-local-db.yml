@@ -1,0 +1,11 @@
+services:
+  db:
+    image: postgres:latest
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=schedule
+    shm_size: "2gb"
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data

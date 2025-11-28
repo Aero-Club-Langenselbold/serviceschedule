@@ -4,9 +4,13 @@ export function useAPI<T>(
   url: string | (() => string),
   options?: UseFetchOptions<T>,
 ) {
-  console.log('useAPI called with URL:', url)
-  return useFetch(url, {
-    ...options,
-    $fetch: useNuxtApp().$api
-  })
+
+  const api = useNuxtApp().$api as (url: string, opts?: any) => Promise<T>
+  return api(typeof url === 'function' ? url() : url, options)
+    .then(response => {
+      return { data: { value: response ?? null }, error: {} }
+    })
+    .catch(error => {
+      return { data: {}, error: { value: error } }
+    })
 }
