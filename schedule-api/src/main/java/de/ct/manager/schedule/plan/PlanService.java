@@ -243,13 +243,19 @@ public class PlanService {
             Table table = new Table(services.size() + 1);
             table.setWidth(pageSize.getWidth() - document.getLeftMargin() - document.getRightMargin());
             // add service headers
-            table.addHeaderCell(new Cell().add(new Paragraph("Datum")));
+            Cell dateHeaderCell = new Cell().add(new Paragraph("Datum"));
+            dateHeaderCell.setWidth(100);
+            dateHeaderCell.setBackgroundColor(com.itextpdf.kernel.colors.ColorConstants.LIGHT_GRAY);
+            table.addHeaderCell(dateHeaderCell);
             for (Service service : services) {
-                table.addHeaderCell(new Cell().add(new Paragraph(service.getServicename())));
+                Cell headerCell = new Cell().add(new Paragraph(service.getServicename()));
+                headerCell.setWidth((pageSize.getWidth() - document.getLeftMargin() - document.getRightMargin() - 100) / services.size());
+                headerCell.setBackgroundColor(com.itextpdf.kernel.colors.ColorConstants.LIGHT_GRAY);
+                table.addHeaderCell(headerCell);
             }
 
             // add date rows and contents
-            SimpleDateFormat df = new SimpleDateFormat("EE, dd.MM.yyyy", Locale.GERMAN);
+            SimpleDateFormat df = new SimpleDateFormat("EE,\r\n dd.MM.yyyy", Locale.GERMAN);
             for (Date date : plan.getAllDates()) {
                 Cell cell = new Cell();
                 cell.setKeepTogether(true);
