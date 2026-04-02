@@ -100,7 +100,9 @@ const onSubmit = async () => {
       await navigateTo('/')
     }
   })
-  .catch(() => {
+  .catch((error) => {
+    // Log the error
+    console.error('Login error:', error)
     loginError.value = t('error.credentials')
   })
   working.value = false

@@ -27,7 +27,7 @@ public class TestUtils {
     }
 
     public static UserDto getUserForRole(UserRole role) {
-        if (role == UserRole.ROLE_ADMIN) {
+        if (role == UserRole.ROLE_ADMIN || role == UserRole.ROLE_ALARM_ADMIN) {
             return new UserDto(TEST_ADMIN, TEST_ADMIN_PW);
         } else {
             return new UserDto(TEST_USER, TEST_USER_PW);

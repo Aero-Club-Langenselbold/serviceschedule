@@ -37,37 +37,37 @@ public class PlanController {
     }
 
     @GetMapping("/list")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<List<Plan>> listPlans() {
         return ResponseEntity.ok(planService.listPlans());
     }
 
     @GetMapping("/fetch/{id}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<Plan> getPlan(@PathVariable String id) {
         return ResponseEntity.ok(planService.getPlan(id));
     }
 
     @PostMapping("/save")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<Plan> createOrUpdatePlan(@RequestBody Plan plan) {
         return ResponseEntity.ok(planService.createOrUpdatePlan(plan));
     }
 
     @PostMapping("/generate/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<Plan> generatePlan(@PathVariable String id) {
         return ResponseEntity.ok(planService.generatePlan(id));
     }
 
     @PostMapping("/updatePlanEntry/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<List<PlanEntry>> updatePlanEntry(@PathVariable String id, @RequestBody List<PlanEntry> planEntry) {
         return ResponseEntity.ok(planService.updatePlanEntry(id, planEntry));
     }
 
     @GetMapping("/download/pdf/{id}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<byte[]> downloadPlanAsPdf(@PathVariable String id) {
         return ResponseEntity.ok()
             .header("Content-Disposition", "attachment; filename=plan_" + id + ".pdf")
@@ -76,7 +76,7 @@ public class PlanController {
     }
 
     @GetMapping("/download/csv/{planId}/{serviceId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<byte[]> downloadPlanAsCsv(@PathVariable String planId, @PathVariable String serviceId) {
         return ResponseEntity.ok()
             .header("Content-Disposition", "attachment; filename=plan_" + planId + "_" + serviceId + ".csv")
@@ -85,27 +85,27 @@ public class PlanController {
     }
 
     @DeleteMapping("/delete/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<Void> deletePlan(@PathVariable String id) {
         planService.deletePlan(id);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/serviceDates/save/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<List<ServiceDate>> createOrUpdateServiceDate(@PathVariable String id, @RequestBody List<ServiceDate> serviceDates) {
         return ResponseEntity.ok(planService.addServiceDates(id, serviceDates));
     }
 
     @DeleteMapping("/serviceDates/delete/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<Void> deleteServiceDate(@PathVariable String id) {
         planService.deleteServiceDate(id);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/participantAvailability/save/{id}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<String> createOrUpdateParticipantAvailability(@PathVariable String id, @RequestBody List<DateParticipantAvailability> participantAvailability) {
         String minValue = settingsService.getCommonSettingValue(SettingConstants.MIN_PARTICIPATION_COUNT);
 
@@ -124,31 +124,31 @@ public class PlanController {
     }
 
     @GetMapping("/participantAvailability/fetch/{planId}/{userId}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<List<DateParticipantAvailability>> getParticipantAvailability(@PathVariable String planId, @PathVariable String userId) {
         return ResponseEntity.ok(planService.getDateParticipantAvailability(planId, userId));
     }
 
     @GetMapping("/participantAvailability/fetch/{planId}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<List<DateParticipantAvailability>> getAllParticipantAvailability(@PathVariable String planId) {
         return ResponseEntity.ok(planService.getDateParticipantAvailability(planId));
     }
 
     @GetMapping("/participantAvailability/fetch/{planId}/{serviceId}/{date}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<List<DateParticipantAvailability>> getAllParticipantAvailability(@PathVariable String planId, @PathVariable String serviceId, @PathVariable String date) {
         return ResponseEntity.ok(planService.getDateParticipantAvailability(planId, date, serviceId));
     }
 
     @GetMapping("/availableServices/{planId}/{date}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<List<Service>> getAvailableServices(@PathVariable String planId, @PathVariable String date) {
         return ResponseEntity.ok(planService.getAvailableServices(planId, date));
     }
 
     @GetMapping("/statistics/{planId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<List<PlanStatistics>> getPlanStatistics(@PathVariable String planId) {
         return ResponseEntity.ok(planService.getPlanStatistics(planId));
     }

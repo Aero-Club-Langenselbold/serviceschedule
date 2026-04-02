@@ -149,6 +149,6 @@ const onSubmit = async () => {
 }
 
 definePageMeta({
-  middleware: ['authenticated', 'admin']
+  middleware: ['authenticated', 'schedule-admin']
 })
 </script>

@@ -69,6 +69,10 @@ export default defineI18nLocale(async locale => {
           usermenu: 'Service Plans',
           list: 'Show Service Plans',
           add: 'Add Service Plan'
+        },
+        alarms: {
+          menu: 'Manage Alarms',
+          list: 'Show Alarms'
         }
       },
       app: {

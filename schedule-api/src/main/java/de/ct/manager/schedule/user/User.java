@@ -1,12 +1,18 @@
 package de.ct.manager.schedule.user;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 import de.ct.manager.schedule.util.AbstractPersistentEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Email;
@@ -23,9 +29,14 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class User extends AbstractPersistentEntity {
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private UserRole userRole;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "auth_user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    @NotAudited
+    private Set<Role> roles = new HashSet<>();
 
     @Column(length = 50, unique = true)
     @NotBlank
@@ -37,11 +48,9 @@ public class User extends AbstractPersistentEntity {
     private String password;
 
     public User() {
-        this.userRole = UserRole.ROLE_USER;
     }
 
     public User(String username, String password) {
-        this.userRole = UserRole.ROLE_USER;
         this.username = username;
         this.password = password;
     }

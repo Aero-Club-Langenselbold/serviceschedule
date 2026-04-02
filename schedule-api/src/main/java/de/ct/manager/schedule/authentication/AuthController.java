@@ -23,9 +23,12 @@ import de.ct.manager.schedule.plugins.vf.VFConnector;
 import de.ct.manager.schedule.security.JwtUtils;
 import de.ct.manager.schedule.settings.SettingConstants;
 import de.ct.manager.schedule.settings.SettingsService;
+import de.ct.manager.schedule.user.Role;
+import de.ct.manager.schedule.user.RoleRepository;
 import de.ct.manager.schedule.user.User;
 import de.ct.manager.schedule.user.UserDetailsImpl;
 import de.ct.manager.schedule.user.UserRepository;
+import de.ct.manager.schedule.user.UserRole;
 import jakarta.validation.Valid;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -35,6 +38,7 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final ParticipantRepository participantRepository;
     private final PasswordEncoder encoder;
     private final JwtUtils jwtUtils;
@@ -42,9 +46,10 @@ public class AuthController {
     private final VFConnector vfConnector;
     private final SettingsService settingsService;
 
-    public AuthController(AuthenticationManager authenticationManager, UserRepository userRepository, ParticipantRepository participantRepository, PasswordEncoder encoder, JwtUtils jwtUtils, FF4j ff4j, VFConnector vfConnector, SettingsService settingsService) {
+    public AuthController(AuthenticationManager authenticationManager, UserRepository userRepository, RoleRepository roleRepository, ParticipantRepository participantRepository, PasswordEncoder encoder, JwtUtils jwtUtils, FF4j ff4j, VFConnector vfConnector, SettingsService settingsService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.participantRepository = participantRepository;
         this.encoder = encoder;
         this.jwtUtils = jwtUtils;
@@ -103,8 +108,12 @@ public class AuthController {
         }
 
         // Create new user's account
+        Role userRole = roleRepository.findByName(UserRole.ROLE_USER)
+                .orElseThrow(() -> new RuntimeException("Error: Role not found."));
+
         User user = new User(signUpRequest.getUsername(),
                         encoder.encode(signUpRequest.getPassword()));
+        user.getRoles().add(userRole);
 
         userRepository.save(user);
 

@@ -1,8 +1,8 @@
 package de.ct.manager.schedule.user;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -25,8 +25,9 @@ private static final long serialVersionUID = 1L;
     private Collection<? extends GrantedAuthority> authorities;
 
     public static UserDetailsImpl build(User user) {
-        List<GrantedAuthority> auth = new ArrayList<>();
-        auth.add(new SimpleGrantedAuthority(user.getUserRole().name()));
+        List<GrantedAuthority> auth = user.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName().name()))
+                .collect(Collectors.toList());
 
         return new UserDetailsImpl(
                 user.getId(),

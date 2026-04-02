@@ -34,7 +34,7 @@ public class RequestController {
     }
 
     @GetMapping("/list")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<List<Request>> listRequests() {
         if (SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream().anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"))) {
             return ResponseEntity.ok(requestService.getAllRequests());
@@ -45,7 +45,7 @@ public class RequestController {
     }
 
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<Page<Request>> getRequestsByPage(@SortDefault(sort = "createdAt", direction = Direction.DESC) @PageableDefault(size = 20) final Pageable pageable) {
         if (SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream().anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"))) {
             return ResponseEntity.ok(requestService.getRequestsByPage(pageable));
@@ -56,20 +56,20 @@ public class RequestController {
     }
 
     @GetMapping("/fetch/{id}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<Request> getRequest(@PathVariable String id) {
         return ResponseEntity.ok(requestService.getRequestById(id));
     }
 
     @DeleteMapping("/delete/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<Void> deleteRequest(@PathVariable String id) {
         requestService.deleteRequest(id);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/save")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<Request> createOrUpdateRequest(@RequestBody Request request) {
         return ResponseEntity.ok(requestService.createOrUpdateRequest(request));
     }

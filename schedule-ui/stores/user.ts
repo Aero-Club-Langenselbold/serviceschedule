@@ -20,7 +20,7 @@ export const useUserStore = defineStore('user', () => {
     async function login(credentials: { username: string | number, password: string | number}) {
         const response = await useAPI('/auth/signin', { method: 'POST', body: credentials })
 
-        if (response.status.value !== "success") {
+        if (response.error?.value) {
             throw new Error('Invalid credentials')
         }
 

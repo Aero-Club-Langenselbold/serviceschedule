@@ -21,7 +21,7 @@ const menu = computed(() => {
       to: '/'
     })
   }
-  if (isLoggedIn.value && user.value?.roles.includes('ROLE_ADMIN')) {
+  if (isLoggedIn.value && (user.value?.roles.includes('ROLE_SCHEDULE_ADMIN') || user.value?.roles.includes('ROLE_ADMIN'))) {
     items.push({
       label: computed(() => t('nav.participants.menu')),
       icon: 'i-lucide-users',
@@ -81,6 +81,20 @@ const menu = computed(() => {
       label: computed(() => t('nav.plan.usermenu')),
       icon: 'i-lucide-tablet-smartphone',
       to: '/plan/list'
+    })
+  }
+
+  if (isLoggedIn.value && (user.value?.roles.includes('ROLE_ALARM_ADMIN') || user.value?.roles.includes('ROLE_ADMIN'))) {
+    items.push({
+      label: computed(() => t('nav.alarms.menu')),
+      icon: 'i-lucide-bell',
+      children: [
+        {
+          label: computed(() => t('nav.alarms.list')),
+          icon: 'i-lucide-list',
+          to: '/alarm/list'
+        }
+      ]
     })
   }
   return items

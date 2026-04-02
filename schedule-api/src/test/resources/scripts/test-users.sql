@@ -1,3 +1,12 @@
-INSERT INTO auth_user(id, version, username, user_role, password) VALUES
-    ('1234', 0, 'test@test.com', 'ROLE_USER', '$2a$10$Q1IgxolRTprePVQ14YA/rOy53I.6/KcWJbYgP98DH21KlogBlKmKi'),
-    ('5678', 0, 'admin@test.de', 'ROLE_ADMIN', '$2a$10$Q1IgxolRTprePVQ14YA/rOy53I.6/KcWJbYgP98DH21KlogBlKmKi');
+MERGE INTO auth_role (id, name) KEY(id) VALUES ('00000000-0000-0000-0000-000000000001', 'ROLE_USER');
+MERGE INTO auth_role (id, name) KEY(id) VALUES ('00000000-0000-0000-0000-000000000002', 'ROLE_ADMIN');
+MERGE INTO auth_role (id, name) KEY(id) VALUES ('00000000-0000-0000-0000-000000000003', 'ROLE_ALARM_ADMIN');
+
+INSERT INTO auth_user(id, version, username, password) VALUES
+    ('1234', 0, 'test@test.com', '$2a$10$Q1IgxolRTprePVQ14YA/rOy53I.6/KcWJbYgP98DH21KlogBlKmKi'),
+    ('5678', 0, 'admin@test.de', '$2a$10$Q1IgxolRTprePVQ14YA/rOy53I.6/KcWJbYgP98DH21KlogBlKmKi');
+
+INSERT INTO auth_user_roles (user_id, role_id) VALUES
+    ('1234', '00000000-0000-0000-0000-000000000001'),
+    ('5678', '00000000-0000-0000-0000-000000000002'),
+    ('5678', '00000000-0000-0000-0000-000000000003');

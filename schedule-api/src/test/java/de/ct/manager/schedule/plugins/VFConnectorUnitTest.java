@@ -29,7 +29,10 @@ import de.ct.manager.schedule.plugins.vf.VFRequestTokenResponse;
 import de.ct.manager.schedule.plugins.vf.VFResponse;
 import de.ct.manager.schedule.plugins.vf.VFUserResponse;
 import de.ct.manager.schedule.security.JacksonConfig;
+import de.ct.manager.schedule.user.Role;
+import de.ct.manager.schedule.user.RoleRepository;
 import de.ct.manager.schedule.user.UserRepository;
+import de.ct.manager.schedule.user.UserRole;
 
 @ExtendWith(SpringExtension.class)
 public class VFConnectorUnitTest {
@@ -42,12 +45,15 @@ public class VFConnectorUnitTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private RoleRepository roleRepository;
+
     private VFConnector vfConnector;
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
-        vfConnector = new VFConnector(restTemplate, VF_API_URL, "4711", userRepository);
+        vfConnector = new VFConnector(restTemplate, VF_API_URL, "4711", userRepository, roleRepository);
         objectMapper = new JacksonConfig().objectMapper();
     }
 
@@ -83,6 +89,11 @@ public class VFConnectorUnitTest {
         String mockUserResponseJson = Files.readString(userPath);
         VFUserResponse mockUserResponse = objectMapper.readValue(mockUserResponseJson, VFUserResponse.class);
         when(restTemplate.postForObject(eq(VF_API_URL + "/auth/getuser"), any(), eq(VFUserResponse.class))).thenReturn(mockUserResponse);
+
+        Role defaultRole = new Role();
+        defaultRole.setName(UserRole.ROLE_USER);
+        when(roleRepository.findByName(UserRole.ROLE_USER)).thenReturn(java.util.Optional.of(defaultRole));
+        when(userRepository.findByUsername(any())).thenReturn(java.util.Optional.empty());
 
         LoginRequest lr = new LoginRequest();
         lr.setUsername("testuser");

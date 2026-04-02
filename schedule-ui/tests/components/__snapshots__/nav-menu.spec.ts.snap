@@ -1,0 +1,39 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Can render Nav Menu 1`] = `
+"<nav data-collapsed="false" data-slot="root" class="relative flex gap-1.5 [&amp;>div]:min-w-0 items-center justify-between data-[orientation=horizontal]:border-b border-(--ui-border) data-[orientation=horizontal]:w-full data-[orientation=vertical]:w-48" aria-label="Main" data-orientation="horizontal" dir="ltr" data-reka-navigation-menu="">
+  <div style="position: relative;">
+    <ul data-slot="list" class="isolate min-w-0 flex items-center" data-orientation="horizontal"></ul>
+  </div>
+  <!--v-if-->
+  <div style="position: relative;">
+    <ul data-slot="list" class="isolate min-w-0 flex items-center" data-orientation="horizontal">
+      <li data-menu-item="" data-slot="item" class="min-w-0 py-2"><button type="button" data-reka-collection-item="" data-slot="link" class="group relative w-full flex items-center gap-1.5 font-medium text-sm before:absolute before:z-[-1] before:rounded-md focus:outline-none focus-visible:outline-none dark:focus-visible:outline-none focus-visible:before:ring-inset focus-visible:before:ring-2 focus-visible:before:ring-primary px-2.5 py-1.5 before:inset-x-px before:inset-y-0 text-muted hover:text-highlighted hover:before:bg-elevated/50 transition-colors before:transition-colors data-[state=open]:text-highlighted data-[state=open]:before:bg-elevated/50"><span class="iconify i-lucide:log-in shrink-0 size-5 text-dimmed group-hover:text-default transition-colors group-data-[state=open]:text-default" aria-hidden="true" data-slot="linkLeadingIcon"></span><span data-slot="linkLabel" class="truncate">Login<!--v-if--></span>
+          <!--v-if-->
+        </button>
+        <!--v-if-->
+        <!--v-if-->
+      </li>
+      <li data-menu-item="" data-slot="item" class="min-w-0 py-2"><button type="button" data-reka-collection-item="" data-slot="link" class="group relative w-full flex items-center gap-1.5 font-medium text-sm before:absolute before:z-[-1] before:rounded-md focus:outline-none focus-visible:outline-none dark:focus-visible:outline-none focus-visible:before:ring-inset focus-visible:before:ring-2 focus-visible:before:ring-primary px-2.5 py-1.5 before:inset-x-px before:inset-y-0 text-muted hover:text-highlighted hover:before:bg-elevated/50 transition-colors before:transition-colors data-[state=open]:text-highlighted data-[state=open]:before:bg-elevated/50"><span class="iconify i-circle-flags:de shrink-0 size-5 text-dimmed group-hover:text-default transition-colors group-data-[state=open]:text-default" aria-hidden="true" data-slot="linkLeadingIcon"></span>
+          <!--v-if-->
+          <!--v-if-->
+        </button>
+        <!--v-if-->
+        <!--v-if-->
+      </li>
+      <li data-menu-item="" data-slot="item" class="min-w-0 py-2"><button type="button" data-reka-collection-item="" data-slot="link" class="group relative w-full flex items-center gap-1.5 font-medium text-sm before:absolute before:z-[-1] before:rounded-md focus:outline-none focus-visible:outline-none dark:focus-visible:outline-none focus-visible:before:ring-inset focus-visible:before:ring-2 focus-visible:before:ring-primary px-2.5 py-1.5 before:inset-x-px before:inset-y-0 text-muted hover:text-highlighted hover:before:bg-elevated/50 transition-colors before:transition-colors data-[state=open]:text-highlighted data-[state=open]:before:bg-elevated/50"><span class="iconify i-circle-flags:us shrink-0 size-5 text-dimmed group-hover:text-default transition-colors group-data-[state=open]:text-default" aria-hidden="true" data-slot="linkLeadingIcon"></span>
+          <!--v-if-->
+          <!--v-if-->
+        </button>
+        <!--v-if-->
+        <!--v-if-->
+      </li>
+    </ul>
+  </div>
+  <!--v-if-->
+  <div data-slot="viewportWrapper" class="absolute top-full left-0 flex w-full">
+    <!--v-if-->
+    <!---->
+  </div>
+</nav>"
+`;

@@ -18,6 +18,8 @@ import org.springframework.util.DigestUtils;
 import org.springframework.web.client.RestTemplate;
 
 import de.ct.manager.schedule.authentication.LoginRequest;
+import de.ct.manager.schedule.user.Role;
+import de.ct.manager.schedule.user.RoleRepository;
 import de.ct.manager.schedule.user.User;
 import de.ct.manager.schedule.user.UserDetailsImpl;
 import de.ct.manager.schedule.user.UserRepository;
@@ -36,13 +38,15 @@ public class VFConnector {
     private String apiUrl;
     private String apiKey;
     private UserRepository userRepository;
+    private RoleRepository roleRepository;
     private CircuitBreaker circuitBreaker;
 
-    public VFConnector(RestTemplate restTemplate, @Value("${vf.api.url}") String apiUrl, @Value("${vf.api.key}") String apiKey, UserRepository userRepository) {
+    public VFConnector(RestTemplate restTemplate, @Value("${vf.api.url}") String apiUrl, @Value("${vf.api.key}") String apiKey, UserRepository userRepository, RoleRepository roleRepository) {
         this.restTemplate = restTemplate;
         this.apiUrl = apiUrl;
         this.apiKey = apiKey;
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
 
         // Configure the Circuit Breaker
         CircuitBreakerConfig config = CircuitBreakerConfig.custom()
@@ -103,23 +107,27 @@ public class VFConnector {
         if (userResponse != null && userResponse.getEmail() != null) {
             // save user to db and return user authentication
             Optional<User> user = userRepository.findByUsername(userResponse.getEmail());
-            GrantedAuthority authority;
+            List<GrantedAuthority> authorities;
             if (!user.isPresent()) {
-                authority = new SimpleGrantedAuthority(UserRole.ROLE_USER.name());
+                Role defaultRole = roleRepository.findByName(UserRole.ROLE_USER)
+                        .orElseThrow(() -> new RuntimeException("Error: Role not found."));
 
                 User newUser = new User();
                 newUser.setUsername(userResponse.getEmail());
                 newUser.setPassword(userResponse.getEmail());
-                newUser.setUserRole(UserRole.ROLE_USER);
+                newUser.getRoles().add(defaultRole);
                 userRepository.save(newUser);
+                authorities = List.of(new SimpleGrantedAuthority(UserRole.ROLE_USER.name()));
             } else {
-                authority = new SimpleGrantedAuthority(user.get().getUserRole().name());
+                authorities = user.get().getRoles().stream()
+                        .map(role -> new SimpleGrantedAuthority(role.getName().name()))
+                        .collect(java.util.stream.Collectors.toList());
             }
 
             UserDetails userDetails = new UserDetailsImpl(userResponse.getUid(),
                 userResponse.getEmail(),
                 vfLoginRequest.getPassword(),
-                List.of(authority)
+                authorities
             );
 
             return new UsernamePasswordAuthenticationToken(userDetails, vfLoginRequest.getPassword());

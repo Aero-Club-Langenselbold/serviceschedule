@@ -1,3 +1,4 @@
+DELETE FROM auth_user_roles;
 DELETE FROM auth_user;
 
 INSERT INTO participant (id, version, firstname, lastname, email, status, date_of_birth, registration_key, max_assignments, min_assignments) VALUES

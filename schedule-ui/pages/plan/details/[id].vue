@@ -309,6 +309,6 @@ onMounted(() => {
 
 
 definePageMeta({
-    middleware: ['authenticated', 'admin']
+    middleware: ['authenticated', 'schedule-admin']
 })
 </script>

@@ -32,13 +32,13 @@ public class ParticipantController {
     }
 
     @GetMapping("/list")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<List<Participant>> listParticipants() {
         return ResponseEntity.ok(participantService.listParticipants());
     }
 
     @GetMapping("/page")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<Page<Participant>> listParticipants(@SortDefault.SortDefaults({
                 @SortDefault(sort = "lastname", direction = org.springframework.data.domain.Sort.Direction.ASC),
                 @SortDefault(sort = "firstname", direction = org.springframework.data.domain.Sort.Direction.ASC)
@@ -47,32 +47,32 @@ public class ParticipantController {
     }
 
     @GetMapping("/fetch/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<Participant> getParticipant(@PathVariable String id) {
         return ResponseEntity.ok(participantService.getParticipant(id));
     }
 
     @GetMapping("/fetchByMail/{email:.+}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<Participant> getParticipantByEmail(@PathVariable String email) {
         return ResponseEntity.ok(participantService.getParticipantByEmail(email));
     }
 
     @PostMapping("/save")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<Participant> createOrUpdateParticipant(@RequestBody Participant participant) {
         return ResponseEntity.ok(participantService.createOrUpdateParticipant(participant));
     }
 
     @DeleteMapping("/delete/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<Void> deleteParticipant(@PathVariable String id) {
         participantService.deleteParticipant(id);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/import")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<ParticipantDiff> importParticipants(@RequestBody MultipartFile file) {
         try {
             return ResponseEntity.ok(participantService.importParticipants(file));

@@ -25,25 +25,25 @@ public class ServiceController {
     }
 
     @GetMapping("/list")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<List<Service>> listServices() {
         return ResponseEntity.ok(serviceService.listServices());
     }
 
     @GetMapping("/fetch/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<Service> getService(@PathVariable String id) {
         return ResponseEntity.ok(serviceService.getService(id));
     }
 
     @PostMapping("/save")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<Service> createOrUpdateService(@RequestBody Service service) {
         return ResponseEntity.ok(serviceService.createOrUpdateService(service));
     }
 
     @DeleteMapping("/delete/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<Void> deleteService(@PathVariable String id) {
         serviceService.deleteService(id);
         return ResponseEntity.ok().build();

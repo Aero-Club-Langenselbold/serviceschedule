@@ -22,6 +22,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import de.ct.manager.schedule.participant.Participant;
 import de.ct.manager.schedule.settings.SettingsService;
+import de.ct.manager.schedule.user.Role;
 import de.ct.manager.schedule.user.UserRole;
 import de.ct.manager.schedule.util.AbstractControllerUnitTest;
 
@@ -69,8 +70,12 @@ public class AuthControllerUnitTest extends AbstractControllerUnitTest {
     @Test
     void testSignUpSuccess() throws Exception {
 
+        Role userRole = new Role();
+        userRole.setName(UserRole.ROLE_USER);
+
         when(userRepository.existsByUsername(TEST_ADMIN)).thenReturn(false);
         when(participantRepository.findByEmail(TEST_ADMIN)).thenReturn(Optional.of(createTestParticipant("4711")));
+        when(roleRepository.findByName(UserRole.ROLE_USER)).thenReturn(Optional.of(userRole));
 
         mockMvc.perform(
             post("/auth/signup")

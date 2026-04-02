@@ -6,17 +6,27 @@ import java.util.Map;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
+import de.ct.manager.schedule.alarm.AlarmDuplicateException;
 import lombok.extern.slf4j.Slf4j;
 
 @ControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(AlarmDuplicateException.class)
+    public ResponseEntity<Map<String, String>> handleAlarmDuplicateException(AlarmDuplicateException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getMessage());
+        return new ResponseEntity<>(errors, HttpStatus.CONFLICT);
+    }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, String>> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
@@ -27,9 +37,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<Map<String, String>> handleBadCredentialsException(DataIntegrityViolationException ex) {
+    public ResponseEntity<Map<String, String>> handleBadCredentialsException(BadCredentialsException ex) {
         Map<String, String> errors = new HashMap<>();
-        errors.put("error", "Bad Credentials: " + ex.getMostSpecificCause().getMessage());
+        errors.put("error", "Bad Credentials: " + ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.UNAUTHORIZED);
     }
 
@@ -42,7 +52,13 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleGlobalException(Exception ex, WebRequest request) {
+    public ResponseEntity<String> handleGlobalException(Exception ex, WebRequest request) throws AccessDeniedException, AuthenticationException {
+        if (ex instanceof AccessDeniedException accessDenied) {
+            throw accessDenied;
+        }
+        if (ex instanceof AuthenticationException authEx) {
+            throw authEx;
+        }
         log.error("General exception", ex);
         ex.printStackTrace();
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
