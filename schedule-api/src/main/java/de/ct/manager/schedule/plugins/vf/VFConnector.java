@@ -27,11 +27,13 @@ import de.ct.manager.schedule.user.UserRole;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.decorators.Decorators;
+import lombok.extern.slf4j.Slf4j;
 
 /*
  * This class represents the connector to the German 'vereinsflieger.de' API. It is used for data fetching and authentication when the FeatureFlag 'vfLoginFeature' is enabled.
  */
 @Component
+@Slf4j
 public class VFConnector {
 
     private RestTemplate restTemplate;
@@ -59,10 +61,13 @@ public class VFConnector {
     }
 
     public String getRequestToken() {
+        log.info("Requesting VF access token from {}/auth/accesstoken", apiUrl);
         // Define the API call logic
         Supplier<String> apiCall = () -> {
             VFRequestTokenResponse response = restTemplate.getForObject(apiUrl + "/auth/accesstoken", VFRequestTokenResponse.class);
-            return response != null ? response.getAccesstoken() : null;
+            String token = response != null ? response.getAccesstoken() : null;
+            log.debug("VF access token response: {}", response);
+            return token;
         };
 
         // Wrap the API call with the Circuit Breaker
@@ -71,16 +76,30 @@ public class VFConnector {
                 .decorate();
 
         try {
-            return decoratedCall.get();
+            String token = decoratedCall.get();
+            if (token == null) {
+                log.warn("VF access token response was null or empty");
+            } else {
+                log.info("VF access token retrieved successfully (length={})", token.length());
+            }
+            return token;
         } catch (Exception e) {
+            log.error("Failed to retrieve VF access token. Circuit breaker state: {}. Error: {}",
+                    circuitBreaker.getState(), e.getMessage(), e);
             return "Fallback: API is currently unavailable";
         }
     }
 
     public Authentication signIn(LoginRequest loginRequest) {
+        log.info("VF signIn attempt for user: {}", loginRequest.getUsername());
         String accesstoken = getRequestToken();
         if (accesstoken == null) {
+            log.error("signIn aborted: access token is null");
             throw new RuntimeException("Failed to retrieve access token from VF API");
+        }
+        if (accesstoken.startsWith("Fallback:")) {
+            log.error("signIn aborted: VF API unavailable ({})", accesstoken);
+            throw new RuntimeException(accesstoken);
         }
 
         VFLoginRequest vfLoginRequest = new VFLoginRequest();
@@ -90,6 +109,7 @@ public class VFConnector {
         vfLoginRequest.setAuthSecret(loginRequest.getAuthSecret());
         vfLoginRequest.setAccesstoken(accesstoken);
 
+        log.info("Sending VF signin request for user: {}", loginRequest.getUsername());
         Supplier<VFResponse> loginCall = () -> {
             return restTemplate.postForObject(apiUrl + "/auth/signin", vfLoginRequest, VFResponse.class);
         };
@@ -98,17 +118,24 @@ public class VFConnector {
             .withCircuitBreaker(circuitBreaker)
             .decorate();
 
-        if (decoratedLoginCall.get().getHttpstatuscode() != HttpStatus.OK.value()) {
+        VFResponse loginResponse = decoratedLoginCall.get();
+        log.debug("VF signin response status: {}", loginResponse != null ? loginResponse.getHttpstatuscode() : "null");
+
+        if (loginResponse == null || loginResponse.getHttpstatuscode() != HttpStatus.OK.value()) {
+            log.warn("VF signin failed for user: {} — HTTP status: {}", loginRequest.getUsername(),
+                    loginResponse != null ? loginResponse.getHttpstatuscode() : "null");
             throw new BadCredentialsException("Invalid username or password");
         }
 
         VFUserResponse userResponse = getUser(accesstoken);
+        log.debug("VF getUser response: email={}", userResponse != null ? userResponse.getEmail() : "null");
 
         if (userResponse != null && userResponse.getEmail() != null) {
             // save user to db and return user authentication
             Optional<User> user = userRepository.findByUsername(userResponse.getEmail());
             List<GrantedAuthority> authorities;
             if (!user.isPresent()) {
+                log.info("VF user {} not found locally — creating new account", userResponse.getEmail());
                 Role defaultRole = roleRepository.findByName(UserRole.ROLE_USER)
                         .orElseThrow(() -> new RuntimeException("Error: Role not found."));
 
@@ -119,6 +146,8 @@ public class VFConnector {
                 userRepository.save(newUser);
                 authorities = List.of(new SimpleGrantedAuthority(UserRole.ROLE_USER.name()));
             } else {
+                log.info("VF user {} authenticated with roles: {}", userResponse.getEmail(),
+                        user.get().getRoles().stream().map(r -> r.getName().name()).toList());
                 authorities = user.get().getRoles().stream()
                         .map(role -> new SimpleGrantedAuthority(role.getName().name()))
                         .collect(java.util.stream.Collectors.toList());
@@ -133,10 +162,12 @@ public class VFConnector {
             return new UsernamePasswordAuthenticationToken(userDetails, vfLoginRequest.getPassword());
         }
 
+        log.error("VF signIn returned no user data for user: {}", loginRequest.getUsername());
         return null;
     }
 
     public VFUserResponse getUser(String accesstoken) {
+        log.info("Requesting VF user info from {}/auth/getuser", apiUrl);
         VFRequest vfRequest = new VFRequest();
         vfRequest.setAccesstoken(accesstoken);
 
@@ -148,6 +179,14 @@ public class VFConnector {
             .withCircuitBreaker(circuitBreaker)
             .decorate();
 
-        return decoratedUserCall.get();
+        try {
+            VFUserResponse response = decoratedUserCall.get();
+            log.debug("VF getUser raw response: {}", response);
+            return response;
+        } catch (Exception e) {
+            log.error("Failed to retrieve VF user info. Circuit breaker state: {}. Error: {}",
+                    circuitBreaker.getState(), e.getMessage(), e);
+            throw e;
+        }
     }
 }

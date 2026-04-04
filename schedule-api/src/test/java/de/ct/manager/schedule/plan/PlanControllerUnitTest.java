@@ -33,7 +33,6 @@ import de.ct.manager.schedule.service.ServiceDate;
 import de.ct.manager.schedule.service.ServiceDateRepository;
 import de.ct.manager.schedule.service.ServiceRepository;
 import de.ct.manager.schedule.settings.CommonSettings;
-import de.ct.manager.schedule.settings.CommonSettingsRepository;
 import de.ct.manager.schedule.settings.SettingConstants;
 import de.ct.manager.schedule.settings.SettingsRepository;
 import de.ct.manager.schedule.settings.SettingsService;
@@ -61,9 +60,6 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest {
 
     @MockitoBean
     private SettingsRepository settingsRepository;
-
-    @MockitoBean
-    private CommonSettingsRepository commonSettingsRepository;
 
     @Test
     void testListPlans() throws Exception {

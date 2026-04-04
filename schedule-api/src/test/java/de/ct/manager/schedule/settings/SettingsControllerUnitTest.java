@@ -42,9 +42,6 @@ public class SettingsControllerUnitTest extends AbstractControllerUnitTest {
     private SettingsRepository settingsRepository;
 
     @MockitoBean
-    private CommonSettingsRepository commonSettingsRepository;
-
-    @MockitoBean
     private PlanRepository planRepository;
 
     @MockitoBean

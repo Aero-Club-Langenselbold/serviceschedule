@@ -22,6 +22,7 @@ import de.ct.manager.schedule.plugins.vf.VFConnector;
 import de.ct.manager.schedule.security.AuthEntryPointJwt;
 import de.ct.manager.schedule.security.JwtUtils;
 import de.ct.manager.schedule.security.WebSecurityConfig;
+import de.ct.manager.schedule.settings.CommonSettingsRepository;
 import de.ct.manager.schedule.user.Role;
 import de.ct.manager.schedule.user.RoleRepository;
 import de.ct.manager.schedule.user.User;
@@ -45,6 +46,9 @@ public abstract class AbstractControllerUnitTest {
 
     @Autowired
     private JwtUtils jwtUtils;
+
+    @MockitoBean
+    protected CommonSettingsRepository commonSettingsRepository;
 
     @MockitoBean
     protected UserRepository userRepository;
