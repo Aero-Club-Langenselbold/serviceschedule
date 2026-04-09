@@ -77,12 +77,12 @@ export default defineI18nLocale(async locale => {
       },
       app: {
         dateLocale: 'de-DE',
-        name: 'Dienstplanmanager V1.0',
-        welcome: 'Herzlich willkommen beim Dienstplanmanager',
+        name: 'Mitgleiderbereich V1.0',
+        welcome: 'Herzlich willkommen im Mitgleiderbereich des ACL',
         user: {
           participantWelcome: 'Du bist in der Rolle als Benutzer angemeldet und kannst daher Dienstpläne einsehen und deine eigenen Verfügbarkeiten eintragen.',
           userWelcome: 'Du bist in der Rolle als Benutzer angemeldet, dir ist aber noch kein Teilnehmer zugeordnet. Bitte wende dich an den Administrator.',
-          adminWelcome: 'Du bist in der Rolle als Administrator angemeldet und kannst daher alle Funktionen des Dienstplanmanagers nutzen.'
+          adminWelcome: 'Du bist in der Rolle als Administrator angemeldet und kannst daher alle Funktionen des Mitgleiderbereichs nutzen.'
         }
       },
       alarm: {
@@ -276,6 +276,9 @@ export default defineI18nLocale(async locale => {
           success: 'Bug/Feature erfolgreich erstellt',
         },
         edit: 'Bearbeiten'
+      },
+      alarm: {
+        list: 'Ereignisprotokoll'
       },
       error: {
         credentials: 'Ungültige Anmeldeinformationen'

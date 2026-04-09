@@ -72,17 +72,17 @@ export default defineI18nLocale(async locale => {
         },
         alarms: {
           menu: 'Alarm system',
-          list: 'Event Log'
+          list: 'Event log'
         }
       },
       app: {
         dateLocale: 'en-US',
-        name: 'Schedule Manager V1.0',
-        welcome: 'Welcome to the Schedule Manager',
+        name: 'Member Area V1.0',
+        welcome: 'Welcome to the Member Area of the ACL',
         user: {
           participantWelcome: 'You are logged in as a user and can therefore view service plans and enter your own availability.',
           userWelcome: 'You are logged in as a user, but no participant has been assigned to you yet. Please contact the administrator.',
-          adminWelcome: 'You are logged in as an administrator and can therefore use all functions of the schedule manager.'
+          adminWelcome: 'You are logged in as an administrator and can therefore use all functions of the Member Area.'
         }
       },
       alarm: {
@@ -276,6 +276,9 @@ export default defineI18nLocale(async locale => {
           success: 'Bug/Feature created successfully',
         },
         edit: 'Edit'
+      },
+      alarm: {
+        list: 'Event log'
       },
       error: {
         credentials: 'Invalid credentials'
