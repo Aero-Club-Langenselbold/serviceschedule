@@ -71,8 +71,8 @@ export default defineI18nLocale(async locale => {
           add: 'Add Service Plan'
         },
         alarms: {
-          menu: 'Manage Alarms',
-          list: 'Show Alarms'
+          menu: 'Alarm system',
+          list: 'Event Log'
         }
       },
       app: {
@@ -84,6 +84,14 @@ export default defineI18nLocale(async locale => {
           userWelcome: 'You are logged in as a user, but no participant has been assigned to you yet. Please contact the administrator.',
           adminWelcome: 'You are logged in as an administrator and can therefore use all functions of the schedule manager.'
         }
+      },
+      alarm: {
+        list: 'Event Log',
+        timestamp: 'Timestamp',
+        rfidId: 'RFID ID',
+        internalTime: 'Internal Time',
+        status: 'Status',
+        rawData: 'Raw Data'
       },
       participants: {
         filter: 'Filter',

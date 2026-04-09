@@ -1,10 +1,10 @@
 type Alarm = {
     id: string
-    timestamp: Date
+    timestamp: string
     rfidId: string
     internalTime: string
     rawData: string
-    status: 'DISARMED' | 'ARMED' | 'UNCHANGED' | 'NOT_IMPLEMENTED'
+    status: number
 }
 
 export type { Alarm }

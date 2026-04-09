@@ -71,8 +71,8 @@ export default defineI18nLocale(async locale => {
           add: 'Dienstplan hinzufügen'
         },
         alarms: {
-          menu: 'Alarme verwalten',
-          list: 'Alarme anzeigen'
+          menu: 'Alarmanlage',
+          list: 'Ereignisprotokoll'
         }
       },
       app: {
@@ -84,6 +84,14 @@ export default defineI18nLocale(async locale => {
           userWelcome: 'Du bist in der Rolle als Benutzer angemeldet, dir ist aber noch kein Teilnehmer zugeordnet. Bitte wende dich an den Administrator.',
           adminWelcome: 'Du bist in der Rolle als Administrator angemeldet und kannst daher alle Funktionen des Dienstplanmanagers nutzen.'
         }
+      },
+      alarm: {
+        list: 'Ereignisprotokoll',
+        timestamp: 'Zeitstempel',
+        rfidId: 'RFID-ID',
+        internalTime: 'Interne Zeit',
+        status: 'Status',
+        rawData: 'Rohdaten'
       },
       participants: {
         filter: 'Filter',

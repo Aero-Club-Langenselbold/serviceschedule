@@ -6,7 +6,7 @@
     <div class="p-8 rounded-4xl shadow-md w-full max-w-9/12 border-2">
       <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('alarm.list') }}</h2>
       <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
-      <UTable :data="listData?.content" class="flex-1" />
+      <UTable :data="listData?.content" :columns="columns" class="flex-1" />
       <UPagination v-model:page="page" :items-per-page="pageSize" :total="listData?.totalElements" @update:page="fetchData"/>
     </div>
   </div>
@@ -24,6 +24,14 @@ const successMessage = ref<string | null>(null)
 const page = ref(1)
 const pageSize = ref(20)
 const listData = ref<Page<Alarm[]> | null>(null)
+
+const columns = [
+  { accessorKey: 'timestamp', header: t('alarm.timestamp') },
+  { accessorKey: 'rfidId', header: t('alarm.rfidId') },
+  { accessorKey: 'internalTime', header: t('alarm.internalTime') },
+  { accessorKey: 'status', header: t('alarm.status') },
+  { accessorKey: 'rawData', header: t('alarm.rawData') },
+]
 
 let sort = 'timestamp'
 let direction = 'desc'
