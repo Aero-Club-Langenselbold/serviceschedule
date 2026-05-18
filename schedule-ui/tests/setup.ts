@@ -50,6 +50,16 @@ mockNuxtImport('useAPI', () => {
             return { data: { value: [] }, error: {} }
         } else if (url === '/settings/common-settings') {
             return { data: { value: [] }, error: {} }
+        } else if (url.startsWith('/alarm/status/page')) {
+            return {
+                data: { value: { content: [{ id: '1', timestamp: '2026-05-07T22:38:45', betrieb: 1, scharf: 0, unscharf: 1, sabotage: 0, stoerung: 0, alarm: 0, zone1: 0, zone2: 0, zone3: 0, zone4: 0, zone5: 0, zone6: 0, zone7: 0, zone8: 0 }], totalElements: 1 } },
+                error: {}
+            }
+        } else if (url.startsWith('/alarm/page')) {
+            return {
+                data: { value: { content: [{ id: '1', timestamp: '2026-05-07T22:38:45', rfidId: 'AABBCC', internalTime: '22:38:45', rawData: 'raw', status: 1 }], totalElements: 1 } },
+                error: {}
+            }
         }
         // Default fallback
         return { data: { value: null }, error: {} }

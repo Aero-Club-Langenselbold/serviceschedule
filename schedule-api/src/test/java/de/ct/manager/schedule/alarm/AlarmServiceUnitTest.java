@@ -26,6 +26,9 @@ class AlarmServiceUnitTest {
     @Mock
     AlarmRepository alarmRepository;
 
+    @Mock
+    AlarmDeviceStatusRepository alarmDeviceStatusRepository;
+
     @InjectMocks
     AlarmService alarmService;
 
@@ -90,6 +93,70 @@ class AlarmServiceUnitTest {
         request.setInternalTime("10:00");
         request.setRawData("raw data");
         request.setStatus(AlarmStatus.ARMED);
+        return request;
+    }
+
+    // --- AlarmDeviceStatus tests ---
+
+    @Test
+    void testSaveDeviceStatus_success() {
+        AlarmDeviceStatusRequest request = buildDeviceStatusRequest(LocalDateTime.of(2026, 5, 7, 22, 38, 45));
+        when(alarmDeviceStatusRepository.existsByTimestamp(any())).thenReturn(false);
+        when(alarmDeviceStatusRepository.save(any(AlarmDeviceStatus.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AlarmDeviceStatus result = alarmService.saveDeviceStatus(request);
+
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result.getTimestamp()).isEqualTo(request.getTimestamp());
+        Assertions.assertThat(result.getBetrieb()).isEqualTo(1);
+        Assertions.assertThat(result.getScharf()).isEqualTo(1);
+        Assertions.assertThat(result.getZone3()).isEqualTo(1);
+        Assertions.assertThat(result.getZone5()).isEqualTo(1);
+        verify(alarmDeviceStatusRepository).save(any(AlarmDeviceStatus.class));
+    }
+
+    @Test
+    void testSaveDeviceStatus_duplicate_throwsException() {
+        AlarmDeviceStatusRequest request = buildDeviceStatusRequest(LocalDateTime.of(2026, 5, 7, 22, 38, 45));
+        when(alarmDeviceStatusRepository.existsByTimestamp(any())).thenReturn(true);
+
+        Assertions.assertThatThrownBy(() -> alarmService.saveDeviceStatus(request))
+                .isInstanceOf(AlarmDuplicateException.class);
+        verify(alarmDeviceStatusRepository, never()).save(any());
+    }
+
+    @Test
+    void testGetDeviceStatuses_returnsPage() {
+        AlarmDeviceStatus status = new AlarmDeviceStatus();
+        status.setTimestamp(LocalDateTime.of(2026, 5, 7, 22, 38, 45));
+        Page<AlarmDeviceStatus> expected = new PageImpl<>(List.of(status));
+        Pageable pageable = PageRequest.of(0, 10);
+        when(alarmDeviceStatusRepository.findAll(any(Pageable.class))).thenReturn(expected);
+
+        Page<AlarmDeviceStatus> result = alarmService.getDeviceStatuses(pageable);
+
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result.getContent()).hasSize(1);
+        verify(alarmDeviceStatusRepository).findAll(any(Pageable.class));
+    }
+
+    private AlarmDeviceStatusRequest buildDeviceStatusRequest(LocalDateTime timestamp) {
+        AlarmDeviceStatusRequest request = new AlarmDeviceStatusRequest();
+        request.setTimestamp(timestamp);
+        request.setBetrieb(1);
+        request.setScharf(1);
+        request.setUnscharf(0);
+        request.setSabotage(0);
+        request.setStoerung(0);
+        request.setAlarm(0);
+        request.setZone1(0);
+        request.setZone2(0);
+        request.setZone3(1);
+        request.setZone4(0);
+        request.setZone5(1);
+        request.setZone6(0);
+        request.setZone7(0);
+        request.setZone8(0);
         return request;
     }
 }

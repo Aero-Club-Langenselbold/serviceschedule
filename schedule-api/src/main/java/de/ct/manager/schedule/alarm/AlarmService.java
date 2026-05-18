@@ -15,9 +15,11 @@ import jakarta.persistence.criteria.Predicate;
 public class AlarmService {
 
     private final AlarmRepository alarmRepository;
+    private final AlarmDeviceStatusRepository alarmDeviceStatusRepository;
 
-    public AlarmService(AlarmRepository alarmRepository) {
+    public AlarmService(AlarmRepository alarmRepository, AlarmDeviceStatusRepository alarmDeviceStatusRepository) {
         this.alarmRepository = alarmRepository;
+        this.alarmDeviceStatusRepository = alarmDeviceStatusRepository;
     }
 
     public Alarm addAlarm(AlarmRequest request) {
@@ -56,5 +58,34 @@ public class AlarmService {
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    public AlarmDeviceStatus saveDeviceStatus(AlarmDeviceStatusRequest request) {
+        if (alarmDeviceStatusRepository.existsByTimestamp(request.getTimestamp())) {
+            throw new AlarmDuplicateException(request.getTimestamp());
+        }
+
+        AlarmDeviceStatus status = new AlarmDeviceStatus();
+        status.setTimestamp(request.getTimestamp());
+        status.setBetrieb(request.getBetrieb());
+        status.setScharf(request.getScharf());
+        status.setUnscharf(request.getUnscharf());
+        status.setSabotage(request.getSabotage());
+        status.setStoerung(request.getStoerung());
+        status.setAlarm(request.getAlarm());
+        status.setZone1(request.getZone1());
+        status.setZone2(request.getZone2());
+        status.setZone3(request.getZone3());
+        status.setZone4(request.getZone4());
+        status.setZone5(request.getZone5());
+        status.setZone6(request.getZone6());
+        status.setZone7(request.getZone7());
+        status.setZone8(request.getZone8());
+
+        return alarmDeviceStatusRepository.save(status);
+    }
+
+    public Page<AlarmDeviceStatus> getDeviceStatuses(Pageable pageable) {
+        return alarmDeviceStatusRepository.findAll(pageable);
     }
 }

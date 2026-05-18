@@ -72,7 +72,8 @@ export default defineI18nLocale(async locale => {
         },
         alarms: {
           menu: 'Alarm system',
-          list: 'Event log'
+          list: 'Event log',
+          deviceStatusList: 'Device Status Log'
         }
       },
       app: {
@@ -91,7 +92,25 @@ export default defineI18nLocale(async locale => {
         rfidId: 'RFID ID',
         internalTime: 'Internal Time',
         status: 'Status',
-        rawData: 'Raw Data'
+        rawData: 'Raw Data',
+        deviceStatus: {
+          list: 'Device Status Log',
+          timestamp: 'Timestamp',
+          betrieb: 'Operation',
+          scharf: 'Armed',
+          unscharf: 'Disarmed',
+          sabotage: 'Sabotage',
+          stoerung: 'Fault',
+          alarm: 'Alarm',
+          zone1: 'Zone 1',
+          zone2: 'Zone 2',
+          zone3: 'Zone 3',
+          zone4: 'Zone 4',
+          zone5: 'Zone 5',
+          zone6: 'Zone 6',
+          zone7: 'Zone 7',
+          zone8: 'Zone 8'
+        }
       },
       participants: {
         filter: 'Filter',
@@ -276,9 +295,6 @@ export default defineI18nLocale(async locale => {
           success: 'Bug/Feature created successfully',
         },
         edit: 'Edit'
-      },
-      alarm: {
-        list: 'Event log'
       },
       error: {
         credentials: 'Invalid credentials'

@@ -24,6 +24,7 @@ public class AlarmPassphraseFilter extends OncePerRequestFilter {
 
     static final String PASSPHRASE_HEADER = "X-Alarm-Passphrase";
     private static final String ALARM_SAVE_PATH = "/alarm/save";
+    private static final String ALARM_DEVICE_SAVE_PATH = "/alarm/status/save";
 
     private final CommonSettingsRepository commonSettingsRepository;
 
@@ -33,8 +34,9 @@ public class AlarmPassphraseFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        String path = request.getServletPath();
         return !(HttpMethod.POST.matches(request.getMethod())
-                && ALARM_SAVE_PATH.equals(request.getServletPath()));
+                && (ALARM_SAVE_PATH.equals(path) || ALARM_DEVICE_SAVE_PATH.equals(path)));
     }
 
     @Override

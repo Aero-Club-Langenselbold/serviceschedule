@@ -35,6 +35,11 @@ public class AlarmController {
         return ResponseEntity.status(HttpStatus.CREATED).body(alarmService.addAlarm(request));
     }
 
+    @PostMapping("/status/save")
+    public ResponseEntity<AlarmDeviceStatus> addDeviceStatus(@Valid @RequestBody AlarmDeviceStatusRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(alarmService.saveDeviceStatus(request));
+    }
+
     @GetMapping("/page")
     public ResponseEntity<Page<Alarm>> getAlarms(
             @RequestParam(required = false) String rfidId,
@@ -43,5 +48,10 @@ public class AlarmController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
             Pageable pageable) {
         return ResponseEntity.ok(alarmService.getAlarms(rfidId, status, from, to, pageable));
+    }
+
+    @GetMapping("/status/page")
+    public ResponseEntity<Page<AlarmDeviceStatus>> getDeviceStatuses(Pageable pageable) {
+        return ResponseEntity.ok(alarmService.getDeviceStatuses(pageable));
     }
 }

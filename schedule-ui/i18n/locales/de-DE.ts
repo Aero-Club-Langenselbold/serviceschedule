@@ -72,7 +72,8 @@ export default defineI18nLocale(async locale => {
         },
         alarms: {
           menu: 'Alarmanlage',
-          list: 'Ereignisprotokoll'
+          list: 'Ereignisprotokoll',
+          deviceStatusList: 'Gerätestatus-Protokoll'
         }
       },
       app: {
@@ -91,7 +92,25 @@ export default defineI18nLocale(async locale => {
         rfidId: 'RFID-ID',
         internalTime: 'Interne Zeit',
         status: 'Status',
-        rawData: 'Rohdaten'
+        rawData: 'Rohdaten',
+        deviceStatus: {
+          list: 'Gerätestatus-Protokoll',
+          timestamp: 'Zeitstempel',
+          betrieb: 'Betrieb',
+          scharf: 'Scharf',
+          unscharf: 'Unscharf',
+          sabotage: 'Sabotage',
+          stoerung: 'Störung',
+          alarm: 'Alarm',
+          zone1: 'Zone 1',
+          zone2: 'Zone 2',
+          zone3: 'Zone 3',
+          zone4: 'Zone 4',
+          zone5: 'Zone 5',
+          zone6: 'Zone 6',
+          zone7: 'Zone 7',
+          zone8: 'Zone 8'
+        }
       },
       participants: {
         filter: 'Filter',
@@ -276,9 +295,6 @@ export default defineI18nLocale(async locale => {
           success: 'Bug/Feature erfolgreich erstellt',
         },
         edit: 'Bearbeiten'
-      },
-      alarm: {
-        list: 'Ereignisprotokoll'
       },
       error: {
         credentials: 'Ungültige Anmeldeinformationen'

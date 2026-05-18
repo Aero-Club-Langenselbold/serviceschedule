@@ -127,4 +127,102 @@ class AlarmIntegrationTest extends AbstractIntegrationTest {
 
         Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
+
+    // --- AlarmDeviceStatus integration tests ---
+
+    @Test
+    @Sql(scripts = "classpath:scripts/test-alarm-device-statuses.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(statements = "DELETE FROM alarm_device_status", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void testGetDeviceStatuses_returnsSeededData() {
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ALARM_ADMIN));
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                createURLWithPort("alarm/status/page"),
+                HttpMethod.GET,
+                entity,
+                String.class);
+
+        Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    @Sql(statements = "DELETE FROM alarm_device_status", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void testAddDeviceStatus_success() {
+        AlarmDeviceStatusRequest request = buildDeviceStatusRequest(LocalDateTime.of(2026, 5, 7, 22, 38, 45));
+
+        HttpEntity<AlarmDeviceStatusRequest> entity = new HttpEntity<>(request, createHeadersWithToken(UserRole.ROLE_ALARM_ADMIN));
+
+        ResponseEntity<AlarmDeviceStatus> response = restTemplate.exchange(
+                createURLWithPort("alarm/status/save"),
+                HttpMethod.POST,
+                entity,
+                AlarmDeviceStatus.class);
+
+        Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        Assertions.assertThat(response.getBody()).isNotNull();
+        Assertions.assertThat(response.getBody().getBetrieb()).isEqualTo(1);
+        Assertions.assertThat(response.getBody().getScharf()).isEqualTo(1);
+    }
+
+    @Test
+    @Sql(statements = "DELETE FROM alarm_device_status", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void testAddDeviceStatus_duplicate_returnsConflict() {
+        AlarmDeviceStatusRequest request = buildDeviceStatusRequest(LocalDateTime.of(2026, 5, 8, 10, 0, 0));
+
+        HttpEntity<AlarmDeviceStatusRequest> entity = new HttpEntity<>(request, createHeadersWithToken(UserRole.ROLE_ALARM_ADMIN));
+
+        ResponseEntity<AlarmDeviceStatus> first = restTemplate.exchange(
+                createURLWithPort("alarm/status/save"), HttpMethod.POST, entity, AlarmDeviceStatus.class);
+        Assertions.assertThat(first.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+        ResponseEntity<String> second = restTemplate.exchange(
+                createURLWithPort("alarm/status/save"), HttpMethod.POST, entity, String.class);
+        Assertions.assertThat(second.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    }
+
+    @Test
+    void testGetDeviceStatuses_unauthorized_noToken() {
+        HttpEntity<String> entity = new HttpEntity<>(null);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                createURLWithPort("alarm/status/page"),
+                HttpMethod.GET,
+                entity,
+                String.class);
+
+        Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    void testGetDeviceStatuses_forbidden_wrongRole() {
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER));
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                createURLWithPort("alarm/status/page"),
+                HttpMethod.GET,
+                entity,
+                String.class);
+
+        Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    private AlarmDeviceStatusRequest buildDeviceStatusRequest(LocalDateTime timestamp) {
+        AlarmDeviceStatusRequest request = new AlarmDeviceStatusRequest();
+        request.setTimestamp(timestamp);
+        request.setBetrieb(1);
+        request.setScharf(1);
+        request.setUnscharf(0);
+        request.setSabotage(0);
+        request.setStoerung(0);
+        request.setAlarm(0);
+        request.setZone1(0);
+        request.setZone2(0);
+        request.setZone3(1);
+        request.setZone4(0);
+        request.setZone5(1);
+        request.setZone6(0);
+        request.setZone7(0);
+        request.setZone8(0);
+        return request;
+    }
 }

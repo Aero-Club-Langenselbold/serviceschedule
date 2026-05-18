@@ -1,0 +1,21 @@
+CREATE TABLE alarm_device_status (
+    id              character varying(36)  NOT NULL,
+    version         int4 DEFAULT 0         NOT NULL,
+    alarm_timestamp timestamp              NOT NULL,
+    betrieb         integer                NOT NULL,
+    scharf          integer                NOT NULL,
+    unscharf        integer                NOT NULL,
+    sabotage        integer                NOT NULL,
+    stoerung        integer                NOT NULL,
+    alarm           integer                NOT NULL,
+    zone1           integer                NOT NULL,
+    zone2           integer                NOT NULL,
+    zone3           integer                NOT NULL,
+    zone4           integer                NOT NULL,
+    zone5           integer                NOT NULL,
+    zone6           integer                NOT NULL,
+    zone7           integer                NOT NULL,
+    zone8           integer                NOT NULL,
+    CONSTRAINT alarm_device_status_pkey             PRIMARY KEY (id),
+    CONSTRAINT alarm_device_status_timestamp_unique UNIQUE (alarm_timestamp)
+);

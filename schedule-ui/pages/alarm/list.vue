@@ -17,6 +17,7 @@ import type { Alarm } from '~/types/alarm'
 import type { Page } from '~/types/page'
 
 const { t } = useI18n()
+const { formatUtcTimestamp } = useFormatTimestamp()
 
 const errorMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
@@ -26,7 +27,7 @@ const pageSize = ref(20)
 const listData = ref<Page<Alarm[]> | null>(null)
 
 const columns = [
-  { accessorKey: 'timestamp', header: t('alarm.timestamp') },
+  { accessorKey: 'timestamp', header: t('alarm.timestamp'), cell: ({ row }: { row: { original: Alarm } }) => formatUtcTimestamp(row.original.timestamp) },
   { accessorKey: 'rfidId', header: t('alarm.rfidId') },
   { accessorKey: 'internalTime', header: t('alarm.internalTime') },
   { accessorKey: 'status', header: t('alarm.status') },

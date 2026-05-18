@@ -36,6 +36,9 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
     @MockitoBean
     private AlarmRepository alarmRepository;
 
+    @MockitoBean
+    private AlarmDeviceStatusRepository alarmDeviceStatusRepository;
+
     // Use Spring's fully-configured ObjectMapper (with JavaTimeModule) for request serialization
     @Autowired
     private ObjectMapper springObjectMapper;
@@ -131,5 +134,134 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
         alarm.setRawData("raw data");
         alarm.setStatus(AlarmStatus.ARMED);
         return alarm;
+    }
+
+    // --- AlarmDeviceStatus tests ---
+
+    @Test
+    void testAddDeviceStatus_success() throws Exception {
+        AlarmDeviceStatusRequest request = buildDeviceStatusRequest(LocalDateTime.of(2026, 5, 7, 22, 38, 45));
+        AlarmDeviceStatus status = buildDeviceStatus("status-1", LocalDateTime.of(2026, 5, 7, 22, 38, 45));
+
+        when(alarmDeviceStatusRepository.existsByTimestamp(any())).thenReturn(false);
+        when(alarmDeviceStatusRepository.save(any(AlarmDeviceStatus.class))).thenReturn(status);
+
+        mockMvc.perform(post("/alarm/status/save")
+                        .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ALARM_ADMIN))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(springObjectMapper.writeValueAsString(request)))
+                .andDo(print())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.betrieb", is(1)))
+                .andExpect(jsonPath("$.scharf", is(1)));
+    }
+
+    @Test
+    void testAddDeviceStatus_duplicate_returnsConflict() throws Exception {
+        AlarmDeviceStatusRequest request = buildDeviceStatusRequest(LocalDateTime.of(2026, 5, 7, 22, 38, 45));
+        when(alarmDeviceStatusRepository.existsByTimestamp(any())).thenReturn(true);
+
+        mockMvc.perform(post("/alarm/status/save")
+                        .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ALARM_ADMIN))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(springObjectMapper.writeValueAsString(request)))
+                .andDo(print())
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void testAddDeviceStatus_unauthorized_noToken() throws Exception {
+        AlarmDeviceStatusRequest request = buildDeviceStatusRequest(LocalDateTime.of(2026, 5, 7, 22, 38, 45));
+
+        mockMvc.perform(post("/alarm/status/save")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(springObjectMapper.writeValueAsString(request)))
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testAddDeviceStatus_forbidden_wrongRole() throws Exception {
+        AlarmDeviceStatusRequest request = buildDeviceStatusRequest(LocalDateTime.of(2026, 5, 7, 22, 38, 45));
+
+        mockMvc.perform(post("/alarm/status/save")
+                        .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(springObjectMapper.writeValueAsString(request)))
+                .andDo(print())
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testGetDeviceStatuses_success() throws Exception {
+        AlarmDeviceStatus status = buildDeviceStatus("status-1", LocalDateTime.of(2026, 5, 7, 22, 38, 45));
+        Page<AlarmDeviceStatus> page = new PageImpl<>(List.of(status));
+
+        when(alarmDeviceStatusRepository.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
+
+        mockMvc.perform(get("/alarm/status/page")
+                        .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ALARM_ADMIN))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].betrieb", is(1)));
+    }
+
+    @Test
+    void testGetDeviceStatuses_unauthorized_noToken() throws Exception {
+        mockMvc.perform(get("/alarm/status/page")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testGetDeviceStatuses_forbidden_wrongRole() throws Exception {
+        mockMvc.perform(get("/alarm/status/page")
+                        .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isForbidden());
+    }
+
+    private AlarmDeviceStatusRequest buildDeviceStatusRequest(LocalDateTime timestamp) {
+        AlarmDeviceStatusRequest request = new AlarmDeviceStatusRequest();
+        request.setTimestamp(timestamp);
+        request.setBetrieb(1);
+        request.setScharf(1);
+        request.setUnscharf(0);
+        request.setSabotage(0);
+        request.setStoerung(0);
+        request.setAlarm(0);
+        request.setZone1(0);
+        request.setZone2(0);
+        request.setZone3(1);
+        request.setZone4(0);
+        request.setZone5(1);
+        request.setZone6(0);
+        request.setZone7(0);
+        request.setZone8(0);
+        return request;
+    }
+
+    private AlarmDeviceStatus buildDeviceStatus(String id, LocalDateTime timestamp) {
+        AlarmDeviceStatus status = new AlarmDeviceStatus();
+        status.setId(id);
+        status.setTimestamp(timestamp);
+        status.setBetrieb(1);
+        status.setScharf(1);
+        status.setUnscharf(0);
+        status.setSabotage(0);
+        status.setStoerung(0);
+        status.setAlarm(0);
+        status.setZone1(0);
+        status.setZone2(0);
+        status.setZone3(1);
+        status.setZone4(0);
+        status.setZone5(1);
+        status.setZone6(0);
+        status.setZone7(0);
+        status.setZone8(0);
+        return status;
     }
 }
