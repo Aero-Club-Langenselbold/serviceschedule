@@ -5,26 +5,20 @@ type Alarm = {
     internalTime: string
     rawData: string
     status: number
+    armed: boolean
+    disarmed: boolean
+    sabotage: boolean
+    fault: boolean
+    alarm: boolean
+    zone1: boolean
+    zone2: boolean
+    zone3: boolean
+    zone4: boolean
+    zone5: boolean
+    zone6: boolean
+    zone7: boolean
+    zone8: boolean
 }
 
-type AlarmDeviceStatus = {
-    id: string
-    timestamp: string
-    betrieb: number
-    scharf: number
-    unscharf: number
-    sabotage: number
-    stoerung: number
-    alarm: number
-    zone1: number
-    zone2: number
-    zone3: number
-    zone4: number
-    zone5: number
-    zone6: number
-    zone7: number
-    zone8: number
-}
-
-export type { Alarm, AlarmDeviceStatus }
+export type { Alarm }
 

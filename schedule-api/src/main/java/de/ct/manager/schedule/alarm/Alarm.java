@@ -34,4 +34,43 @@ public class Alarm extends AbstractPersistentEntity {
     @Enumerated(EnumType.ORDINAL)
     @Column(columnDefinition = "INTEGER")
     private AlarmStatus status;
+
+    @Column
+    private boolean armed;
+
+    @Column
+    private boolean disarmed;
+
+    @Column
+    private boolean sabotage;
+
+    @Column
+    private boolean fault;
+
+    @Column
+    private boolean alarm;
+
+    @Column
+    private boolean zone1;
+
+    @Column
+    private boolean zone2;
+
+    @Column
+    private boolean zone3;
+
+    @Column
+    private boolean zone4;
+
+    @Column
+    private boolean zone5;
+
+    @Column
+    private boolean zone6;
+
+    @Column
+    private boolean zone7;
+
+    @Column
+    private boolean zone8;
 }

@@ -93,11 +93,6 @@ const menu = computed(() => {
           label: computed(() => t('nav.alarms.list')),
           icon: 'i-lucide-list',
           to: '/alarm/list'
-        },
-        {
-          label: computed(() => t('nav.alarms.deviceStatusList')),
-          icon: 'i-lucide-activity',
-          to: '/alarm/device-status'
         }
       ]
     })

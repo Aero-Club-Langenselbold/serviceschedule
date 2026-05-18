@@ -26,12 +26,38 @@ const page = ref(1)
 const pageSize = ref(20)
 const listData = ref<Page<Alarm[]> | null>(null)
 
+const getAlarmMessage = (alarm: Alarm): string => {
+  if (alarm.rfidId) {
+    return t('alarm.rfidMessage')
+  }
+  return t('alarm.statusChangeMessage')
+}
+
+const getAlarmDetailMessage = (alarm: Alarm): string => {
+  if (alarm.rfidId) {
+    return t('alarm.rfidDetail') + alarm.rfidId
+  }
+  const activeFlags: string[] = []
+  if (alarm.armed) activeFlags.push(t('alarm.armed'))
+  if (alarm.disarmed) activeFlags.push(t('alarm.disarmed'))
+  if (alarm.sabotage) activeFlags.push(t('alarm.sabotage'))
+  if (alarm.fault) activeFlags.push(t('alarm.fault'))
+  if (alarm.alarm) activeFlags.push(t('alarm.alarm'))
+  if (alarm.zone1) activeFlags.push(t('alarm.zone1'))
+  if (alarm.zone2) activeFlags.push(t('alarm.zone2'))
+  if (alarm.zone3) activeFlags.push(t('alarm.zone3'))
+  if (alarm.zone4) activeFlags.push(t('alarm.zone4'))
+  if (alarm.zone5) activeFlags.push(t('alarm.zone5'))
+  if (alarm.zone6) activeFlags.push(t('alarm.zone6'))
+  if (alarm.zone7) activeFlags.push(t('alarm.zone7'))
+  if (alarm.zone8) activeFlags.push(t('alarm.zone8'))
+  return activeFlags.join(', ')
+}
+
 const columns = [
   { accessorKey: 'timestamp', header: t('alarm.timestamp'), cell: ({ row }: { row: { original: Alarm } }) => formatUtcTimestamp(row.original.timestamp) },
-  { accessorKey: 'rfidId', header: t('alarm.rfidId') },
-  { accessorKey: 'internalTime', header: t('alarm.internalTime') },
-  { accessorKey: 'status', header: t('alarm.status') },
-  { accessorKey: 'rawData', header: t('alarm.rawData') },
+  { accessorKey: 'message', header: t('alarm.message'), cell: ({ row }: { row: { original: Alarm } }) => getAlarmMessage(row.original) },
+  { accessorKey: 'detailMessage', header: t('alarm.detailMessage'), cell: ({ row }: { row: { original: Alarm } }) => getAlarmDetailMessage(row.original) },
 ]
 
 let sort = 'timestamp'

@@ -36,9 +36,6 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
     @MockitoBean
     private AlarmRepository alarmRepository;
 
-    @MockitoBean
-    private AlarmDeviceStatusRepository alarmDeviceStatusRepository;
-
     // Use Spring's fully-configured ObjectMapper (with JavaTimeModule) for request serialization
     @Autowired
     private ObjectMapper springObjectMapper;
@@ -95,7 +92,7 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].rfidId", is("rfid001")));
+                .andExpect(jsonPath("$.content[0].rfidId", is("XXid001")));
     }
 
     @Test
@@ -141,10 +138,16 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
     @Test
     void testAddDeviceStatus_success() throws Exception {
         AlarmDeviceStatusRequest request = buildDeviceStatusRequest(LocalDateTime.of(2026, 5, 7, 22, 38, 45));
-        AlarmDeviceStatus status = buildDeviceStatus("status-1", LocalDateTime.of(2026, 5, 7, 22, 38, 45));
+        Alarm result = new Alarm();
+        result.setId("alarm-1");
+        result.setTimestamp(LocalDateTime.of(2026, 5, 7, 22, 38, 45));
+        result.setStatus(AlarmStatus.ARMED);
+        result.setArmed(true);
+        result.setZone3(true);
+        result.setZone5(true);
 
-        when(alarmDeviceStatusRepository.existsByTimestamp(any())).thenReturn(false);
-        when(alarmDeviceStatusRepository.save(any(AlarmDeviceStatus.class))).thenReturn(status);
+        when(alarmRepository.existsByTimestamp(any())).thenReturn(false);
+        when(alarmRepository.save(any(Alarm.class))).thenReturn(result);
 
         mockMvc.perform(post("/alarm/status/save")
                         .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ALARM_ADMIN))
@@ -152,14 +155,14 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
                         .content(springObjectMapper.writeValueAsString(request)))
                 .andDo(print())
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.betrieb", is(1)))
-                .andExpect(jsonPath("$.scharf", is(1)));
+                .andExpect(jsonPath("$.status", is(1)))
+                .andExpect(jsonPath("$.armed", is(true)));
     }
 
     @Test
     void testAddDeviceStatus_duplicate_returnsConflict() throws Exception {
         AlarmDeviceStatusRequest request = buildDeviceStatusRequest(LocalDateTime.of(2026, 5, 7, 22, 38, 45));
-        when(alarmDeviceStatusRepository.existsByTimestamp(any())).thenReturn(true);
+        when(alarmRepository.existsByTimestamp(any())).thenReturn(true);
 
         mockMvc.perform(post("/alarm/status/save")
                         .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ALARM_ADMIN))
@@ -192,38 +195,6 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
                 .andExpect(status().isForbidden());
     }
 
-    @Test
-    void testGetDeviceStatuses_success() throws Exception {
-        AlarmDeviceStatus status = buildDeviceStatus("status-1", LocalDateTime.of(2026, 5, 7, 22, 38, 45));
-        Page<AlarmDeviceStatus> page = new PageImpl<>(List.of(status));
-
-        when(alarmDeviceStatusRepository.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
-
-        mockMvc.perform(get("/alarm/status/page")
-                        .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ALARM_ADMIN))
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].betrieb", is(1)));
-    }
-
-    @Test
-    void testGetDeviceStatuses_unauthorized_noToken() throws Exception {
-        mockMvc.perform(get("/alarm/status/page")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void testGetDeviceStatuses_forbidden_wrongRole() throws Exception {
-        mockMvc.perform(get("/alarm/status/page")
-                        .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_USER))
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isForbidden());
-    }
-
     private AlarmDeviceStatusRequest buildDeviceStatusRequest(LocalDateTime timestamp) {
         AlarmDeviceStatusRequest request = new AlarmDeviceStatusRequest();
         request.setTimestamp(timestamp);
@@ -244,24 +215,4 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
         return request;
     }
 
-    private AlarmDeviceStatus buildDeviceStatus(String id, LocalDateTime timestamp) {
-        AlarmDeviceStatus status = new AlarmDeviceStatus();
-        status.setId(id);
-        status.setTimestamp(timestamp);
-        status.setBetrieb(1);
-        status.setScharf(1);
-        status.setUnscharf(0);
-        status.setSabotage(0);
-        status.setStoerung(0);
-        status.setAlarm(0);
-        status.setZone1(0);
-        status.setZone2(0);
-        status.setZone3(1);
-        status.setZone4(0);
-        status.setZone5(1);
-        status.setZone6(0);
-        status.setZone7(0);
-        status.setZone8(0);
-        return status;
-    }
 }

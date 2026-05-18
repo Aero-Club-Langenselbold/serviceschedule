@@ -72,8 +72,7 @@ export default defineI18nLocale(async locale => {
         },
         alarms: {
           menu: 'Alarmanlage',
-          list: 'Ereignisprotokoll',
-          deviceStatusList: 'Gerätestatus-Protokoll'
+          list: 'Ereignisprotokoll'
         }
       },
       app: {
@@ -89,28 +88,24 @@ export default defineI18nLocale(async locale => {
       alarm: {
         list: 'Ereignisprotokoll',
         timestamp: 'Zeitstempel',
-        rfidId: 'RFID-ID',
-        internalTime: 'Interne Zeit',
-        status: 'Status',
-        rawData: 'Rohdaten',
-        deviceStatus: {
-          list: 'Gerätestatus-Protokoll',
-          timestamp: 'Zeitstempel',
-          betrieb: 'Betrieb',
-          scharf: 'Scharf',
-          unscharf: 'Unscharf',
-          sabotage: 'Sabotage',
-          stoerung: 'Störung',
-          alarm: 'Alarm',
-          zone1: 'Zone 1',
-          zone2: 'Zone 2',
-          zone3: 'Zone 3',
-          zone4: 'Zone 4',
-          zone5: 'Zone 5',
-          zone6: 'Zone 6',
-          zone7: 'Zone 7',
-          zone8: 'Zone 8'
-        }
+        message: 'Nachricht',
+        detailMessage: 'Detail',
+        rfidMessage: 'RFID-Leser: Schlüssel erkannt',
+        rfidDetail: 'Zugang durch Schlüssel Nr. ',
+        statusChangeMessage: 'Alarmanlage: Statusänderung',
+        armed: 'Anlage Scharf',
+        disarmed: 'Anlage Unscharf',
+        sabotage: 'Sabotage',
+        fault: 'Störung',
+        alarm: 'Alarm',
+        zone1: 'Zone 1',
+        zone2: 'Zone 2',
+        zone3: 'Zone 3',
+        zone4: 'Zone 4',
+        zone5: 'Zone 5',
+        zone6: 'Zone 6',
+        zone7: 'Zone 7',
+        zone8: 'Zone 8'
       },
       participants: {
         filter: 'Filter',

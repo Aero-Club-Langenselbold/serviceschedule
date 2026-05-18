@@ -26,9 +26,6 @@ class AlarmServiceUnitTest {
     @Mock
     AlarmRepository alarmRepository;
 
-    @Mock
-    AlarmDeviceStatusRepository alarmDeviceStatusRepository;
-
     @InjectMocks
     AlarmService alarmService;
 
@@ -101,43 +98,28 @@ class AlarmServiceUnitTest {
     @Test
     void testSaveDeviceStatus_success() {
         AlarmDeviceStatusRequest request = buildDeviceStatusRequest(LocalDateTime.of(2026, 5, 7, 22, 38, 45));
-        when(alarmDeviceStatusRepository.existsByTimestamp(any())).thenReturn(false);
-        when(alarmDeviceStatusRepository.save(any(AlarmDeviceStatus.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(alarmRepository.existsByTimestamp(any())).thenReturn(false);
+        when(alarmRepository.save(any(Alarm.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        AlarmDeviceStatus result = alarmService.saveDeviceStatus(request);
+        Alarm result = alarmService.saveDeviceStatus(request);
 
         Assertions.assertThat(result).isNotNull();
         Assertions.assertThat(result.getTimestamp()).isEqualTo(request.getTimestamp());
-        Assertions.assertThat(result.getBetrieb()).isEqualTo(1);
-        Assertions.assertThat(result.getScharf()).isEqualTo(1);
-        Assertions.assertThat(result.getZone3()).isEqualTo(1);
-        Assertions.assertThat(result.getZone5()).isEqualTo(1);
-        verify(alarmDeviceStatusRepository).save(any(AlarmDeviceStatus.class));
+        Assertions.assertThat(result.getStatus()).isEqualTo(AlarmStatus.ARMED);
+        Assertions.assertThat(result.isArmed()).isTrue();
+        Assertions.assertThat(result.isZone3()).isTrue();
+        Assertions.assertThat(result.isZone5()).isTrue();
+        verify(alarmRepository).save(any(Alarm.class));
     }
 
     @Test
     void testSaveDeviceStatus_duplicate_throwsException() {
         AlarmDeviceStatusRequest request = buildDeviceStatusRequest(LocalDateTime.of(2026, 5, 7, 22, 38, 45));
-        when(alarmDeviceStatusRepository.existsByTimestamp(any())).thenReturn(true);
+        when(alarmRepository.existsByTimestamp(any())).thenReturn(true);
 
         Assertions.assertThatThrownBy(() -> alarmService.saveDeviceStatus(request))
                 .isInstanceOf(AlarmDuplicateException.class);
-        verify(alarmDeviceStatusRepository, never()).save(any());
-    }
-
-    @Test
-    void testGetDeviceStatuses_returnsPage() {
-        AlarmDeviceStatus status = new AlarmDeviceStatus();
-        status.setTimestamp(LocalDateTime.of(2026, 5, 7, 22, 38, 45));
-        Page<AlarmDeviceStatus> expected = new PageImpl<>(List.of(status));
-        Pageable pageable = PageRequest.of(0, 10);
-        when(alarmDeviceStatusRepository.findAll(any(Pageable.class))).thenReturn(expected);
-
-        Page<AlarmDeviceStatus> result = alarmService.getDeviceStatuses(pageable);
-
-        Assertions.assertThat(result).isNotNull();
-        Assertions.assertThat(result.getContent()).hasSize(1);
-        verify(alarmDeviceStatusRepository).findAll(any(Pageable.class));
+        verify(alarmRepository, never()).save(any());
     }
 
     private AlarmDeviceStatusRequest buildDeviceStatusRequest(LocalDateTime timestamp) {

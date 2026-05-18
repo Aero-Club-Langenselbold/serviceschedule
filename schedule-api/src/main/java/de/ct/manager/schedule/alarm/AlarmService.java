@@ -15,11 +15,9 @@ import jakarta.persistence.criteria.Predicate;
 public class AlarmService {
 
     private final AlarmRepository alarmRepository;
-    private final AlarmDeviceStatusRepository alarmDeviceStatusRepository;
 
-    public AlarmService(AlarmRepository alarmRepository, AlarmDeviceStatusRepository alarmDeviceStatusRepository) {
+    public AlarmService(AlarmRepository alarmRepository) {
         this.alarmRepository = alarmRepository;
-        this.alarmDeviceStatusRepository = alarmDeviceStatusRepository;
     }
 
     public Alarm addAlarm(AlarmRequest request) {
@@ -38,7 +36,16 @@ public class AlarmService {
     }
 
     public Page<Alarm> getAlarms(String rfidId, AlarmStatus status, LocalDateTime from, LocalDateTime to, Pageable pageable) {
-        return alarmRepository.findAll(buildSpec(rfidId, status, from, to), pageable);
+        Page<Alarm> page = alarmRepository.findAll(buildSpec(rfidId, status, from, to), pageable);
+        page.getContent().forEach(alarm -> alarm.setRfidId(anonymizeRfid(alarm.getRfidId())));
+        return page;
+    }
+
+    private String anonymizeRfid(String rfid) {
+        if (rfid == null || rfid.length() <= 5) {
+            return rfid;
+        }
+        return "X".repeat(rfid.length() - 5) + rfid.substring(rfid.length() - 5);
     }
 
     private Specification<Alarm> buildSpec(String rfidId, AlarmStatus status, LocalDateTime from, LocalDateTime to) {
@@ -60,32 +67,28 @@ public class AlarmService {
         };
     }
 
-    public AlarmDeviceStatus saveDeviceStatus(AlarmDeviceStatusRequest request) {
-        if (alarmDeviceStatusRepository.existsByTimestamp(request.getTimestamp())) {
+    public Alarm saveDeviceStatus(AlarmDeviceStatusRequest request) {
+        if (alarmRepository.existsByTimestamp(request.getTimestamp())) {
             throw new AlarmDuplicateException(request.getTimestamp());
         }
 
-        AlarmDeviceStatus status = new AlarmDeviceStatus();
+        Alarm status = new Alarm();
         status.setTimestamp(request.getTimestamp());
-        status.setBetrieb(request.getBetrieb());
-        status.setScharf(request.getScharf());
-        status.setUnscharf(request.getUnscharf());
-        status.setSabotage(request.getSabotage());
-        status.setStoerung(request.getStoerung());
-        status.setAlarm(request.getAlarm());
-        status.setZone1(request.getZone1());
-        status.setZone2(request.getZone2());
-        status.setZone3(request.getZone3());
-        status.setZone4(request.getZone4());
-        status.setZone5(request.getZone5());
-        status.setZone6(request.getZone6());
-        status.setZone7(request.getZone7());
-        status.setZone8(request.getZone8());
+        status.setStatus(AlarmStatus.fromCode(request.getBetrieb()));
+        status.setArmed(request.getScharf() == 1);
+        status.setDisarmed(request.getUnscharf() == 1);
+        status.setSabotage(request.getSabotage() == 1);
+        status.setFault(request.getStoerung() == 1);
+        status.setAlarm(request.getAlarm() == 1);
+        status.setZone1(request.getZone1() == 1);
+        status.setZone2(request.getZone2() == 1);
+        status.setZone3(request.getZone3() == 1);
+        status.setZone4(request.getZone4() == 1);
+        status.setZone5(request.getZone5() == 1);
+        status.setZone6(request.getZone6() == 1);
+        status.setZone7(request.getZone7() == 1);
+        status.setZone8(request.getZone8() == 1);
 
-        return alarmDeviceStatusRepository.save(status);
-    }
-
-    public Page<AlarmDeviceStatus> getDeviceStatuses(Pageable pageable) {
-        return alarmDeviceStatusRepository.findAll(pageable);
+        return alarmRepository.save(status);
     }
 }
