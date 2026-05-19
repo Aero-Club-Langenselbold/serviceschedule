@@ -40,7 +40,7 @@ class AlarmServiceUnitTest {
         Assertions.assertThat(result).isNotNull();
         Assertions.assertThat(result.getSystemTimestamp()).isEqualTo(request.getTimestamp());
         Assertions.assertThat(result.getRfidId()).isEqualTo("rfid001");
-        Assertions.assertThat(result.getStatus()).isEqualTo(AlarmStatus.ARMED);
+        Assertions.assertThat(result.getStatus()).isEqualTo(AlarmStatus.AUTHORIZED_KEY);
         verify(alarmRepository).save(any(Alarm.class));
     }
 
@@ -76,7 +76,7 @@ class AlarmServiceUnitTest {
         Pageable pageable = PageRequest.of(0, 10);
         when(alarmRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(expected);
 
-        Page<Alarm> result = alarmService.getAlarms("rfid001", AlarmStatus.ARMED,
+        Page<Alarm> result = alarmService.getAlarms("rfid001", AlarmStatus.AUTHORIZED_KEY,
                 LocalDateTime.of(2026, 1, 1, 0, 0), LocalDateTime.of(2026, 1, 2, 0, 0), pageable);
 
         Assertions.assertThat(result).isNotNull();
@@ -89,7 +89,7 @@ class AlarmServiceUnitTest {
         request.setRfidId("rfid001");
         request.setInternalTime("10:00");
         request.setRawData("raw data");
-        request.setStatus(AlarmStatus.ARMED);
+        request.setStatus(AlarmStatus.AUTHORIZED_KEY);
         return request;
     }
 
@@ -105,7 +105,7 @@ class AlarmServiceUnitTest {
 
         Assertions.assertThat(result).isNotNull();
         Assertions.assertThat(result.getSystemTimestamp()).isEqualTo(request.getTimestamp());
-        Assertions.assertThat(result.getStatus()).isEqualTo(AlarmStatus.ARMED);
+        Assertions.assertThat(result.getStatus()).isEqualTo(AlarmStatus.AUTHORIZED_KEY);
         Assertions.assertThat(result.isArmed()).isTrue();
         Assertions.assertThat(result.isZone3()).isTrue();
         Assertions.assertThat(result.isZone5()).isTrue();

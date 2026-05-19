@@ -29,14 +29,14 @@ class AlarmRepositoryUnitTest {
         alarm1.setTimestamp(TIMESTAMP_1);
         alarm1.setSystemTimestamp(TIMESTAMP_1);
         alarm1.setRfidId("rfid001");
-        alarm1.setStatus(AlarmStatus.DISARMED);
+        alarm1.setStatus(AlarmStatus.UNAUTHORIZED_KEY);
         alarmRepository.save(alarm1);
 
         Alarm alarm2 = new Alarm();
         alarm2.setTimestamp(TIMESTAMP_2);
         alarm2.setSystemTimestamp(TIMESTAMP_2);
         alarm2.setRfidId("rfid002");
-        alarm2.setStatus(AlarmStatus.ARMED);
+        alarm2.setStatus(AlarmStatus.AUTHORIZED_KEY);
         alarmRepository.save(alarm2);
     }
 

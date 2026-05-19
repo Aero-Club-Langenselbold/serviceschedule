@@ -68,7 +68,7 @@ class AlarmIntegrationTest extends AbstractIntegrationTest {
         request.setRfidId("rfid-new");
         request.setInternalTime("10:00");
         request.setRawData("test raw");
-        request.setStatus(AlarmStatus.ARMED);
+        request.setStatus(AlarmStatus.AUTHORIZED_KEY);
 
         HttpEntity<AlarmRequest> entity = new HttpEntity<>(request, createHeadersWithToken(UserRole.ROLE_ALARM_ADMIN));
 
@@ -89,7 +89,7 @@ class AlarmIntegrationTest extends AbstractIntegrationTest {
         AlarmRequest request = new AlarmRequest();
         request.setTimestamp(LocalDateTime.of(2026, 4, 1, 10, 0));
         request.setRfidId("rfid-dup");
-        request.setStatus(AlarmStatus.DISARMED);
+        request.setStatus(AlarmStatus.UNAUTHORIZED_KEY);
 
         HttpEntity<AlarmRequest> entity = new HttpEntity<>(request, createHeadersWithToken(UserRole.ROLE_ALARM_ADMIN));
 
@@ -145,7 +145,7 @@ class AlarmIntegrationTest extends AbstractIntegrationTest {
 
         Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         Assertions.assertThat(response.getBody()).isNotNull();
-        Assertions.assertThat(response.getBody().getStatus()).isEqualTo(AlarmStatus.ARMED);
+        Assertions.assertThat(response.getBody().getStatus()).isEqualTo(AlarmStatus.AUTHORIZED_KEY);
         Assertions.assertThat(response.getBody().isArmed()).isTrue();
     }
 

@@ -118,7 +118,7 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
         request.setRfidId("rfid001");
         request.setInternalTime("10:00");
         request.setRawData("raw data");
-        request.setStatus(AlarmStatus.ARMED);
+        request.setStatus(AlarmStatus.AUTHORIZED_KEY);
         return request;
     }
 
@@ -129,7 +129,7 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
         alarm.setRfidId("rfid001");
         alarm.setInternalTime("10:00");
         alarm.setRawData("raw data");
-        alarm.setStatus(AlarmStatus.ARMED);
+        alarm.setStatus(AlarmStatus.AUTHORIZED_KEY);
         return alarm;
     }
 
@@ -141,7 +141,7 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
         Alarm result = new Alarm();
         result.setId("alarm-1");
         result.setTimestamp(LocalDateTime.of(2026, 5, 7, 22, 38, 45));
-        result.setStatus(AlarmStatus.ARMED);
+        result.setStatus(AlarmStatus.AUTHORIZED_KEY);
         result.setArmed(true);
         result.setZone3(true);
         result.setZone5(true);
