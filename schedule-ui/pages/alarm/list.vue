@@ -35,9 +35,16 @@ const getAlarmMessage = (alarm: Alarm): string => {
 
 const getAlarmDetailMessage = (alarm: Alarm): string => {
   if (alarm.rfidId) {
-    return alarm.status > 1
-      ? t('alarm.rfidDenied') + alarm.rfidId
-      : t('alarm.rfidDetail') + alarm.rfidId
+    switch (alarm.status) {
+      case 2:
+        return t('alarm.rfidUnknownKey') + ' ' + alarm.rfidId
+      case 1:
+        return t('alarm.rfidAuthorizedKey') + ' ' + alarm.rfidId
+      case 0:
+        return t('alarm.rfidUnauthorizedKey') + ' ' + alarm.rfidId
+      default:
+        return alarm.rfidId
+    }
   }
   const activeFlags: string[] = []
   if (alarm.armed) activeFlags.push(t('alarm.armed'))

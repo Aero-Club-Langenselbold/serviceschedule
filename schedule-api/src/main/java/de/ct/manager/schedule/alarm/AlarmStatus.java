@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum AlarmStatus {
-    DISARMED(0),
-    ARMED(1),
-    UNCHANGED(2),
+    UNAUTHORIZED_KEY(0),
+    AUTHORIZED_KEY(1),
+    UNKNOWN_KEY(2),
     NOT_IMPLEMENTED(3);
 
     private final int code;
