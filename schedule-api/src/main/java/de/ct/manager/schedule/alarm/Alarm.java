@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+
 @Entity
 @Table(name = "alarm")
 @Data
@@ -21,6 +22,9 @@ public class Alarm extends AbstractPersistentEntity {
 
     @Column(name = "alarm_timestamp", nullable = false, unique = true)
     private LocalDateTime timestamp;
+
+    @Column(name = "system_timestamp")
+    private LocalDateTime systemTimestamp;
 
     @Column(name = "rfid_id", length = 32)
     private String rfidId;

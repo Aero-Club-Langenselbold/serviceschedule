@@ -92,6 +92,7 @@ export default defineI18nLocale(async locale => {
         detailMessage: 'Detail',
         rfidMessage: 'RFID-Leser: Schlüssel erkannt',
         rfidDetail: 'Zugang durch Schlüssel Nr. ',
+        rfidDenied: 'Zugang verweigert für Schlüssel Nr. ',
         statusChangeMessage: 'Alarmanlage: Statusänderung',
         armed: 'Anlage Scharf',
         disarmed: 'Anlage Unscharf',

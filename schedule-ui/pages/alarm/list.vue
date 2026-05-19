@@ -35,7 +35,9 @@ const getAlarmMessage = (alarm: Alarm): string => {
 
 const getAlarmDetailMessage = (alarm: Alarm): string => {
   if (alarm.rfidId) {
-    return t('alarm.rfidDetail') + alarm.rfidId
+    return alarm.status > 1
+      ? t('alarm.rfidDenied') + alarm.rfidId
+      : t('alarm.rfidDetail') + alarm.rfidId
   }
   const activeFlags: string[] = []
   if (alarm.armed) activeFlags.push(t('alarm.armed'))

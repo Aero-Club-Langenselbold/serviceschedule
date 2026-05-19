@@ -1,6 +1,7 @@
 package de.ct.manager.schedule.alarm;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +27,8 @@ public class AlarmService {
         }
 
         Alarm alarm = new Alarm();
-        alarm.setTimestamp(request.getTimestamp());
+        alarm.setTimestamp(LocalDateTime.now(ZoneOffset.UTC));
+        alarm.setSystemTimestamp(request.getTimestamp());
         alarm.setRfidId(request.getRfidId());
         alarm.setInternalTime(request.getInternalTime());
         alarm.setRawData(request.getRawData());
@@ -73,7 +75,8 @@ public class AlarmService {
         }
 
         Alarm status = new Alarm();
-        status.setTimestamp(request.getTimestamp());
+        status.setTimestamp(LocalDateTime.now(ZoneOffset.UTC));
+        status.setSystemTimestamp(request.getTimestamp());
         status.setStatus(AlarmStatus.fromCode(request.getBetrieb()));
         status.setArmed(request.getScharf() == 1);
         status.setDisarmed(request.getUnscharf() == 1);
