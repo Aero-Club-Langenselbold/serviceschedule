@@ -22,7 +22,7 @@ public class AlarmService {
     }
 
     public Alarm addAlarm(AlarmRequest request) {
-        if (alarmRepository.existsByTimestamp(request.getTimestamp())) {
+        if (alarmRepository.existsBySystemTimestamp(request.getTimestamp())) {
             throw new AlarmDuplicateException(request.getTimestamp());
         }
 
@@ -70,7 +70,7 @@ public class AlarmService {
     }
 
     public Alarm saveDeviceStatus(AlarmDeviceStatusRequest request) {
-        if (alarmRepository.existsByTimestamp(request.getTimestamp())) {
+        if (alarmRepository.existsBySystemTimestamp(request.getTimestamp())) {
             throw new AlarmDuplicateException(request.getTimestamp());
         }
 

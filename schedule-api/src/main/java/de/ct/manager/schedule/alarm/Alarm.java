@@ -20,10 +20,10 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 public class Alarm extends AbstractPersistentEntity {
 
-    @Column(name = "alarm_timestamp", nullable = false, unique = true)
+    @Column(name = "alarm_timestamp", nullable = false)
     private LocalDateTime timestamp;
 
-    @Column(name = "system_timestamp")
+    @Column(name = "system_timestamp", unique = true)
     private LocalDateTime systemTimestamp;
 
     @Column(name = "rfid_id", length = 32)

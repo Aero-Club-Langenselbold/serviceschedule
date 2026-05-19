@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface AlarmRepository extends JpaRepository<Alarm, String>, JpaSpecificationExecutor<Alarm> {
 
-    boolean existsByTimestamp(LocalDateTime timestamp);
+    boolean existsBySystemTimestamp(LocalDateTime systemTimestamp);
 }

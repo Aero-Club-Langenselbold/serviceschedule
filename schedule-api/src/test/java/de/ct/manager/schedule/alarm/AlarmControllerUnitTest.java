@@ -53,7 +53,7 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
         AlarmRequest request = buildRequest(LocalDateTime.of(2026, 1, 1, 10, 0));
         Alarm alarm = buildAlarm("alarm-1", LocalDateTime.of(2026, 1, 1, 10, 0));
 
-        when(alarmRepository.existsByTimestamp(any())).thenReturn(false);
+        when(alarmRepository.existsBySystemTimestamp(any())).thenReturn(false);
         when(alarmRepository.save(any(Alarm.class))).thenReturn(alarm);
 
         mockMvc.perform(post("/alarm/save")
@@ -68,7 +68,7 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
     @Test
     void testAddAlarm_duplicate_returnsConflict() throws Exception {
         AlarmRequest request = buildRequest(LocalDateTime.of(2026, 1, 1, 10, 0));
-        when(alarmRepository.existsByTimestamp(any())).thenReturn(true);
+        when(alarmRepository.existsBySystemTimestamp(any())).thenReturn(true);
 
         mockMvc.perform(post("/alarm/save")
                         .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ALARM_ADMIN))
@@ -146,7 +146,7 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
         result.setZone3(true);
         result.setZone5(true);
 
-        when(alarmRepository.existsByTimestamp(any())).thenReturn(false);
+        when(alarmRepository.existsBySystemTimestamp(any())).thenReturn(false);
         when(alarmRepository.save(any(Alarm.class))).thenReturn(result);
 
         mockMvc.perform(post("/alarm/status/save")
@@ -162,7 +162,7 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
     @Test
     void testAddDeviceStatus_duplicate_returnsConflict() throws Exception {
         AlarmDeviceStatusRequest request = buildDeviceStatusRequest(LocalDateTime.of(2026, 5, 7, 22, 38, 45));
-        when(alarmRepository.existsByTimestamp(any())).thenReturn(true);
+        when(alarmRepository.existsBySystemTimestamp(any())).thenReturn(true);
 
         mockMvc.perform(post("/alarm/status/save")
                         .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ALARM_ADMIN))

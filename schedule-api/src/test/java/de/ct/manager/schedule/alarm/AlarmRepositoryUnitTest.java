@@ -27,12 +27,14 @@ class AlarmRepositoryUnitTest {
     void setup() {
         Alarm alarm1 = new Alarm();
         alarm1.setTimestamp(TIMESTAMP_1);
+        alarm1.setSystemTimestamp(TIMESTAMP_1);
         alarm1.setRfidId("rfid001");
         alarm1.setStatus(AlarmStatus.DISARMED);
         alarmRepository.save(alarm1);
 
         Alarm alarm2 = new Alarm();
         alarm2.setTimestamp(TIMESTAMP_2);
+        alarm2.setSystemTimestamp(TIMESTAMP_2);
         alarm2.setRfidId("rfid002");
         alarm2.setStatus(AlarmStatus.ARMED);
         alarmRepository.save(alarm2);
@@ -44,13 +46,13 @@ class AlarmRepositoryUnitTest {
     }
 
     @Test
-    void existsByTimestamp_returnsTrue_whenAlarmExists() {
-        Assertions.assertThat(alarmRepository.existsByTimestamp(TIMESTAMP_1)).isTrue();
+    void existsBySystemTimestamp_returnsTrue_whenAlarmExists() {
+        Assertions.assertThat(alarmRepository.existsBySystemTimestamp(TIMESTAMP_1)).isTrue();
     }
 
     @Test
-    void existsByTimestamp_returnsFalse_whenAlarmNotExists() {
-        Assertions.assertThat(alarmRepository.existsByTimestamp(LocalDateTime.of(2000, 1, 1, 0, 0))).isFalse();
+    void existsBySystemTimestamp_returnsFalse_whenAlarmNotExists() {
+        Assertions.assertThat(alarmRepository.existsBySystemTimestamp(LocalDateTime.of(2000, 1, 1, 0, 0))).isFalse();
     }
 
     @Test

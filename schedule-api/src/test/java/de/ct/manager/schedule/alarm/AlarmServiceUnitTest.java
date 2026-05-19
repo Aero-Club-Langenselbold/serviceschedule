@@ -32,13 +32,13 @@ class AlarmServiceUnitTest {
     @Test
     void testAddAlarm_success() {
         AlarmRequest request = buildRequest(LocalDateTime.of(2026, 1, 1, 10, 0));
-        when(alarmRepository.existsByTimestamp(any())).thenReturn(false);
+        when(alarmRepository.existsBySystemTimestamp(any())).thenReturn(false);
         when(alarmRepository.save(any(Alarm.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Alarm result = alarmService.addAlarm(request);
 
         Assertions.assertThat(result).isNotNull();
-        Assertions.assertThat(result.getTimestamp()).isEqualTo(request.getTimestamp());
+        Assertions.assertThat(result.getSystemTimestamp()).isEqualTo(request.getTimestamp());
         Assertions.assertThat(result.getRfidId()).isEqualTo("rfid001");
         Assertions.assertThat(result.getStatus()).isEqualTo(AlarmStatus.ARMED);
         verify(alarmRepository).save(any(Alarm.class));
@@ -47,7 +47,7 @@ class AlarmServiceUnitTest {
     @Test
     void testAddAlarm_duplicate_throwsException() {
         AlarmRequest request = buildRequest(LocalDateTime.of(2026, 1, 1, 10, 0));
-        when(alarmRepository.existsByTimestamp(any())).thenReturn(true);
+        when(alarmRepository.existsBySystemTimestamp(any())).thenReturn(true);
 
         Assertions.assertThatThrownBy(() -> alarmService.addAlarm(request))
                 .isInstanceOf(AlarmDuplicateException.class);
@@ -98,13 +98,13 @@ class AlarmServiceUnitTest {
     @Test
     void testSaveDeviceStatus_success() {
         AlarmDeviceStatusRequest request = buildDeviceStatusRequest(LocalDateTime.of(2026, 5, 7, 22, 38, 45));
-        when(alarmRepository.existsByTimestamp(any())).thenReturn(false);
+        when(alarmRepository.existsBySystemTimestamp(any())).thenReturn(false);
         when(alarmRepository.save(any(Alarm.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Alarm result = alarmService.saveDeviceStatus(request);
 
         Assertions.assertThat(result).isNotNull();
-        Assertions.assertThat(result.getTimestamp()).isEqualTo(request.getTimestamp());
+        Assertions.assertThat(result.getSystemTimestamp()).isEqualTo(request.getTimestamp());
         Assertions.assertThat(result.getStatus()).isEqualTo(AlarmStatus.ARMED);
         Assertions.assertThat(result.isArmed()).isTrue();
         Assertions.assertThat(result.isZone3()).isTrue();
@@ -115,7 +115,7 @@ class AlarmServiceUnitTest {
     @Test
     void testSaveDeviceStatus_duplicate_throwsException() {
         AlarmDeviceStatusRequest request = buildDeviceStatusRequest(LocalDateTime.of(2026, 5, 7, 22, 38, 45));
-        when(alarmRepository.existsByTimestamp(any())).thenReturn(true);
+        when(alarmRepository.existsBySystemTimestamp(any())).thenReturn(true);
 
         Assertions.assertThatThrownBy(() -> alarmService.saveDeviceStatus(request))
                 .isInstanceOf(AlarmDuplicateException.class);
