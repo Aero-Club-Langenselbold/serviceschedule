@@ -18,7 +18,6 @@
     "date-fns": "^4.1.0",
     "iconv-lite": "^0.7.0",
     "nuxt": "^4.2.1",
-    "nuxt-app": "file:",
     "nuxt-auth-utils": "^0.5.25",
     "pinia": "^3.0.4",
     "v-calendar": "^3.1.2",

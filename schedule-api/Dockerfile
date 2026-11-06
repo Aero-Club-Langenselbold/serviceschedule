@@ -4,7 +4,7 @@ RUN groupadd scheduler -g 1002 && useradd -ms /bin/bash scheduler -u 1001 -g 100
 
 USER scheduler
 
-COPY --chown=1001:1002 schedule-api.jar /usr/app/
+COPY --chown=1001:1002 target/schedule-api.jar /usr/app/
 
 WORKDIR /usr/app
 

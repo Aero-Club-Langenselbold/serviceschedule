@@ -8,7 +8,13 @@ services:
       - POSTGRES_USER=schedule
     shm_size: "2gb"
     volumes:
-      - ./volumes/postgres:/var/lib/postgresql/data
+      - ./volumes/postgres:/var/lib/postgresql
+    healthcheck:
+      # TCP on purpose: the temporary server used during first-run init only listens on the unix socket.
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "schedule", "-d", "schedule"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
 
   schedule-api:
     build:
@@ -19,7 +25,8 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     shm_size: "1gb"
     volumes:
       - ./volumes/schedule-api:/var/log/schedule-api
@@ -27,9 +34,9 @@ services:
   schedule-ui:
     build:
       context: ./
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile-nginx
     ports:
-      - "80:80"
-      - "443:443"
+      - "8081:80"
+      - "8443:443"
     volumes:
       - ./schedule-ui/.output/public:/usr/share/nginx/html:ro
