@@ -1,24 +1,65 @@
 <template>
-  <div>
-    <NavMenu />
-  </div>
-  <div class="flex items-start justify-center min-h-screen mt-4">
-    <div class="p-8 rounded-4xl shadow-md w-full max-w-8/12 border-2">
-      <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('service.list') }}</h2>
-      <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
-      <UTable :data="listData" :columns="columns" class="flex-1" />
-    </div>
-  </div>
+  <AppPage :title="$t('nav.plan.usermenu')" :error-message="errorMessage" :success-message="successMessage">
+    <template v-if="isAdmin" #actions>
+      <UButton to="/plan/add" icon="i-lucide-plus" :label="$t('nav.plan.add')" />
+    </template>
+
+    <p v-if="!listData.length" class="rounded-xl border border-dashed border-accented p-8 text-center text-muted">
+      {{ $t('common.empty') }}
+    </p>
+
+    <ul class="grid gap-4 lg:grid-cols-2">
+      <li v-for="plan in listData" :key="plan.id">
+        <article class="flex h-full flex-col gap-4 rounded-xl border border-default bg-default p-4 sm:p-5">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <h2 class="text-lg font-semibold text-highlighted">{{ plan.name }}</h2>
+              <p v-if="plan.description" class="mt-0.5 text-sm text-muted">{{ plan.description }}</p>
+            </div>
+            <UBadge :color="stateOf(plan).color" variant="subtle" class="shrink-0">{{ stateOf(plan).label }}</UBadge>
+          </div>
+          <p class="flex items-center gap-2 text-sm text-default">
+            <UIcon name="i-lucide-calendar" class="size-4 shrink-0 text-muted" />
+            {{ formatDate(plan.dateFrom) }} – {{ formatDate(plan.dateUntil) }}
+          </p>
+          <div class="mt-auto grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+            <UTooltip v-for="action in actionsFor(plan)" :key="action.label" :delay-duration="0" :text="action.tooltip">
+              <UButton
+                :label="action.label"
+                :icon="action.icon"
+                :disabled="action.disabled"
+                :loading="action.loading"
+                :variant="action.primary ? 'solid' : 'outline'"
+                :color="action.primary ? 'primary' : 'neutral'"
+                class="w-full sm:w-auto"
+                @click="action.onClick"
+              />
+            </UTooltip>
+            <ConfirmationDialog
+              v-if="isAdmin"
+              color="error"
+              variant="ghost"
+              icon="i-lucide-trash"
+              :loading="deleting === plan.id"
+              :button-label="$t('plan.actionLabels.delete')"
+              :tooltip="$t('plan.deleteInfo')"
+              :modal-title="$t('plan.deleteConfirmationTitle')"
+              :confirm-label="$t('plan.deleteConfirmation')"
+              :abort-label="$t('plan.cancel')"
+              button-class="w-full sm:w-auto"
+              :on-confirm="() => deletePlan(plan.id)"
+            />
+          </div>
+        </article>
+      </li>
+    </ul>
+  </AppPage>
 </template>
 
 <script lang="ts" setup>
-import type { TableColumn } from '@nuxt/ui'
 import iconv from 'iconv-lite'
 import type { Plan } from '~/types/plan'
 import type { Service } from '~/types/service'
-
-const UButton = resolveComponent('UButton')
-const UTooltip = resolveComponent('UTooltip')
 
 const { t, locale } = useI18n()
 
@@ -30,201 +71,85 @@ const successMessage = ref<string | null>(null)
 
 const listData = ref<Plan[]>([])
 
-const columns = computed<TableColumn<Plan>[]>(() => [
-  {
-    accessorKey: 'name',
-    header: t('plan.name')
-  }, {
-    accessorKey: 'description',
-    header: t('plan.description')
-  }, {
-    accessorKey: 'dateFrom',
-    header: t('plan.dateFrom'),
-    cell: ({ row }) => {
-      return new Date(row.getValue('dateFrom')).toLocaleString(locale.value, {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      })
-    }
-  }, {
-    accessorKey: 'dateUntil',
-    header: t('plan.dateUntil'),
-    cell: ({ row }) => {
-      return new Date(row.getValue('dateUntil')).toLocaleString(locale.value, {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      })
-    }
-  }, {
-    header: t('plan.actions'),
-    cell: ({ row }) => {
-      const hasServiceDates = row.original.serviceDates.length > 0
-      if (user.value?.roles.includes('ROLE_ADMIN')) {
-        return [
-          h(UTooltip, {
-            'delay-duration': 0,
-            text: t('plan.detailsInfo')
-          }, {
-            default: () =>
-            h(UButton, {
-              onClick: () => navigateTo(`/plan/details/${row.original.id}`),
-              variant: hasServiceDates ? 'soft' : 'solid',
-              color: hasServiceDates ? 'neutral' : 'primary',
-              disabled: row.original.published,
-              icon: "i-lucide-eye"
-            })
-          }),
-          h(UTooltip, {
-            'delay-duration': 0,
-            text: t('plan.availabilityInfo'),
-            class: 'ml-2'
-          }, {
-            default: () =>
-            h(UButton, {
-              onClick: () => navigateTo(`/plan/availabilities/${row.original.id}`),
-              variant: hasServiceDates && !row.original.published ? 'solid' : 'soft',
-              color: hasServiceDates ? row.original.published ? 'neutral' : 'primary' : 'error',
-              disabled: !hasServiceDates,
-              icon: "i-lucide-users"
-            })
-          }),
-          h(UTooltip, {
-            'delay-duration': 0,
-            text: t('plan.generateInfo'),
-            class: 'ml-2'
-          }, {
-            default: () =>
-            h(UButton, {
-              onClick: () => generatePlan(row.original.id),
-              variant: hasServiceDates && !row.original.published ? 'solid' : 'soft',
-              color: hasServiceDates ? row.original.published ? 'neutral' : 'primary' : 'error',
-              loading: generating.value,
-              disabled: !hasServiceDates,
-              icon: "i-lucide-plane"
-            })
-          }),
-          h(UTooltip, {
-            'delay-duration': 0,
-            text: t('plan.generatedDetailsInfo'),
-            class: 'ml-2'
-          }, {
-            default: () =>
-            h(UButton, {
-              onClick: () => navigateTo(`/plan/generated/${row.original.id}`),
-              variant: row.original.published ? 'solid' : 'soft',
-              color: row.original.published ? 'primary' : 'error',
-              disabled: !row.original.published,
-              icon: "i-lucide-book"
-            })
-          }),
-          h(UTooltip, {
-            'delay-duration': 0,
-            text: t('plan.statisticsInfo'),
-            class: 'ml-2'
-          }, {
-            default: () =>
-            h(UButton, {
-              onClick: () => navigateTo(`/plan/statistics/${row.original.id}`),
-              variant: row.original.published ? 'solid' : 'soft',
-              color: row.original.published ? 'primary' : 'error',
-              disabled: !row.original.published,
-              icon: "i-lucide-bar-chart-horizontal-big"
-            })
-          }),
-          h(UTooltip, {
-            'delay-duration': 0,
-            text: t('plan.pdfInfo'),
-            class: 'ml-2'
-          }, {
-            default: () =>
-            h(UButton, {
-              onClick: () => downloadPdf(row.original.id),
-              variant: row.original.published ? 'solid' : 'soft',
-              color: row.original.published ? 'primary' : 'error',
-              disabled: !row.original.published,
-              icon: "i-lucide-file-down"
-            })
-          }),
-          h(UTooltip, {
-            'delay-duration': 0,
-            text: t('plan.csvInfo'),
-            class: 'ml-2'
-          }, {
-            default: () =>
-            h(UButton, {
-              onClick: () => downloadCsv(row.original.id),
-              variant: row.original.published ? 'solid' : 'soft',
-              color: row.original.published ? 'primary' : 'error',
-              disabled: !row.original.published,
-              icon: "i-lucide-file-text"
-            })
-          }),
-          h(resolveComponent('confirmationDialog'), {
-            color: "error",
-            variant: "solid",
-            icon: "i-lucide-trash",
-            loading: deleting.value,
-            tooltip: t('plan.deleteInfo'),
-            modalTitle: t('plan.deleteConfirmationTitle'),
-            confirmLabel: t('plan.deleteConfirmation'),
-            abortLabel: t('plan.cancel'),
-            buttonClass: 'ml-2',
-            onConfirm: () => {
-              deletePlan(row.original.id) // Call the deletePlan function on confirmation
-            }
-          })
-      ]
-    } else {
-      return [
-        h(UTooltip, {
-          'delay-duration': 0,
-          text: t('plan.availabilityInfo'),
-          class: 'ml-2'
-        }, {
-          default: () =>
-          h(UButton, {
-            onClick: () => navigateTo(`/plan/availabilities/me/${row.original.id}`),
-            variant: hasServiceDates && !row.original.published ? 'solid' : 'soft',
-            color: hasServiceDates ? row.original.published ? 'neutral' : 'primary' : 'error',
-            disabled: !hasServiceDates || row.original.published,
-            icon: "i-lucide-user"
-          })
-        }),
-        h(UTooltip, {
-          'delay-duration': 0,
-          text: t('plan.generatedDetailsInfo'),
-          class: 'ml-2'
-        }, {
-          default: () =>
-          h(UButton, {
-            onClick: () => navigateTo(`/plan/generated/${row.original.id}`),
-            variant: row.original.published ? 'solid' : 'soft',
-            color: row.original.published ? 'primary' : 'error',
-            disabled: !row.original.published,
-            icon: "i-lucide-book"
-          })
-        }),
-        h(UTooltip, {
-          'delay-duration': 0,
-          text: t('plan.pdfInfo'),
-          class: 'ml-2'
-        }, {
-          default: () =>
-          h(UButton, {
-            onClick: () => downloadPdf(row.original.id),
-            variant: row.original.published ? 'solid' : 'soft',
-            color: row.original.published ? 'primary' : 'error',
-            disabled: !row.original.published,
-            icon: "i-lucide-file-down"
-          })
-        })
-      ]
-    }
-    }
+const isAdmin = computed(() => !!user.value?.roles.includes('ROLE_ADMIN'))
+
+const formatDate = (date: Date | null) => date
+  ? new Date(date).toLocaleDateString(locale.value, { day: '2-digit', month: '2-digit', year: 'numeric' })
+  : ''
+
+const stateOf = (plan: Plan) => {
+  if (plan.published) {
+    return { label: t('plan.state.published'), color: 'success' as const }
   }
-])
+  return plan.serviceDates.length > 0
+    ? { label: t('plan.state.open'), color: 'primary' as const }
+    : { label: t('plan.state.draft'), color: 'neutral' as const }
+}
+
+const actionsFor = (plan: Plan) => {
+  const hasServiceDates = plan.serviceDates.length > 0
+  const finalPlan = {
+    label: t('plan.actionLabels.final'),
+    tooltip: t('plan.generatedDetailsInfo'),
+    icon: 'i-lucide-book-open',
+    disabled: !plan.published,
+    primary: plan.published,
+    onClick: () => navigateTo(`/plan/generated/${plan.id}`)
+  }
+  const pdf = {
+    label: t('plan.actionLabels.pdf'),
+    tooltip: t('plan.pdfInfo'),
+    icon: 'i-lucide-file-down',
+    disabled: !plan.published,
+    onClick: () => downloadPdf(plan.id)
+  }
+
+  if (!isAdmin.value) {
+    return [{
+      label: t('plan.actionLabels.myAvailability'),
+      tooltip: t('plan.availabilityInfo'),
+      icon: 'i-lucide-calendar-check',
+      disabled: !hasServiceDates || plan.published,
+      primary: hasServiceDates && !plan.published,
+      onClick: () => navigateTo(`/plan/availabilities/me/${plan.id}`)
+    }, finalPlan, pdf]
+  }
+
+  return [{
+    label: t('plan.actionLabels.details'),
+    tooltip: t('plan.detailsInfo'),
+    icon: 'i-lucide-pencil',
+    disabled: plan.published,
+    primary: !hasServiceDates,
+    onClick: () => navigateTo(`/plan/details/${plan.id}`)
+  }, {
+    label: t('plan.actionLabels.availabilities'),
+    tooltip: t('plan.availabilityInfo'),
+    icon: 'i-lucide-users',
+    disabled: !hasServiceDates,
+    onClick: () => navigateTo(`/plan/availabilities/${plan.id}`)
+  }, {
+    label: t('plan.actionLabels.generate'),
+    tooltip: t('plan.generateInfo'),
+    icon: 'i-lucide-sparkles',
+    disabled: !hasServiceDates,
+    primary: hasServiceDates && !plan.published,
+    loading: generating.value === plan.id,
+    onClick: () => generatePlan(plan.id)
+  }, finalPlan, {
+    label: t('plan.actionLabels.statistics'),
+    tooltip: t('plan.statisticsInfo'),
+    icon: 'i-lucide-chart-bar',
+    disabled: !plan.published,
+    onClick: () => navigateTo(`/plan/statistics/${plan.id}`)
+  }, pdf, {
+    label: t('plan.actionLabels.csv'),
+    tooltip: t('plan.csvInfo'),
+    icon: 'i-lucide-file-text',
+    disabled: !plan.published,
+    onClick: () => downloadCsv(plan.id)
+  }]
+}
 
 const fetchData = async () => {
   errorMessage.value = null
@@ -242,25 +167,25 @@ const fetchData = async () => {
   }
 }
 
-const generating = ref<Boolean>(false)
-const deleting = ref<Boolean>(false)
+const generating = ref<string | null>(null)
+const deleting = ref<string | null>(null)
 const generatePlan = async (id: string) => {
   errorMessage.value = null
   successMessage.value = null
-  generating.value = true
+  generating.value = id
 
   try {
     const { error } = await useAPI(`/plan/generate/${id}`, { method: 'POST' })
     if (error.value) {
       errorMessage.value = error.value.message
     } else {
+      await fetchData()
       successMessage.value = 'Plan generated successfully.'
-      fetchData()
     }
   } catch (err) {
     errorMessage.value = 'An error occurred while generating the plan.'
   } finally {
-    generating.value = false
+    generating.value = null
   }
 }
 
@@ -319,20 +244,20 @@ const downloadCsv = async (id: string) => {
 const deletePlan = async (id: string) => {
   errorMessage.value = null
   successMessage.value = null
-  deleting.value = true
+  deleting.value = id
 
   try {
     const { error } = await useAPI(`/plan/delete/${id}`, { method: 'DELETE' })
     if (error.value) {
       errorMessage.value = error.value.message
     } else {
+      await fetchData()
       successMessage.value = 'Plan deleted successfully.'
-      fetchData()
     }
   } catch (err) {
     errorMessage.value = 'An error occurred while deleting the plan.'
   } finally {
-    deleting.value = false
+    deleting.value = null
   }
 }
 

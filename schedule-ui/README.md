@@ -38,6 +38,20 @@ yarn dev
 bun run dev
 ```
 
+## Tests
+
+```bash
+# Unit- und Komponententests (Vitest)
+pnpm test
+
+# Einmalig: Browser für Playwright installieren
+pnpm exec playwright install chromium webkit
+
+# E2E-Tests (Playwright): bauen die App und antworten auf alle API-Aufrufe aus e2e/support/mock-api.ts,
+# Backend und Datenbank sind nicht nötig. Mit E2E_FIREFOX=1 läuft zusätzlich Firefox.
+pnpm test:e2e
+```
+
 ## Production
 
 Build the application for production:

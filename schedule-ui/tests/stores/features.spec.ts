@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
 describe('Features Store', () => {
-    const featureStore = useFeatureStore()
+    let featureStore: ReturnType<typeof useFeatureStore>
+
+    beforeEach(() => {
+        featureStore = useFeatureStore()
+    })
 
     beforeEach(() => {
         featureStore.features = []

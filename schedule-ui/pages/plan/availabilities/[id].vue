@@ -1,65 +1,43 @@
 <template>
-  <div>
-    <NavMenu />
-  </div>
-  <div class="flex items-start justify-center min-h-screen mt-4">
-    <div class="p-8 rounded-4xl shadow-md w-full max-w-full border-2">
-      <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('availabilities.list') }}</h2>
-      <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
-
-      <div class="flex justify-start mb-4 mt-4">
-        <UButton color="neutral" variant="subtle" icon="i-lucide-arrow-left" @click="navigateTo('/plan/list')" class="mr-4">
-          {{ $t('plan.backToList') }}
+  <AppPage
+    :title="$t('availabilities.list')"
+    :description="$t('availabilities.matrixHint')"
+    back="/plan/list"
+    :back-label="$t('plan.backToList')"
+    :error-message="errorMessage"
+    :success-message="successMessage"
+    width="full"
+  >
+    <template #actions>
+      <UModal :title="$t('plan.legend.title')">
+        <UButton color="neutral" variant="outline" icon="i-lucide-info">
+          {{ $t('plan.legend.button') }}
         </UButton>
-        <UModal :title="$t('plan.legend.title')">
-          <UButton color="neutral" variant="subtle" >
-            {{ $t('plan.legend.button') }}
-          </UButton>
 
-          <template #body>
-            <div class="flex flex-col space-y-4">
-              <div class="flex items-center space-x-4">
-                <UButton color="error" variant="subtle" icon="i-lucide-thumbs-down" />
-                <span>{{ $t('plan.legend.open.unavailable') }}</span>
-                <UButton color="error" variant="solid" icon="i-lucide-thumbs-down" />
-                <span>{{ $t('plan.legend.set.unavailable') }}</span>
-              </div>
-              <div class="flex items-center space-x-4">
-                <UButton color="primary" variant="subtle" icon="i-lucide-thumbs-up"/>
-                <span>{{ $t('plan.legend.open.available') }}</span>
-                <UButton color="primary" variant="solid" icon="i-lucide-thumbs-up" />
-                <span>{{ $t('plan.legend.set.available') }}</span>
-              </div>
-              <div class="flex items-center space-x-4">
-                <UButton color="secondary" variant="subtle" icon="i-lucide-plane"/>
-                <span>{{ $t('plan.legend.open.requested') }}</span>
-                <UButton color="secondary" variant="solid" icon="i-lucide-plane" />
-                <span>{{ $t('plan.legend.set.requested') }}</span>
-              </div>
-            </div>
-          </template>
-        </UModal>
-      </div>
-      <div class="flex justify-start mb-4 mt-4">
-        <UCheckbox :label="$t('availabilities.selectAll')" v-model="selectAll" default-value @change="toggleSelectAll" />
-        <div v-for="service in services" :key="service.id" class="ml-4">
-            <UCheckbox default-value :label="service.servicename" v-model="serviceSelect[service.id]" @change="toggleService"/>
-        </div>
-      </div>
+        <template #body>
+          <ul class="grid gap-3 sm:grid-cols-2">
+            <li v-for="entry in legend" :key="entry.text" class="flex items-center gap-3 text-sm">
+              <UButton :color="entry.color" :variant="entry.variant" :icon="entry.icon" tabindex="-1" aria-hidden="true" class="pointer-events-none" />
+              <span>{{ entry.text }}</span>
+            </li>
+          </ul>
+        </template>
+      </UModal>
+      <UButton icon="i-lucide-save" @click="savePreferences" :loading="saving">
+        {{ $t('availabilities.save') }}
+      </UButton>
+    </template>
 
-      <!-- Save button -->
-      <div class="flex justify-end mb-4 mt-4">
-        <UButton variant="solid" color="primary" icon="i-lucide-save" @click="savePreferences" :loading="saving" >
-          {{ $t('availabilities.save') }}
-        </UButton>
-      </div>
-
-      <Spinner v-if="loading" />
-
-      <!-- Render table only when data is loaded -->
-      <UTable v-else sticky :data="data" :columns="columns" :key="tableKey" class="flex-1 max-h-[600px]" />
+    <div class="mb-4 flex flex-wrap gap-x-5 gap-y-3 rounded-xl border border-default bg-default p-4">
+      <UCheckbox :label="$t('availabilities.selectAll')" v-model="selectAll" @change="toggleSelectAll" />
+      <UCheckbox v-for="service in services" :key="service.id" :label="service.servicename" v-model="serviceSelect[service.id]" @change="toggleService" />
     </div>
-  </div>
+
+    <Spinner v-if="loading" />
+
+    <!-- Render table only when data is loaded. The matrix stays a table on every device: it scrolls sideways next to a pinned date column. -->
+    <UTable v-else sticky :data="data" :columns="columns" :key="tableKey" :ui="{ root: 'max-h-[70dvh] rounded-xl border border-default bg-default', td: 'p-2', th: 'p-2 align-bottom' }" />
+  </AppPage>
 </template>
 
 <script lang="ts" setup>
@@ -72,6 +50,7 @@ import type { ServiceDate } from '~/types/serviceDate'
 
 const UButton = resolveComponent('UButton')
 const UCheckbox = resolveComponent('UCheckbox')
+const { t, locale } = useI18n()
 
 const route = useRoute()
 const errorMessage = ref<string | null>(null)
@@ -110,6 +89,15 @@ const toggleService = (event: Event) => {
   tableKey.value++
 }
 
+const legend = computed(() => [
+  { color: 'error', variant: 'subtle', icon: 'i-lucide-thumbs-down', text: t('plan.legend.open.unavailable') },
+  { color: 'error', variant: 'solid', icon: 'i-lucide-thumbs-down', text: t('plan.legend.set.unavailable') },
+  { color: 'primary', variant: 'subtle', icon: 'i-lucide-thumbs-up', text: t('plan.legend.open.available') },
+  { color: 'primary', variant: 'solid', icon: 'i-lucide-thumbs-up', text: t('plan.legend.set.available') },
+  { color: 'secondary', variant: 'subtle', icon: 'i-lucide-star', text: t('plan.legend.open.requested') },
+  { color: 'secondary', variant: 'solid', icon: 'i-lucide-star', text: t('plan.legend.set.requested') }
+] as const)
+
 const toggleStateForColumn = (participantId: string, checked: boolean) => {
   data.value.forEach((row: Record<string, any>) => {
     if (row[participantId]) {
@@ -123,10 +111,16 @@ const columns = computed<TableColumn<any>[]>(() => {
   // First column: Dates
   const dateColumn: TableColumn<any> = {
     accessorKey: 'date',
-    header: () => h('th', {}, [h('span', '')]),
+    header: '',
+    meta: {
+      class: {
+        th: 'sticky left-0 z-10 bg-default',
+        td: 'sticky left-0 z-10 bg-default font-medium text-highlighted whitespace-nowrap'
+      }
+    },
     cell: ({ row }) => {
       const date = new Date(row.original.date)
-      return date.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit' })
+      return date.toLocaleDateString(locale.value, { weekday: 'short', year: '2-digit', month: '2-digit', day: '2-digit' })
     }
   }
 
@@ -134,19 +128,17 @@ const columns = computed<TableColumn<any>[]>(() => {
   const participantColumns: TableColumn<any>[] = participants.value?.map(participant => ({
     accessorKey: participant.id, // Use participant ID as the key
     id: participant.id,
-    header: () => h('th', { class: 'h-45' }, [
-      h('div', { class: 'flex flex-col items-left justify-end h-full' }, [
-        h('div', { class: 'rotate mb-2' }, [
+    header: () => h('div', { class: 'flex h-44 flex-col items-center justify-end gap-2' }, [
+        h('div', { class: 'rotate whitespace-nowrap font-medium text-default' }, [
           h('span', {}, `${participant.lastname}, ${participant.firstname}`)
         ]),
         h(UCheckbox, {
-          class: 'mt-auto',
+          'aria-label': `${participant.lastname}, ${participant.firstname}`,
           defaultValue: participant.status === 'ACTIVE',
           disabled: data.value.some((row: Record<string, any>) => row[participant.id]?.preferencesSaved),
           'onUpdate:modelValue': (value: boolean) => { toggleStateForColumn(participant.id, value) }
         })
-      ])
-    ]),
+      ]),
     cell: ({ row }) => {
       // Toggle state for each cell
       const toggleStates = ['yes', 'no', 'please']
@@ -161,10 +153,11 @@ const columns = computed<TableColumn<any>[]>(() => {
       }
 
       return h(UButton, {
+        'aria-label': `${participant.lastname}, ${participant.firstname} – ${new Date(row.original.date).toLocaleDateString(locale.value)}: ${t(`availabilities.${currentState}`)}`,
         onClick: toggleState,
         variant: preferencesSaved ? 'solid' : 'subtle',
         color: currentState === 'yes' ? 'primary' : currentState === 'no' ? 'error' : 'secondary',
-        icon: currentState === 'yes' ? 'i-lucide-thumbs-up' : currentState === 'no' ? 'i-lucide-thumbs-down' : 'i-lucide-plane'
+        icon: currentState === 'yes' ? 'i-lucide-thumbs-up' : currentState === 'no' ? 'i-lucide-thumbs-down' : 'i-lucide-star'
       })
     }
   }))
@@ -271,6 +264,7 @@ const savePreferences = async () => {
     })
 
     const { error } = await useAPI('/plan/participantAvailability/save/' + id, { method: 'POST', body: JSON.stringify(payload) })
+    await fetchData()
     if (error.value) {
       errorMessage.value = 'An error occurred while saving the preferences.'
     } else {
@@ -280,7 +274,6 @@ const savePreferences = async () => {
     errorMessage.value = 'An error occurred while saving the preferences.'
   } finally {
     saving.value = false
-    fetchData()
   }
 }
 

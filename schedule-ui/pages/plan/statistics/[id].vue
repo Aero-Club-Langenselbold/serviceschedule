@@ -1,20 +1,8 @@
 <template>
-  <div>
-    <NavMenu />
-  </div>
-  <div class="flex items-start justify-center min-h-screen mt-6 mb-6">
-    <div class="p-8 rounded-4xl shadow-md w-full max-w-max border-2">
-      <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('plan.statisticsInfo') }}</h2>
-      <UButton color="neutral" variant="subtle" icon="i-lucide-arrow-left" @click="navigateTo('/plan/list')" class="mr-4">
-        {{ $t('plan.backToList') }}
-      </UButton>
-      <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
-
-      <Spinner v-if="loading" />
-
-      <UTable v-else :data="data" :columns="columns" class="flex-1 max-h-[600px]" sticky />
-    </div>
-  </div>
+  <AppPage :title="$t('plan.statisticsInfo')" back="/plan/list" :back-label="$t('plan.backToList')" :error-message="errorMessage" :success-message="successMessage" width="md">
+    <Spinner v-if="loading" />
+    <DataTable v-else :data="data" :columns="columns" />
+  </AppPage>
 </template>
 
 <script lang="ts" setup>
@@ -44,11 +32,13 @@ const data = ref<any[]>([])
 const columns = computed<TableColumn<any>[]>(() => {
   const participantColumn : TableColumn<any> = {
     accessorKey: 'participant',
+    meta: { label: t('participants.fullname'), cardTitle: true },
     header: ({ column }) => getHeader(column, t('participants.fullname'))
   }
 
   const serviceColumns: TableColumn<any>[] = services.value?.map(service => ({
     accessorKey: service.servicename,
+    meta: { label: service.servicename },
     header: ({ column }) => getHeader(column, service.servicename),
     cell: ({ row }: { row: { getValue: (key: string) => any; original: any } }) => {
       const serviceCount = row.original[service.servicename]
@@ -58,6 +48,7 @@ const columns = computed<TableColumn<any>[]>(() => {
 
   const totalCountColumn: TableColumn<any> = {
     accessorKey: 'totalCount',
+    meta: { label: t('plan.statistics.totalCount') },
     header: ({ column }) => getHeader(column, t('plan.statistics.totalCount'))
   }
 
@@ -123,7 +114,6 @@ function getHeader(column: Column<any>, label: string) {
         }
       },
       class: '-mx-2.5',
-      'aria-label': `Sort by ${isSorted === 'asc' ? 'descending' : 'ascending'}`
     }
   )
 }

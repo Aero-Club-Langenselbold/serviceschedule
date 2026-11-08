@@ -5,7 +5,11 @@ const mockNavigateTo = vi.hoisted(() => vi.fn())
 mockNuxtImport('navigateTo', () => mockNavigateTo)
 
 describe('authenticated middleware', () => {
-    const userStore = useUserStore()
+    let userStore: ReturnType<typeof useUserStore>
+
+    beforeEach(() => {
+        userStore = useUserStore()
+    })
 
     beforeEach(async () => {
         mockNavigateTo.mockClear()

@@ -1,59 +1,40 @@
 <template>
-  <div>
-    <NavMenu />
-  </div>
-  <div class="flex items-center justify-center min-h-screen">
-    <div class="p-8 rounded-4xl shadow-md w-full max-w-md border-2">
-      <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('plan.add') }}</h2>
-      <form @submit.prevent="onSubmit">
+  <AppPage :title="$t('plan.add')" back="/plan/list" :back-label="$t('plan.backToList')" width="sm">
+    <UCard :ui="{ root: 'rounded-xl' }">
+      <form class="space-y-5" @submit.prevent="onSubmit">
         <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
-        <div class="mb-4">
-          <label class="block text-sm font-bold mb-2">
-            {{ $t('plan.name') }}
-          </label>
-          <UInput v-model="plan.name" type="text" :placeholder="$t('plan.name')" class="w-full" />
+        <UFormField :label="$t('plan.name')">
+          <UInput v-model="plan.name" type="text" class="w-full" />
+        </UFormField>
+        <UFormField :label="$t('plan.description')">
+          <UInput v-model="plan.description" type="text" class="w-full" />
+        </UFormField>
+        <div class="grid gap-5 sm:grid-cols-2">
+          <UFormField :label="$t('plan.dateFrom')">
+            <UPopover>
+              <UButton color="neutral" variant="outline" icon="i-lucide-calendar" class="w-full justify-start">
+                {{ dateFrom ? df.format(dateFrom.toDate(getLocalTimeZone())) : $t('plan.dateFrom') }}
+              </UButton>
+              <template #content>
+                <UCalendar v-model="dateFrom" class="p-2" />
+              </template>
+            </UPopover>
+          </UFormField>
+          <UFormField :label="$t('plan.dateUntil')">
+            <UPopover>
+              <UButton color="neutral" variant="outline" icon="i-lucide-calendar" class="w-full justify-start">
+                {{ dateUntil ? df.format(dateUntil.toDate(getLocalTimeZone())) : $t('plan.dateUntil') }}
+              </UButton>
+              <template #content>
+                <UCalendar v-model="dateUntil" class="p-2" />
+              </template>
+            </UPopover>
+          </UFormField>
         </div>
-        <div class="mb-6">
-          <label class="block text-sm font-bold mb-2">
-            {{ $t('plan.description') }}
-          </label>
-          <UInput v-model="plan.description" type="text" :placeholder="$t('plan.description')" class="w-full" />
-        </div>
-        <div class="mb-6">
-          <label class="block text-sm font-bold mb-2">
-            {{ $t('plan.dateFrom') }}
-          </label>
-          <UPopover>
-            <UButton color="neutral" variant="subtle" icon="i-lucide-calendar" class="w-full">
-              {{ dateFrom ? df.format(dateFrom.toDate(getLocalTimeZone())) : $t('plan.dateFrom') }}
-            </UButton>
-
-            <template #content>
-              <UCalendar v-model="dateFrom" class="p-2" />
-            </template>
-          </UPopover>
-        </div>
-        <div class="mb-6">
-          <label class="block text-sm font-bold mb-2">
-            {{ $t('plan.dateUntil') }}
-          </label>
-          <UPopover>
-            <UButton color="neutral" variant="subtle" icon="i-lucide-calendar" class="w-full">
-              {{ dateUntil ? df.format(dateUntil.toDate(getLocalTimeZone())) : $t('plan.dateUntil') }}
-            </UButton>
-
-            <template #content>
-              <UCalendar v-model="dateUntil" class="p-2" />
-            </template>
-          </UPopover>
-        </div>
-
-        <div class="flex items-center justify-between">
-          <UButton trailing-icon="i-lucide-arrow-right" size="md" :label="$t('plan.save')" type="submit" />
-        </div>
+        <UButton block size="lg" :label="$t('plan.save')" type="submit" />
       </form>
-    </div>
-  </div>
+    </UCard>
+  </AppPage>
 </template>
 
 <script lang="ts" setup>
@@ -94,9 +75,9 @@ const onSubmit = async () => {
     const { data: pd, error: planError } = await useAPI<Plan>('/plan/save', { method: 'POST', body: JSON.stringify(plan.value) })
 
     if (planError.value) {
-      errorMessage.value = t('plan.error')
+      errorMessage.value = t('plan.saveError')
     } else {
-      successMessage.value = t('plan.success')
+      successMessage.value = t('plan.saveSuccess')
       errorMessage.value = null
 
       plan.value.name = ''
@@ -108,7 +89,7 @@ const onSubmit = async () => {
     }
   }
   catch(error) {
-    errorMessage.value = t('plan.error')
+    errorMessage.value = t('plan.saveError')
   }
 }
 

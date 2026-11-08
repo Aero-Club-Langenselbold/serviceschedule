@@ -1,65 +1,47 @@
 <template>
-  <div>
-    <NavMenu />
-  </div>
-  <div class="flex items-start justify-center min-h-screen mt-6 mb-6">
-    <div class="p-8 rounded-4xl shadow-md w-full max-w-max border-2">
-      <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('request.title') }}</h2>
-
+  <AppPage :title="$t('request.title')">
+    <template #actions>
       <UModal :title="$t('request.add.title')" :dismissible="false" v-model:open="modalOpen">
-        <UButton>
-            {{ $t('request.add.open') }}
+        <UButton icon="i-lucide-plus">
+          {{ $t('request.add.open') }}
         </UButton>
 
         <template #body>
-          <form @submit.prevent="onSubmit">
-            <div class="mb-4">
-              <label class="block text-sm font-bold mb-2">
-                {{ $t('request.headline') }}
-              </label>
-              <UInput v-model="request.headline" type="text" :placeholder="$t('request.headline')" class="w-full" />
-            </div>
-            <div class="mb-4">
-              <label class="block text-sm font-bold mb-2">
-                {{ $t('request.description') }}
-              </label>
-                <UTextarea v-model="request.description" color="primary" variant="subtle" :placeholder="$t('request.description')" autoresize class="w-full" />
-            </div>
-            <div class="mb-6 flex items-center ">
-              <label class="text-sm font-bold mr-6">
-                {{ $t('request.type.name') }}
-              </label>
+          <form class="space-y-5" @submit.prevent="onSubmit">
+            <UFormField :label="$t('request.headline')">
+              <UInput v-model="request.headline" type="text" class="w-full" />
+            </UFormField>
+            <UFormField :label="$t('request.description')">
+              <UTextarea v-model="request.description" :rows="3" autoresize class="w-full" />
+            </UFormField>
+            <UFormField :label="$t('request.type.name')">
               <URadioGroup v-model="request.type" color="primary" variant="table" default-value="BUG" :items="typeItems" />
-            </div>
-            <div class="mb-6 flex items-center ">
-              <label class="text-sm font-bold mr-6">
-                {{ $t('request.status.name') }}
-              </label>
+            </UFormField>
+            <UFormField :label="$t('request.status.name')">
               <USelect v-model="request.status" value-key="value" :items="statusItems" class="w-full" />
-            </div>
-            <div class="flex justify-end gap-4">
-              <UButton color="success"  variant="solid"  :disabled="!request.headline || !request.description"  @click="addRequest()">
-                {{ $t('request.add.submit') }}
-              </UButton>
+            </UFormField>
+            <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <UButton color="neutral" variant="outline" @click="closeModal()">
                 {{ $t('request.add.cancel') }}
+              </UButton>
+              <UButton :disabled="!request.headline || !request.description" @click="addRequest()">
+                {{ $t('request.add.submit') }}
               </UButton>
             </div>
           </form>
         </template>
       </UModal>
+    </template>
 
-      <UTable v-model:expanded="expanded" :ui="{ tr: 'data-[expanded=true]:bg-(--ui-bg-elevated)/50' }" :data="listData?.content" :columns="columns" class="flex-1" >
-        <template #expanded="{ row }">
-          <div class="p-4">
-            <UTextarea v-model="row.original.description" color="primary" variant="subtle" :placeholder="$t('request.description')" autoresize class="w-full" disabled />
-          </div>
-        </template>
-      </UTable>
-      <UPagination v-model:page="page" :items-per-page="pageSize" :total="listData?.totalElements" @update:page="fetchData"/>
-
+    <DataTable v-model:expanded="expanded" :data="listData?.content" :columns="columns">
+      <template #expanded="{ row }">
+        <p class="whitespace-pre-line rounded-lg bg-muted p-3 text-sm text-default md:mx-2">{{ row.original.description }}</p>
+      </template>
+    </DataTable>
+    <div class="mt-4 flex justify-center">
+      <UPagination v-model:page="page" :sibling-count="1" :items-per-page="pageSize" :total="listData?.totalElements" @update:page="fetchData" />
     </div>
-  </div>
+  </AppPage>
 </template>
 
 <script lang="ts" setup>
@@ -162,11 +144,13 @@ const typeItems = ref([
 const columns = computed<TableColumn<Request>[]>(() => [
   {
     id: 'expand',
+    meta: { class: { th: 'w-12', td: 'max-md:hidden' } },
     cell: ({ row }) =>
       h(UButton, {
         color: 'neutral',
         variant: 'ghost',
         icon: 'i-lucide-chevron-down',
+        'aria-label': t('common.toggleDetails'),
         square: true,
         ui: {
           leadingIcon: [
@@ -179,6 +163,7 @@ const columns = computed<TableColumn<Request>[]>(() => [
   }, {
     accessorKey: 'headline',
     header: t('request.headline'),
+    meta: { cardTitle: true, class: { td: 'font-medium text-highlighted' } },
     cell: ({ row }) => row.getValue('headline')
   }, {
     accessorKey: 'createdAt',
@@ -197,8 +182,8 @@ const columns = computed<TableColumn<Request>[]>(() => [
       const color = {
         OPEN: 'success' as const,
         IN_PROGRESS: 'warning' as const,
-        CLOSED: 'secondary' as const,
-        REJECTED: 'error' as const
+        CLOSED: 'info' as const,
+        REJECTED: 'neutral' as const
       }[row.getValue('status') as string]
 
       return h(UBadge, { class: 'capitalize', variant: 'subtle', color }, () => t('request.status.' + String(row.getValue('status'))?.toLowerCase()))
@@ -217,16 +202,26 @@ const columns = computed<TableColumn<Request>[]>(() => [
   }, {
     accessorKey: 'author',
     header: t('request.author'),
-    cell: ({ row }) => (row.getValue('author') as Participant).fullname
+    cell: ({ row }) => (row.getValue('author') as Participant | null)?.fullname
   }, {
     id: 'edit',
     cell: ({ row }) =>
-      h(UButton, {
-        color: 'primary',
-        variant: 'subtle',
-        icon: 'i-lucide-edit',
-        onClick: () => openEditModal(row.original)
-      }, t('request.edit'))
+      h('div', { class: 'flex justify-end gap-2' }, [
+        h(UButton, {
+          'aria-label': t('common.toggleDetails'),
+          color: 'neutral',
+          variant: 'ghost',
+          icon: row.getIsExpanded() ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down',
+          class: 'md:hidden mr-auto',
+          onClick: () => row.toggleExpanded()
+        }),
+        h(UButton, {
+          color: 'neutral',
+          variant: 'outline',
+          icon: 'i-lucide-pencil',
+          onClick: () => openEditModal(row.original)
+        }, () => t('request.edit'))
+      ])
   }
 ])
 

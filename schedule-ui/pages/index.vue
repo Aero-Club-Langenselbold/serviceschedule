@@ -1,14 +1,18 @@
 <template>
-  <div>
-    <NavMenu />
-  </div>
-  <div class="flex items-center justify-center min-h-screen">
-    <div class="text-center p-6 bg-white rounded-lg shadow-md max-w-lg break-words">
-      <h1 class="text-4xl font-bold text-gray-800 mb-4">{{ $t('app.name') }}</h1>
-      <p class="text-lg text-gray-600">{{ $t('app.welcome') }} {{ userData?.firstname }} {{ userData?.lastname }}</p>
-      <p class="text-lg text-gray-600">{{ displayText }}</p>
-    </div>
-  </div>
+  <AppPage :title="$t('app.welcome')" :description="`${userData?.firstname ?? ''} ${userData?.lastname ?? ''}`.trim() || undefined" width="md">
+    <p class="mb-6 text-muted">{{ displayText }}</p>
+    <ul class="grid gap-3 sm:grid-cols-2">
+      <li v-for="tile in tiles" :key="tile.to">
+        <NuxtLink :to="tile.to" class="flex items-center gap-4 rounded-xl border border-default bg-default p-4 transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-primary">
+          <span class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <UIcon :name="tile.icon" class="size-5" />
+          </span>
+          <span class="font-medium text-highlighted">{{ tile.label }}</span>
+          <UIcon name="i-lucide-chevron-right" class="ml-auto size-4 shrink-0 text-dimmed" />
+        </NuxtLink>
+      </li>
+    </ul>
+  </AppPage>
 </template>
 
 <script setup lang="ts">
@@ -33,6 +37,21 @@ const userData = ref<Participant | null>({
 definePageMeta({
     middleware: ['authenticated']
 })
+
+const hasRole = (...roles: string[]) => roles.some(role => user.value?.roles.includes(role))
+const tiles = computed(() => [
+  ...(hasRole('ROLE_ADMIN', 'ROLE_SCHEDULE_ADMIN') ? [
+    { label: t('nav.participants.list'), icon: 'i-lucide-users', to: '/participants/list' },
+    { label: t('nav.service.list'), icon: 'i-lucide-briefcase', to: '/service/list' }
+  ] : []),
+  ...(hasRole('ROLE_ADMIN', 'ROLE_SCHEDULE_ADMIN', 'ROLE_USER') ? [
+    { label: t('nav.plan.usermenu'), icon: 'i-lucide-calendar-days', to: '/plan/list' }
+  ] : []),
+  ...(hasRole('ROLE_ADMIN', 'ROLE_ALARM_ADMIN') ? [
+    { label: t('nav.alarms.list'), icon: 'i-lucide-bell', to: '/alarm/list' }
+  ] : []),
+  { label: t('nav.requests'), icon: 'i-lucide-bug', to: '/request/list' }
+])
 
 // see who we got here
 const displayText = ref('')

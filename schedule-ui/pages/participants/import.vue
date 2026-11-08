@@ -1,24 +1,19 @@
 <template>
-  <div>
-    <NavMenu />
-  </div>
-  <div class="flex items-start justify-center min-h-screen mt-4">
-    <div class="p-8 rounded-4xl shadow-md w-full max-w-10/12 border-2">
-      <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('participants.import') }}</h2>
-      <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
-      <form @submit.prevent="upload" enctype="multipart/form-data">
-        <UInput type="file" v-on:change="onFileChange" accept=".csv" class="mt-3 mr-4"/>
-        <UButton variant="solid" color="primary" icon="i-lucide-arrow-up" @click="upload" :loading="saving" class="mr-4">
-          {{ $t('participants.import') }}
-        </UButton>
-      </form>
+  <AppPage :title="$t('participants.import')" back="/participants/list" :back-label="$t('nav.participants.list')" :error-message="errorMessage" :success-message="successMessage" width="full">
+    <form class="mb-6 flex flex-col gap-3 rounded-xl border border-default bg-default p-4 sm:flex-row sm:items-center" enctype="multipart/form-data" @submit.prevent="upload">
+      <UInput type="file" accept=".csv" class="w-full sm:max-w-md" :aria-label="$t('participants.importFile')" v-on:change="onFileChange" />
+      <UButton type="submit" icon="i-lucide-upload" :loading="saving">
+        {{ $t('participants.import') }}
+      </UButton>
+    </form>
 
-      <div v-if="imported" class="mt-6">
-        <UTable :data="listData?.content" :columns="columns" class="flex-1" />
-        <UPagination v-model:page="page" :items-per-page="pageSize" :total="listData?.totalElements" @update:page="fetchData" />
+    <div v-if="imported">
+      <DataTable :data="listData?.content" :columns="columns" />
+      <div class="mt-4 flex justify-center">
+        <UPagination v-model:page="page" :sibling-count="1" :items-per-page="pageSize" :total="listData?.totalElements" @update:page="fetchData" />
       </div>
     </div>
-  </div>
+  </AppPage>
 </template>
 
 <script lang="ts" setup>
@@ -112,6 +107,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
         }
         if (diff.value?.updatedParticipants.some(participant => participant.email === email)) {
           return h(UButton, {
+            'aria-label': t('common.acceptChange'),
             icon: 'i-lucide-save',
             onClick: async () => {
               try {
@@ -140,6 +136,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
         }
         if (diff.value?.newParticipants.some(participant => participant.email === email)) {
           return h(UButton, {
+            'aria-label': t('common.addParticipant'),
             icon: 'i-lucide-plus',
             onClick: async () => {
               try {
@@ -163,6 +160,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
         }
         if (diff.value?.missingParticipants.some(participant => participant.email === email)) {
           return h(UButton, {
+            'aria-label': t('common.removeParticipant'),
             color: 'error',
             icon: 'i-lucide-x',
             onClick: async () => {
@@ -189,6 +187,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
   }, {
       accessorKey: 'diff',
       header: '',
+      meta: { cardTitle: true },
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
         const color = getRowHighlightColor(row.original.email)
 
@@ -209,8 +208,8 @@ const columns = computed<TableColumn<Participant>[]>(() => {
 
           if (!equal) {
             return h('div', { class: 'flex flex-col' }, [
-              h('span', { class: 'text-white line-through' }, row.getValue('lastname')), // Old value
-              h('span', { class: 'text-white font-bold' }, updatedParticipant.lastname), // New value
+              h('span', { class: 'text-muted line-through' }, row.getValue('lastname')), // Old value
+              h('span', { class: 'font-semibold text-highlighted' }, updatedParticipant.lastname), // New value
             ])
           }
         }
@@ -230,8 +229,8 @@ const columns = computed<TableColumn<Participant>[]>(() => {
 
           if (!equal) {
             return h('div', { class: 'flex flex-col' }, [
-              h('span', { class: 'text-white line-through' }, row.getValue('firstname')), // Old value
-              h('span', { class: 'text-white font-bold' }, updatedParticipant.firstname), // New value
+              h('span', { class: 'text-muted line-through' }, row.getValue('firstname')), // Old value
+              h('span', { class: 'font-semibold text-highlighted' }, updatedParticipant.firstname), // New value
             ])
           }
         }
@@ -257,12 +256,12 @@ const columns = computed<TableColumn<Participant>[]>(() => {
 
           if (!equal) {
             return h('div', { class: 'flex flex-col' }, [
-              h('span', { class: 'text-white line-through' }, new Date(row.getValue('dateOfBirth')).toLocaleString(locale.value, {
+              h('span', { class: 'text-muted line-through' }, new Date(row.getValue('dateOfBirth')).toLocaleString(locale.value, {
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric'
               })), // Old value
-              h('span', { class: 'text-white font-bold' }, updatedParticipant.dateOfBirth?.toLocaleString(locale.value, {
+              h('span', { class: 'font-semibold text-highlighted' }, updatedParticipant.dateOfBirth && new Date(updatedParticipant.dateOfBirth).toLocaleString(locale.value, {
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric'
@@ -283,7 +282,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
         const color = {
           ACTIVE: 'success' as const,
-          INACTIVE: 'error' as const
+          INACTIVE: 'neutral' as const
         }[row.getValue('status') as string]
 
         return h(UBadge, { class: 'capitalize', variant: 'subtle', color }, () =>
@@ -315,8 +314,8 @@ const columns = computed<TableColumn<Participant>[]>(() => {
 
           if (!equal) {
             return h('div', { class: 'flex flex-col' }, [
-              h('span', { class: 'text-white line-through' }, row.original.participantServices?.map((ps) => ps.service.servicename).join(', ')), // Old value
-              h('span', { class: 'text-white font-bold' }, updatedParticipant.participantServices?.map((ps) => ps.service.servicename).join(', ')), // New value
+              h('span', { class: 'text-muted line-through' }, row.original.participantServices?.map((ps) => ps.service.servicename).join(', ')), // Old value
+              h('span', { class: 'font-semibold text-highlighted' }, updatedParticipant.participantServices?.map((ps) => ps.service.servicename).join(', ')), // New value
             ])
           }
         }

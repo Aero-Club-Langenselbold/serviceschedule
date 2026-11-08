@@ -1,18 +1,15 @@
 <template>
-  <div>
-    <NavMenu />
-  </div>
-  <div class="flex items-start justify-center min-h-screen mt-4">
-    <div class="p-8 rounded-4xl shadow-md w-full max-w-12/12 border-2">
-      <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('participants.list') }}</h2>
-      <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
-      <div class="flex px-4 py-3.5 border-b border-accented">
-        <UInput v-model="filterValue" class="max-w-sm" :placeholder="$t('participants.filter')" @update:model-value="fetchDataDebounced" />
-      </div>
-      <UTable :data="listData?.content" :columns="columns" class="flex-1" />
-      <UPagination v-model:page="page" :items-per-page="pageSize" :total="listData?.totalElements" @update:page="fetchData"/>
+  <AppPage :title="$t('participants.list')" :error-message="errorMessage" :success-message="successMessage" width="full">
+    <template #actions>
+      <UButton to="/participants/import" icon="i-lucide-upload" color="neutral" variant="outline" :label="$t('participants.import')" />
+      <UButton to="/participants/add" icon="i-lucide-user-plus" :label="$t('nav.participants.add')" />
+    </template>
+    <UInput v-model="filterValue" icon="i-lucide-search" class="mb-4 w-full sm:max-w-sm" :placeholder="$t('participants.filter')" :aria-label="$t('participants.filter')" @update:model-value="fetchDataDebounced" />
+    <DataTable :data="listData?.content" :columns="columns" />
+    <div class="mt-4 flex justify-center">
+      <UPagination v-model:page="page" :sibling-count="1" :items-per-page="pageSize" :total="listData?.totalElements" @update:page="fetchData" />
     </div>
-  </div>
+  </AppPage>
 </template>
 
 <script lang="ts" setup>
@@ -43,7 +40,7 @@ const UCheckbox = resolveComponent('UCheckbox')
 
 const editingState = reactive<{ [key: string]: boolean }>({})
 const editedRows = reactive<{ [key: string]: Participant }>({})
-let filterValue = ''
+const filterValue = ref('')
 
 const toast = useToast()
 
@@ -70,6 +67,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
   const baseColumns = [
     {
       accessorKey: 'lastname',
+      meta: { label: t('participants.lastname') },
       header: ({ column }: { column: TableColumn<Participant> }) => sortColumn(column, t('participants.lastname'), 'lastname'),
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
         const rowId = row.original.id
@@ -89,6 +87,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
       }
     }, {
       accessorKey: 'firstname',
+      meta: { label: t('participants.firstname') },
       header: ({ column }: { column: TableColumn<Participant> }) => sortColumn(column, t('participants.firstname'), 'firstname'),
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
         const rowId = row.original.id
@@ -108,6 +107,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
       }
     }, {
       accessorKey: 'email',
+      meta: { label: t('participants.email'), class: { td: 'max-md:break-all' } },
       header: ({ column }: { column: TableColumn<Participant> }) => sortColumn(column, t('participants.email'), 'email'),
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
         const rowId = row.original.id
@@ -128,6 +128,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
       }
     }, {
       accessorKey: 'dateOfBirth',
+      meta: { label: t('participants.dateOfBirth') },
       header: ({ column }: { column: TableColumn<Participant> }) => sortColumn(column, t('participants.dateOfBirth'), 'dateOfBirth'),
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
         const rowId = row.original.id
@@ -152,11 +153,12 @@ const columns = computed<TableColumn<Participant>[]>(() => {
       }
     }, {
       accessorKey: 'status',
+      meta: { label: t('participants.status') },
       header: ({ column }: { column: TableColumn<Participant> }) => sortColumn(column, t('participants.status'), 'status'),
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
         const color = {
           ACTIVE: 'success' as const,
-          INACTIVE: 'error' as const
+          INACTIVE: 'neutral' as const
         }[row.getValue('status') as string]
 
         const rowId = row.original.id
@@ -178,6 +180,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
       }
     }, {
       accessorKey: 'minAssignments',
+      meta: { label: t('participants.minAssignments') },
       header: ({ column }: { column: TableColumn<Participant> }) => sortColumn(column, t('participants.minAssignments'), 'minAssignments'),
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
         const rowId = row.original.id
@@ -198,6 +201,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
       }
     }, {
       accessorKey: 'maxAssignments',
+      meta: { label: t('participants.maxAssignments') },
       header: ({ column }: { column: TableColumn<Participant> }) => sortColumn(column, t('participants.maxAssignments'), 'maxAssignments'),
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
         const rowId = row.original.id
@@ -224,15 +228,16 @@ const columns = computed<TableColumn<Participant>[]>(() => {
         const isEditing = ref(editingState[rowId] || false)
 
         return isEditing.value ?
-          h('div', {}, [
-            h('div', { class: 'flex items-center mb-2 w-full' }, [
+          h('div', { class: 'min-w-56' }, [
+            h('div', { class: 'flex items-center gap-4 mb-2 w-full' }, [
               h('span', { class: 'text-sm font-bold mr-auto' }, t('participants.services')),
               h('span', { class: 'text-sm font-bold ml-auto' }, t('participants.autoAssign'))
             ]),
             h('div', {}, serviceItems.value?.map((item) =>
-              h('div', { key: item.service.id, class: 'flex items-center mb-2 w-full' }, [
+              h('div', { key: item.service.id, class: 'flex items-center gap-2 mb-2 w-full' }, [
                 h(UCheckbox, {
                   modelValue: editedRows[rowId]?.participantServices?.some((ps) => ps.service.id === item.service.id) || row.original.participantServices?.some((ps) => ps.service.id === item.service.id),
+                  'aria-label': item.service.servicename,
                   onChange: () => {
                     if (!editedRows[rowId]) {
                       editedRows[rowId] = { ...row.original }
@@ -248,6 +253,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
                 }),
                 h('span', { class: 'mr-4' }, item.service.servicename),
                 h(UCheckbox, {
+                  'aria-label': `${item.service.servicename}: ${t('participants.autoAssign')}`,
                   modelValue: editedRows[rowId]?.participantServices?.find((ps) => ps.service.id === item.service.id)?.autoAssign || row.original.participantServices?.find((ps) => ps.service.id === item.service.id)?.autoAssign,
                   'onUpdate:modelValue': (value: boolean) => {
                     if (!editedRows[rowId]) {
@@ -274,12 +280,13 @@ const columns = computed<TableColumn<Participant>[]>(() => {
       accessorKey: 'registrationKey',
       header: t('participants.registrationKey'),
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
-        return h('div', { class: 'flex items-center justify-between' }, [
-          h('span', {}, row.getValue('registrationKey')),
+        return h('div', { class: 'flex items-center justify-between gap-2' }, [
+          h('span', { class: 'font-mono text-xs break-all' }, row.getValue('registrationKey')),
           h(UButton, {
             color: 'neutral',
-            variant: 'subtle',
+            variant: 'ghost',
             icon: 'i-lucide-copy',
+            'aria-label': t('common.copy'),
             onClick: () => {
               navigator.clipboard.writeText(row.getValue('registrationKey'))
               .then(() => {
@@ -295,7 +302,9 @@ const columns = computed<TableColumn<Participant>[]>(() => {
   // push actions
   baseColumns.push({
       accessorKey: 'actions',
-      header: t('participants.actions'),
+      header: '',
+      // Stays in view while the wide table scrolls sideways.
+      meta: { class: { th: 'md:sticky md:right-0 md:bg-default md:border-l md:border-default', td: 'md:sticky md:right-0 md:bg-default md:border-l md:border-default' } },
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
         const rowId = row.original.id
         const isEditing = ref(editingState[rowId] || false)
@@ -354,13 +363,13 @@ const columns = computed<TableColumn<Participant>[]>(() => {
         }
 
         return isEditing.value ?
-          h('div', {}, [
-            h(UButton, { onClick: saveEdit, variant:"subtle", icon:"i-lucide-save", class: "mr-2" }),
-            h(UButton, { onClick: abortEdit, color:"error", variant:"subtle", icon:"i-lucide-x" })
+          h('div', { class: 'flex justify-end gap-2' }, [
+            h(UButton, { 'aria-label': t('common.save'), onClick: saveEdit, icon:"i-lucide-save" }),
+            h(UButton, { 'aria-label': t('common.cancel'), onClick: abortEdit, color:"neutral", variant:"outline", icon:"i-lucide-x" })
           ]) :
-          h('div', {}, [
-            h(UButton, { onClick: startEdit, variant:"subtle", icon:"i-lucide-pen", class: "mr-2" }),
-            h(UButton, { onClick: deleteRow, color:"error", variant:"subtle", icon:"i-lucide-trash" })
+          h('div', { class: 'flex justify-end gap-2' }, [
+            h(UButton, { 'aria-label': t('common.edit'), onClick: startEdit, color:"neutral", variant:"outline", icon:"i-lucide-pencil" }),
+            h(UButton, { 'aria-label': t('common.delete'), onClick: deleteRow, color:"error", variant:"ghost", icon:"i-lucide-trash" })
           ])
       }
     })
@@ -394,7 +403,7 @@ const sortColumn = (column: any, label: string, accessor: string) => {
 
 const fetchData = async () => {
   try {
-    const { data: participantData, error: participantError } = await useAPI<Page<Participant>>(`/participant/page?page=${page.value - 1}&size=${pageSize.value}&sort=${sort},${direction}&search=${filterValue}`, { method: 'GET' })
+    const { data: participantData, error: participantError } = await useAPI<Page<Participant>>(`/participant/page?page=${page.value - 1}&size=${pageSize.value}&sort=${sort},${direction}&search=${filterValue.value}`, { method: 'GET' })
     const { data: serviceData, error: serviceError } = await useAPI<Service[]>(`/service/list`, { method: 'GET' })
     if (participantError.value && participantError.value?.statusCode !== 200) {
       errorMessage.value = participantError.value.data.message

@@ -1,65 +1,49 @@
 <template>
-  <div>
-    <NavMenu />
-  </div>
-  <div class="flex items-center justify-center min-h-screen">
-    <div class="p-8 rounded-4xl shadow-md w-full max-w-md border-2">
-      <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('login.title') }}</h2>
-      <form @submit.prevent="onSubmit">
+  <div class="flex justify-center px-4 py-10 sm:py-16">
+    <UCard class="w-full max-w-md" :ui="{ root: 'rounded-2xl', body: 'sm:p-8' }">
+      <h1 class="mb-6 text-2xl font-semibold tracking-tight text-highlighted">{{ $t('login.title') }}</h1>
+      <form class="space-y-5" @submit.prevent="onSubmit">
         <Messages :errorMessage="loginError" :successMessage="successMessage" />
-        <div class="mb-4">
-          <label class="block text-sm font-bold mb-2">
-            {{ $t('login.username') }}
-          </label>
-          <UInput v-model="credentials.username" type="email" trailing-icon="i-lucide-at-sign" :placeholder="$t('login.username')" class="w-full" />
-        </div>
-        <div class="mb-6">
-          <label class="block text-sm font-bold mb-2">
-            {{ $t('login.password') }}
-          </label>
-          <UInput v-model="credentials.password" :placeholder="$t('login.password')"  :type="show ? 'text' : 'password'" :ui="{ trailing: 'pe-1' }" class="w-full" >
+        <UFormField :label="$t('login.username')">
+          <UInput v-model="credentials.username" type="email" autocomplete="username" trailing-icon="i-lucide-at-sign" class="w-full" />
+        </UFormField>
+        <UFormField :label="$t('login.password')">
+          <UInput v-model="credentials.password" autocomplete="current-password" :type="show ? 'text' : 'password'" :ui="{ trailing: 'pe-1' }" class="w-full">
             <template #trailing>
               <UButton
                 color="neutral"
                 variant="link"
                 size="sm"
                 :icon="show ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                :aria-label="show ? 'Hide password' : 'Show password'"
+                :aria-label="show ? $t('common.hidePassword') : $t('common.showPassword')"
                 :aria-pressed="show"
-                aria-controls="password"
                 @click="show = !show"
               />
             </template>
           </UInput>
+        </UFormField>
+        <UFormField v-if="features.some(feature => feature.id === 'securityQuestionFeature')" :label="securityQuestion ?? ''" :aria-label="$t('login.securityAnswer')">
+          <UInput v-model="credentials.securityAnswer" type="text" trailing-icon="i-lucide-key" :aria-label="$t('login.securityAnswer')" class="w-full" />
+        </UFormField>
+        <UFormField v-if="features.some(feature => feature.id === 'vfLoginFeature')" :label="$t('login.authSecret')">
+          <UInput v-model="credentials.authSecret" type="text" inputmode="numeric" autocomplete="one-time-code" trailing-icon="i-lucide-key" class="w-full" />
+        </UFormField>
+        <div v-if="!features.some(feature => feature.id === 'vfLoginFeature')" class="text-right text-sm">
+          <ULink to="#">{{ $t('login.forgot') }}</ULink>
         </div>
-        <div v-if="features.some(feature => feature.id === 'securityQuestionFeature')" class="mb-4">
-          <label class="block text-sm font-bold mb-2">
-            {{ securityQuestion }}
-          </label>
-          <UInput v-model="credentials.securityAnswer" type="text" trailing-icon="i-lucide-key" :placeholder="$t('login.securityAnswer')" class="w-full" />
-        </div>
-        <div v-if="features.some(feature => feature.id === 'vfLoginFeature')" class="mb-4">
-          <label class="block text-sm font-bold mb-2">
-            {{ $t('login.authSecret') }}
-          </label>
-          <UInput v-model="credentials.authSecret" type="text" trailing-icon="i-lucide-key" :placeholder="$t('login.authSecret')" class="w-full" />
-        </div>
-        <div class="mb-6 text-right">
-          <ULink v-if="!features.some(feature => feature.id === 'vfLoginFeature')" to="#" >{{ $t('login.forgot') }}</ULink>
-        </div>
-        <div class="flex items-center justify-between">
-          <UButton trailing-icon="i-lucide-arrow-right" size="md" :label="$t('login.submit')" type="submit" :loading="working"/>
-          <UButton
-            v-if="!features.some(feature => feature.id === 'vfLoginFeature')"
-            icon="i-lucide-rocket"
-            color="neutral"
-            size="md"
-            :label="$t('login.register')"
-            @click="navigateTo('/register')"
-          />
-        </div>
+        <UButton block size="lg" :label="$t('login.submit')" type="submit" :loading="working" />
+        <UButton
+          v-if="!features.some(feature => feature.id === 'vfLoginFeature')"
+          block
+          size="lg"
+          icon="i-lucide-user-plus"
+          color="neutral"
+          variant="outline"
+          :label="$t('login.register')"
+          to="/register"
+        />
       </form>
-    </div>
+    </UCard>
   </div>
 </template>
 

@@ -1,5 +1,5 @@
-<template #footer>
-  <div class="bottom-0 w-full bg-primary-500 text-white text-center p-4 mt-10">
+<template>
+  <footer class="border-t border-default bg-default px-4 py-5 text-center text-xs text-muted">
     <p>&copy; 2026 Christian Triebstein</p>
-  </div>
+  </footer>
 </template>

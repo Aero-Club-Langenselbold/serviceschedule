@@ -1,30 +1,22 @@
 <template>
-  <UModal
-    :title="modalTitle"
-    :close="{
-      color: 'primary',
-      variant: 'outline',
-      class: 'rounded-full'
-    }"
-    v-model:open="open"
-  >
+  <UModal :title="modalTitle" v-model:open="open">
     <UTooltip :text="tooltip" :class="buttonClass">
-      <UButton :label="buttonLabel" :color="color" :variant="variant" :icon="icon" :loading="loading"/>
+      <UButton :label="buttonLabel" :color="color" :variant="variant" :icon="icon" :loading="loading" :aria-label="buttonLabel ? undefined : tooltip" />
     </UTooltip>
 
     <template #body>
-      <div class="flex justify-end gap-4">
-        <UButton
-          :label="confirmLabel"
-          color="success"
-          variant="solid"
-          @click="handleConfirm"
-        />
+      <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         <UButton
           :label="abortLabel"
-          color="error"
+          color="neutral"
           variant="outline"
           @click="close()"
+        />
+        <UButton
+          :label="confirmLabel"
+          color="error"
+          variant="solid"
+          @click="handleConfirm"
         />
       </div>
     </template>

@@ -1,109 +1,23 @@
 <template>
-  <div>
-    <NavMenu />
-  </div>
-  <div class="flex items-start justify-center min-h-screen mt-4">
-    <div class="p-8 rounded-4xl shadow-md w-full max-w-9/12 border-2">
-      <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('service.list') }}</h2>
-      <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
-      <UTable v-model:expanded="expanded" :data="listData" :columns="columns" :ui="{ tr: 'data-[expanded=true]:bg-(--ui-bg-elevated)/50' }" class="flex-1">
-        <template #expanded="{ row }">
-          <table class="min-w-full border border-gray-200 mt-4">
-            <thead>
-              <tr>
-                <th class="px-4 py-2 border">{{ $t('service.rangeFrom') }}</th>
-                <th class="px-4 py-2 border">{{ $t('service.rangeTo') }}</th>
-                <th class="px-4 py-2 border">{{ $t('service.mandatoryAssignees') }}</th>
-                <th class="px-4 py-2 border">{{ $t('service.saturdays') }}</th>
-                <th class="px-4 py-2 border">{{ $t('service.sundays') }}</th>
-                <th class="px-4 py-2 border">{{ $t('service.publicHolidays') }}</th>
-                <th class="px-4 py-2 border">{{ $t('service.startTime') }}</th>
-                <th class="px-4 py-2 border">{{ $t('service.endTime') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(setting, index) in row.original.settings" :key="index">
-                <td class="border px-4 py-2">
-                  <template v-if="editingState[row.original.id]">
-                    <USelect v-model="row.original.settings[index].rangeFrom" :items="dateRangeItems" class="w-48" />
-                  </template>
-                  <template v-else>
-                    {{ getLabelForValue(setting.rangeFrom) }}
-                  </template>
-                </td>
-                <td class="border px-4 py-2">
-                  <template v-if="editingState[row.original.id]">
-                    <USelect v-model="row.original.settings[index].rangeTo" :items="dateRangeItems" class="w-48" />
-                  </template>
-                  <template v-else>
-                    {{ getLabelForValue(setting.rangeTo) }}
-                  </template>
-                </td>
-                <td class="border px-4 py-2">
-                  <template v-if="editingState[row.original.id]">
-                    <UInput type="number" v-model="row.original.settings[index].mandatoryAssignees" />
-                  </template>
-                  <template v-else>
-                    {{ setting.mandatoryAssignees }}
-                  </template>
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <template v-if="editingState[row.original.id]">
-                    <UCheckbox v-model="row.original.settings[index].saturdays" />
-                  </template>
-                  <template v-else>
-                    <UBadge :color="setting.saturdays ? 'success' : 'error'">{{ setting.saturdays ? $t('general.yes') : $t('general.no') }}</UBadge>
-                  </template>
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <template v-if="editingState[row.original.id]">
-                    <UCheckbox v-model="row.original.settings[index].sundays" />
-                  </template>
-                  <template v-else>
-                    <UBadge :color="setting.sundays ? 'success' : 'error'">{{ setting.sundays ? $t('general.yes') : $t('general.no') }}</UBadge>
-                  </template>
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <template v-if="editingState[row.original.id]">
-                    <UCheckbox v-model="row.original.settings[index].publicHolidays" />
-                  </template>
-                  <template v-else>
-                    <UBadge :color="setting.publicHolidays ? 'success' : 'error'">{{ setting.publicHolidays ? $t('general.yes') : $t('general.no') }}</UBadge>
-                  </template>
-                </td>
-                <td class="border px-4 py-2">
-                  <template v-if="editingState[row.original.id]">
-                    <UInput v-model="row.original.settings[index].startTime" type="time" />
-                  </template>
-                  <template v-else>
-                    {{ setting.startTime }}
-                  </template>
-                </td>
-                <td class="border px-4 py-2">
-                  <template v-if="editingState[row.original.id]">
-                    <UInput v-model="row.original.settings[index].endTime" type="time" />
-                  </template>
-                  <template v-else>
-                    {{ setting.endTime }}
-                  </template>
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <template v-if="editingState[row.original.id]">
-                    <UButton color="error" variant="subtle" icon="i-lucide-trash" @click="deleteSetting(row.original.id, index)" />
-                  </template>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <template v-if="editingState[row.original.id]">
-            <UButton class="mt-4" variant="subtle" icon="i-lucide-plus" @click="addSetting(row.original.id)">
-              {{ $t('service.addSetting') }}
-            </UButton>
-          </template>
-        </template>
-      </UTable>
-    </div>
-  </div>
+  <AppPage :title="$t('service.list')" :error-message="errorMessage" :success-message="successMessage">
+    <template #actions>
+      <UButton to="/service/add" icon="i-lucide-plus" :label="$t('nav.service.add')" />
+    </template>
+    <DataTable v-model:expanded="expanded" :data="listData" :columns="columns">
+      <template #expanded="{ row }">
+        <div class="space-y-3 md:p-2">
+          <ServiceSettings
+            :settings="row.original.settings"
+            :editable="editingState[row.original.id]"
+            @remove="deleteSetting(row.original.id, $event)"
+          />
+          <UButton v-if="editingState[row.original.id]" color="neutral" variant="outline" icon="i-lucide-plus" @click="addSetting(row.original.id)">
+            {{ $t('service.addSetting') }}
+          </UButton>
+        </div>
+      </template>
+    </DataTable>
+  </AppPage>
 </template>
 
 <script lang="ts" setup>
@@ -120,13 +34,6 @@ const UBadge = resolveComponent('UBadge')
 const UInput = resolveComponent('UInput')
 const UCheckbox = resolveComponent('UCheckbox')
 
-const dateRangeItems = useDateRangeItems()
-
-const getLabelForValue = (value: string) => {
-  const item = dateRangeItems.value.find(item => item.value === value)
-  return item ? item.label : value
-}
-
 const listData = ref<Service[] | undefined>([])
 const editingState = reactive<{ [key: string]: boolean }>({})
 const editedRows = reactive<{ [key: string]: Service }>({})
@@ -134,11 +41,13 @@ const editedRows = reactive<{ [key: string]: Service }>({})
 const columns = computed<TableColumn<Service>[]>(() => [
   {
     id: 'expand',
+    meta: { class: { th: 'w-12', td: 'max-md:hidden' } },
     cell: ({ row }) =>
       h(UButton, {
         color: 'neutral',
         variant: 'ghost',
         icon: 'i-lucide-chevron-down',
+        'aria-label': t('common.toggleDetails'),
         square: true,
         ui: {
           leadingIcon: [
@@ -151,6 +60,7 @@ const columns = computed<TableColumn<Service>[]>(() => [
   }, {
     accessorKey: 'servicename',
     header: t('service.name'),
+    meta: { cardTitle: true, class: { td: 'font-medium text-highlighted' } },
     cell: ({ row }) => {
       const rowId = row.original.id
       const isEditing = ref(editingState[rowId] || false)
@@ -187,7 +97,7 @@ const columns = computed<TableColumn<Service>[]>(() => [
     }
   }, {
     accessorKey: 'actions',
-    header: t('participants.actions'),
+    header: '',
     cell: ({ row }) => {
       const rowId = row.original.id
       const isEditing = ref(editingState[rowId] || false)
@@ -221,8 +131,8 @@ const columns = computed<TableColumn<Service>[]>(() => [
           if (error.value) {
             errorMessage.value = t('service.updateFailure')
           } else {
+            await fetchData()
             successMessage.value = t('service.updateSuccess')
-            fetchData()
           }
         } catch (err) {
           errorMessage.value = 'An error occurred while updating the data.'
@@ -240,21 +150,31 @@ const columns = computed<TableColumn<Service>[]>(() => [
           if (error.value) {
             errorMessage.value = t('service.deleteFailure')
           } else {
+            await fetchData()
             successMessage.value = t('service.deleteSuccess')
-            fetchData()
           }
         } catch (err) {
           errorMessage.value = 'An error occurred while deleting the data.'
         }
       }
 
-      return isEditing.value ? [
-        h(UButton, { onClick: saveEdit, variant:"subtle", icon:"i-lucide-save", class: "mr-2" }),
-        h(UButton, { onClick: abortEdit, color:"error", variant:"subtle", icon:"i-lucide-x" })
-      ] : [
-        h(UButton, { onClick: startEdit, variant:"subtle", icon:"i-lucide-pen", class: "mr-2" }),
-        h(UButton, { onClick: deleteRow, color:"error", variant:"subtle", icon:"i-lucide-trash" })
-      ]
+      return h('div', { class: 'flex justify-end gap-2' }, [
+        h(UButton, {
+          'aria-label': t('common.toggleDetails'),
+          color: 'neutral',
+          variant: 'ghost',
+          icon: row.getIsExpanded() ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down',
+          class: 'md:hidden mr-auto',
+          onClick: () => row.toggleExpanded()
+        }),
+        ...(isEditing.value ? [
+          h(UButton, { 'aria-label': t('common.save'), onClick: saveEdit, icon:"i-lucide-save" }),
+          h(UButton, { 'aria-label': t('common.cancel'), onClick: abortEdit, color:"neutral", variant:"outline", icon:"i-lucide-x" })
+        ] : [
+          h(UButton, { 'aria-label': t('common.edit'), onClick: startEdit, color:"neutral", variant:"outline", icon:"i-lucide-pencil" }),
+          h(UButton, { 'aria-label': t('common.delete'), onClick: deleteRow, color:"error", variant:"ghost", icon:"i-lucide-trash" })
+        ])
+      ])
     }
   }
 ])

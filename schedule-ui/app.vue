@@ -1,9 +1,8 @@
 <template>
   <UApp>
-    <div class="flex flex-col min-h-screen">
+    <NuxtLayout>
       <NuxtPage />
-    </div>
-    <Footer></Footer>
+    </NuxtLayout>
   </UApp>
 </template>
 

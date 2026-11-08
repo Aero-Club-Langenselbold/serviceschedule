@@ -10,6 +10,25 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@nuxt/test-utils/module'
   ],
+  // The app is light-only: without color mode there is no .dark class to activate.
+  ui: {
+    colorMode: false
+  },
+  // Ship the icons with the client, the static nginx deployment has no icon endpoint.
+  icon: {
+    clientBundle: {
+      scan: true,
+      sizeLimitKb: 1024
+    }
+  },
+  app: {
+    head: {
+      meta: [
+        { name: 'color-scheme', content: 'light only' },
+        { name: 'theme-color', content: '#ffffff' }
+      ]
+    }
+  },
   i18n: {
     locales: [
       {

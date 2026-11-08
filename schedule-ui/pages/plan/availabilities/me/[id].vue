@@ -1,47 +1,82 @@
 <template>
-  <div>
-    <NavMenu />
-  </div>
-  <div class="flex items-start justify-center min-h-screen mt-4">
-    <div class="p-8 rounded-4xl shadow-md max-w-full border-2">
-      <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('availabilities.list') }}</h2>
-      <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
+  <AppPage
+    :title="$t('availabilities.me')"
+    :description="$t('availabilities.hint')"
+    back="/plan/list"
+    :back-label="$t('plan.backToList')"
+    :error-message="errorMessage"
+    :success-message="successMessage"
+    width="md"
+  >
+    <Spinner v-if="loading" />
 
-      <div class="flex justify-start mb-4 mt-4">
-        <UButton color="neutral" variant="subtle" icon="i-lucide-arrow-left" @click="navigateTo('/plan/list')">
-          {{ $t('plan.backToList') }}
-        </UButton>
-      </div>
+    <template v-else>
+      <ul class="space-y-3">
+        <li v-for="row in data" :key="row.date" class="rounded-xl border border-default bg-default p-4" data-testid="availability">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="font-semibold text-highlighted">{{ formatDate(row.date) }}</h2>
+            <div role="group" :aria-label="formatDate(row.date)" class="grid grid-cols-3 gap-1 rounded-lg bg-elevated p-1 sm:flex">
+              <UButton
+                v-for="option in options"
+                :key="option.value"
+                :icon="option.icon"
+                :color="row.currentState === option.value ? option.color : 'neutral'"
+                :variant="row.currentState === option.value ? 'solid' : 'ghost'"
+                :aria-pressed="row.currentState === option.value"
+                :label="$t(`availabilities.${option.value}`)"
+                size="sm"
+                class="flex-col gap-1 text-xs sm:flex-row sm:text-sm"
+                @click="setState(row, option.value)"
+              />
+            </div>
+          </div>
+          <UFormField v-if="row.currentState === 'please'" :label="$t('availabilities.requestedService')" class="mt-3">
+            <span v-if="!servicesFor(row).length" class="text-sm text-muted">{{ $t('availabilities.noServiceAvailable') }}</span>
+            <USelect
+              v-else
+              :model-value="row.selectedService?.id"
+              :items="servicesFor(row)"
+              label-key="servicename"
+              value-key="id"
+              class="w-full sm:w-64"
+              @update:model-value="selectService(row, $event)"
+            />
+          </UFormField>
+        </li>
+      </ul>
 
-      <!-- Save button -->
-      <div class="flex justify-end mb-4 mt-4">
-        <UButton variant="solid" color="primary" icon="i-lucide-save" @click="savePreferences" :loading="saving" >
+      <div class="sticky bottom-0 -mx-4 mt-4 flex items-center justify-between gap-3 border-t border-default bg-default/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:rounded-xl sm:border">
+        <span class="flex items-center gap-1.5 text-sm" :class="isSaved ? 'text-success' : 'text-muted'">
+          <UIcon :name="isSaved ? 'i-lucide-circle-check' : 'i-lucide-circle-dashed'" class="size-4 shrink-0" />
+          {{ isSaved ? $t('availabilities.saved') : $t('availabilities.unsaved') }}
+        </span>
+        <UButton icon="i-lucide-save" :loading="saving" @click="savePreferences">
           {{ $t('availabilities.save') }}
         </UButton>
       </div>
-
-      <Spinner v-if="loading" />
-
-      <!-- Render table only when data is loaded -->
-      <UTable v-else sticky :data="data" :columns="columns" class="flex-1 max-h-[600px]" />
-    </div>
-  </div>
+    </template>
+  </AppPage>
 </template>
 
 <script lang="ts" setup>
-import type { TableColumn } from '@nuxt/ui'
 import type { Participant } from '~/types/participant'
 import type { ParticipantAvailability } from '~/types/participantAvailability'
 import type { Plan } from '~/types/plan'
 import type { Service } from '~/types/service'
 import type { ServiceDate } from '~/types/serviceDate'
 
-const { t } = useI18n()
+type State = 'yes' | 'no' | 'please'
+type Row = {
+  date: string
+  currentState: State
+  selectedService: Service | null
+  preferencesSaved: boolean
+  participant: Participant
+}
+
+const { t, locale } = useI18n()
 const userStore = useUserStore()
 const { user } = storeToRefs(userStore)
-
-const UButton = resolveComponent('UButton')
-const USelect = resolveComponent('USelect')
 
 const route = useRoute()
 const errorMessage = ref<string | null>(null)
@@ -49,84 +84,43 @@ const successMessage = ref<string | null>(null)
 const id = route.params.id
 const loading = ref(true)
 const saving = ref(false)
+const dirty = ref(false)
 
-const data = ref<{ date: string, currentState: string, selectedService: Service, preferencesSaved: boolean, participant: Participant }[]>([])
+const data = ref<Row[]>([])
 const availableServices = ref<Record<string, Service[]>>({})
 
-const columns = computed<TableColumn<any>[]>(() => [
-  {
-    accessorKey: 'date',
-    header: () => h('th', {}, [h('span', '')]),
-    cell: ({ row }) => {
-      const date = new Date(row.original.date)
-      return date.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit' }) // Format date with locale
-    }
-  }, {
-    accessorKey: 'participant.id',
-    header: t('availabilities.me'),
-    cell: ({ row }) => {
-      // Toggle state for each cell
-      const toggleStates = ['yes', 'no', 'please']
+const options = [
+  { value: 'yes', icon: 'i-lucide-thumbs-up', color: 'primary' },
+  { value: 'no', icon: 'i-lucide-thumbs-down', color: 'error' },
+  { value: 'please', icon: 'i-lucide-star', color: 'secondary' }
+] as const
 
-      const currentState = row.original.currentState
-      const preferencesSaved = row.original.preferencesSaved
+const isSaved = computed(() => !dirty.value && data.value.some(row => row.preferencesSaved))
 
-      const toggleState = async () => {
-        const currentIndex = toggleStates.indexOf(currentState)
-        row.original.currentState = toggleStates[(currentIndex + 1) % toggleStates.length]
+const formatDate = (date: string) => new Date(date).toLocaleDateString(locale.value, {
+  weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit'
+})
 
-        if (row.original.currentState === 'please') {
-          const { data: serviceData } = await useAPI<Service[]>(`/plan/availableServices/${id}/${row.original.date}`, { method: 'GET' })
+const servicesFor = (row: Row): Service[] => {
+  const services = (row.participant.services ?? []) as Service[]
+  return services.filter(service => availableServices.value[row.date]?.some(available => available.id === service.id))
+}
 
-          if (serviceData.value) {
-            availableServices.value[row.original.date] = serviceData.value
-          }
-        }
-      }
-
-      return h(UButton, {
-        onClick: toggleState,
-        variant: preferencesSaved ? 'solid' : 'subtle',
-        color: currentState === 'yes' ? 'primary' : currentState === 'no' ? 'error' : 'secondary',
-        icon: currentState === 'yes' ? 'i-lucide-thumbs-up' : currentState === 'no' ? 'i-lucide-thumbs-down' : 'i-lucide-plane'
-      }, () => t(`availabilities.${currentState}`))
-    }
-  }, {
-    accessorKey: 'selectedService',
-    header: t('availabilities.requestedService'),
-    cell: ({ row }) =>{
-      if (row.original.currentState === 'please') {
-        // fetch available services for this participant
-        let services = row.original.participant.services
-        let selectedService = services[0].id
-
-        services = services.filter((service: Service) =>
-          availableServices.value[row.original.date]?.some(availableService => availableService.id === service.id)
-        )
-        if (services.length === 0) {
-          return h('span', {}, t('availabilities.noServiceAvailable'))
-        }
-
-        row.original.selectedService = row.original.selectedService || services.find((service: Service) => service.id === selectedService)
-
-        return h(USelect, {
-          defaultValue: row.original.selectedService?.id || selectedService,
-          items: services,
-          labelKey: 'servicename',
-          valueKey: 'id',
-          class: 'w-40',
-          'onUpdate:modelValue': (selectedId: string) => {
-            selectedService = selectedId || services[0]?.id
-            row.original.selectedService = services.find((service: Service) => service.id === selectedService)
-          },
-        })
-      }
-
-      row.original.selectedService = null
-      return null
-    }
+const setState = async (row: Row, state: State) => {
+  row.currentState = state
+  dirty.value = true
+  if (state === 'please') {
+    await fetchAvailableServices(row.date)
+    row.selectedService = row.selectedService ?? servicesFor(row)[0] ?? null
+  } else {
+    row.selectedService = null
   }
-])
+}
+
+const selectService = (row: Row, serviceId: string) => {
+  row.selectedService = servicesFor(row).find(service => service.id === serviceId) ?? null
+  dirty.value = true
+}
 
 const fetchData = async () => {
   errorMessage.value = null
@@ -148,7 +142,7 @@ const fetchData = async () => {
       })
       data.value = Array.from(uniqueDates).map(date => {
         const savedAvailability = (availabilityData.value ?? []).length > 0
-        let status = 'no'
+        let status: State = 'no'
         let savedService = null
 
         if (savedAvailability) {
@@ -167,15 +161,15 @@ const fetchData = async () => {
           fetchAvailableServices(date)
         }
 
-        const row: any = {
-          date: date,
+        return {
+          date,
           currentState: status,
           preferencesSaved: savedAvailability,
-          participant: participantData.value,
+          participant: participantData.value as Participant,
           selectedService: savedService
         }
-        return row
       })
+      dirty.value = false
     }
   } catch (err) {
     errorMessage.value = 'An error occurred while fetching the data.'
@@ -218,8 +212,8 @@ const savePreferences = async () => {
     } else if (error.value) {
       errorMessage.value = 'An error occurred while saving the preferences.'
     } else {
+      await fetchData()
       successMessage.value = 'Preferences saved successfully.'
-      fetchData()
     }
   } catch (err) {
     errorMessage.value = 'An error occurred while saving the preferences.'

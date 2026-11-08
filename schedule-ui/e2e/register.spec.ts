@@ -1,41 +1,68 @@
-import { expect, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import { expect, expectPath, field, test } from './support/test'
 
-const BASE_URL = 'http://localhost:3000'
+const submit = (page: Page) => page.locator('button[type="submit"]')
 
-test('register page shows the full registration form', async ({ page }) => {
-    await page.goto(`${BASE_URL}/register`)
+const fillForm = async (page: Page, { password = 'Passwort1', confirm = password } = {}) => {
+  await field(page, 'E-Mail-Adresse (wie vom Administrator bereitgestellt)').fill('neu@example.org')
+  await field(page, 'Passwort').fill(password)
+  await field(page, 'Passwort bestätigen').fill(confirm)
+  await field(page, 'Registrierungsschlüssel').fill('KEY-1')
+}
 
-    await expect(page.getByRole('heading')).toBeVisible()
-    // E-Mail field
-    await expect(page.getByRole('textbox').first()).toBeVisible()
-    // Password field
-    await expect(page.getByRole('textbox').nth(1)).toBeVisible()
-    // Registration Key field
-    await expect(page.locator('input[type="text"]').last()).toBeVisible()
-})
+test.describe('Registrierung', () => {
+  test('ist von der Anmeldung aus erreichbar', async ({ page }) => {
+    await page.goto('/login')
+    await page.getByRole('link', { name: 'Registrieren' }).click()
+    await expectPath(page, '/register')
+  })
 
-test('register button is disabled when form is empty', async ({ page }) => {
-    await page.goto(`${BASE_URL}/register`)
+  test('hält das Absenden gesperrt, solange das Formular leer ist', async ({ page }) => {
+    await page.goto('/register')
+    await expect(submit(page)).toBeDisabled()
+  })
 
-    // The submit button should be disabled when all fields are empty
-    const submitButton = page.getByRole('button').filter({ hasText: /register/i })
-    await expect(submitButton).toBeDisabled()
-})
+  test('meldet nicht übereinstimmende Passwörter', async ({ page }) => {
+    await page.goto('/register')
+    await fillForm(page, { confirm: 'Anders123' })
+    await expect(page.getByText('Passwörter stimmen nicht überein')).toBeVisible()
+    await expect(submit(page)).toBeDisabled()
+  })
 
-test('register button stays disabled when passwords do not match', async ({ page }) => {
-    await page.goto(`${BASE_URL}/register`)
+  test('bewertet die Passwortstärke', async ({ page }) => {
+    await page.goto('/register')
+    const password = field(page, 'Passwort')
 
-    const inputs = page.getByRole('textbox')
-    await inputs.nth(0).fill('test@example.com')
-    await inputs.nth(1).fill('Password123!')
-    await inputs.nth(2).fill('DifferentPassword1!')
+    await expect(page.getByText('Gib ein Passwort ein')).toBeVisible()
+    await password.fill('abc')
+    await expect(page.getByText('Schwaches Passwort')).toBeVisible()
+    await password.fill('abcdefg1')
+    await expect(page.getByText('Mittleres Passwort')).toBeVisible()
+    await password.fill('Abcdefg1')
+    await expect(page.getByText('Starkes Passwort')).toBeVisible()
+  })
 
-    const submitButton = page.getByRole('button').filter({ hasText: /register/i })
-    await expect(submitButton).toBeDisabled()
-})
+  test('lässt schwache Passwörter nicht zu', async ({ page }) => {
+    await page.goto('/register')
+    await fillForm(page, { password: 'schwach' })
+    await expect(submit(page)).toBeDisabled()
+  })
 
-test('navigating to register from login works', async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`)
-    await page.getByRole('button', { name: /register/i }).click()
-    await expect(page).toHaveURL(`${BASE_URL}/register`)
+  test('registriert mit gültigen Daten', async ({ page, api }) => {
+    await page.goto('/register')
+    await fillForm(page)
+    await submit(page).click()
+
+    await expect(page.getByText('Registrierung erfolgreich')).toBeVisible()
+    const body = api.sent('POST', '/auth/signup')[0]!.body
+    expect(body).toMatchObject({ username: 'neu@example.org', password: 'Passwort1', registrationKey: 'KEY-1' })
+  })
+
+  test('zeigt die Fehlermeldung des Servers', async ({ page, api }) => {
+    api.fail('POST', /^\/auth\/signup$/, 400, { message: 'Schlüssel ungültig' })
+    await page.goto('/register')
+    await fillForm(page)
+    await submit(page).click()
+    await expect(page.getByText('Schlüssel ungültig')).toBeVisible()
+  })
 })

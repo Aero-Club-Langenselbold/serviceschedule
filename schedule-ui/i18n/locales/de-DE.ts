@@ -16,9 +16,25 @@ export default defineI18nLocale(async locale => {
         november: 'November',
         december: 'Dezember'
       },
+      common: {
+        save: 'Speichern',
+        cancel: 'Abbrechen',
+        edit: 'Bearbeiten',
+        delete: 'Löschen',
+        copy: 'Kopieren',
+        toggleDetails: 'Details ein-/ausblenden',
+        addParticipant: 'Teilnehmer hinzufügen',
+        removeParticipant: 'Teilnehmer entfernen',
+        acceptChange: 'Änderung übernehmen',
+        showPassword: 'Passwort anzeigen',
+        hidePassword: 'Passwort verbergen',
+        moreInfo: 'Weitere Informationen',
+        empty: 'Keine Einträge vorhanden'
+      },
       permissionDenied: {
         title: 'Zugang verweigert',
-        description: 'Du hast keine Berechtigung, auf diese Seite zuzugreifen.'
+        description: 'Du hast keine Berechtigung, auf diese Seite zuzugreifen.',
+        back: 'Zur Startseite'
       },
       login: {
         title: 'Anmelden',
@@ -26,7 +42,7 @@ export default defineI18nLocale(async locale => {
         password: 'Passwort',
         submit: 'Anmelden',
         register: 'Registrieren',
-        forgot: 'Password vergessen?',
+        forgot: 'Passwort vergessen?',
         authSecret: 'Sicherheitscode (bei aktivierter 2FA)',
         securityAnswer: 'Antwort auf Sicherheitsfrage'
       },
@@ -48,24 +64,31 @@ export default defineI18nLocale(async locale => {
         uppercaseMandatory: 'Mindestens 1 Großbuchstabe',
         passwordMismatch: 'Passwörter stimmen nicht überein',
         success: 'Registrierung erfolgreich',
+        error: 'Registrierung fehlgeschlagen',
       },
       nav: {
-        home: 'Home',
+        home: 'Startseite',
+        login: 'Anmelden',
+        logout: 'Abmelden',
+        settings: 'Einstellungen',
+        requests: 'Bugs & Wünsche',
+        language: 'Sprache wählen',
+        account: 'Benutzerkonto',
         about: 'About',
         contact: 'Kontakt',
         participants: {
-          menu: 'Teilnehmer verwalten',
+          menu: 'Teilnehmer',
           list: 'Teilnehmer anzeigen',
           add: 'Teilnehmer hinzufügen',
           import: 'Teilnehmer importieren'
         },
         service: {
-          menu: 'Dienste verwalten',
+          menu: 'Dienste',
           list: 'Dienste anzeigen',
           add: 'Dienst hinzufügen'
         },
         plan: {
-          menu: 'Dienstpläne verwalten',
+          menu: 'Dienstpläne',
           usermenu: 'Dienstpläne',
           list: 'Dienstpläne anzeigen',
           add: 'Dienstplan hinzufügen'
@@ -77,12 +100,13 @@ export default defineI18nLocale(async locale => {
       },
       app: {
         dateLocale: 'de-DE',
-        name: 'Mitgleiderbereich V1.0',
-        welcome: 'Herzlich willkommen im Mitgleiderbereich des ACL',
+        name: 'Mitgliederbereich V1.0',
+        shortName: 'Mitgliederbereich',
+        welcome: 'Herzlich willkommen im Mitgliederbereich des ACL',
         user: {
           participantWelcome: 'Du bist in der Rolle als Benutzer angemeldet und kannst daher Dienstpläne einsehen und deine eigenen Verfügbarkeiten eintragen.',
           userWelcome: 'Du bist in der Rolle als Benutzer angemeldet, dir ist aber noch kein Teilnehmer zugeordnet. Bitte wende dich an den Administrator.',
-          adminWelcome: 'Du bist in der Rolle als Administrator angemeldet und kannst daher alle Funktionen des Mitgleiderbereichs nutzen.'
+          adminWelcome: 'Du bist in der Rolle als Administrator angemeldet und kannst daher alle Funktionen des Mitgliederbereichs nutzen.'
         }
       },
       alarm: {
@@ -139,6 +163,7 @@ export default defineI18nLocale(async locale => {
         deleteSuccess: 'Teilnehmer erfolgreich gelöscht',
         deleteFailure: 'Fehler beim Löschen des Teilnehmers',
         import: 'Teilnehmer importieren',
+        importFile: 'CSV-Datei auswählen',
         importSuccess: 'Teilnehmer erfolgreich importiert',
         importFailure: 'Fehler beim Importieren der Teilnehmer',
         registrationKeyCopied: 'Der Registrierungsschlüssel wurde in die Zwischenablage kopiert.',
@@ -158,6 +183,10 @@ export default defineI18nLocale(async locale => {
         success: 'Dienst erfolgreich gespeichert',
         error: 'Fehler beim Speichern des Dienstes',
         exists: 'Dienst existiert bereits',
+        updateSuccess: 'Dienst erfolgreich aktualisiert',
+        updateFailure: 'Fehler beim Aktualisieren des Dienstes',
+        deleteSuccess: 'Dienst erfolgreich gelöscht',
+        deleteFailure: 'Fehler beim Löschen des Dienstes',
         addSetting: 'Einstellung hinzufügen',
         rangeFrom: 'Von',
         rangeTo: 'Bis',
@@ -191,6 +220,23 @@ export default defineI18nLocale(async locale => {
         generateInfo: 'Dienstplan final generieren',
         deleteInfo: 'Dienstplan löschen',
         editDetails: 'Details',
+        actionLabels: {
+          details: 'Details',
+          availabilities: 'Verfügbarkeiten',
+          myAvailability: 'Eintragen',
+          generate: 'Generieren',
+          final: 'Dienstplan',
+          statistics: 'Statistik',
+          pdf: 'PDF',
+          csv: 'CSV',
+          delete: 'Löschen'
+        },
+        state: {
+          draft: 'In Vorbereitung',
+          open: 'Offen',
+          published: 'Veröffentlicht'
+        },
+        assignees: 'Anzahl',
         saveSuccess: 'Dienstplan erfolgreich gespeichert',
         saveError: 'Fehler beim Speichern des Dienstplans',
         saveException: 'Schwerer Fehler beim Speichern des Dienstplans',
@@ -217,6 +263,10 @@ export default defineI18nLocale(async locale => {
       },
       availabilities: {
         list: 'Verfügbarkeiten verwalten',
+        hint: 'Trage für jeden Termin ein, ob du Dienst übernehmen kannst.',
+        saved: 'Gespeichert',
+        unsaved: 'Noch nicht gespeichert',
+        matrixHint: 'Tippe auf ein Feld, um den Status zu wechseln.',
         me: 'Deine Verfügbarkeiten',
         yes: 'Ich kann',
         no: 'Ich kann nicht',

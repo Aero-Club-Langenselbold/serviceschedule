@@ -1,15 +1,10 @@
 <template>
-  <div>
-    <NavMenu />
-  </div>
-  <div class="flex items-start justify-center min-h-screen mt-4">
-    <div class="p-8 rounded-4xl shadow-md w-full max-w-9/12 border-2">
-      <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('alarm.list') }}</h2>
-      <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
-      <UTable :data="listData?.content" :columns="columns" class="flex-1" />
-      <UPagination v-model:page="page" :items-per-page="pageSize" :total="listData?.totalElements" @update:page="fetchData"/>
+  <AppPage :title="$t('alarm.list')" :error-message="errorMessage" :success-message="successMessage">
+    <DataTable :data="listData?.content" :columns="columns" />
+    <div class="mt-4 flex justify-center">
+      <UPagination v-model:page="page" :sibling-count="1" :items-per-page="pageSize" :total="listData?.totalElements" @update:page="fetchData" />
     </div>
-  </div>
+  </AppPage>
 </template>
 
 <script lang="ts" setup>
@@ -66,7 +61,7 @@ const getAlarmDetailMessage = (alarm: Alarm): string => {
 const columns = [
   { accessorKey: 'timestamp', header: t('alarm.timestamp'), cell: ({ row }: { row: { original: Alarm } }) => formatUtcTimestamp(row.original.timestamp) },
   { accessorKey: 'message', header: t('alarm.message'), cell: ({ row }: { row: { original: Alarm } }) => getAlarmMessage(row.original) },
-  { accessorKey: 'detailMessage', header: t('alarm.detailMessage'), cell: ({ row }: { row: { original: Alarm } }) => getAlarmDetailMessage(row.original) },
+  { accessorKey: 'detailMessage', header: t('alarm.detailMessage'), meta: { class: { td: 'whitespace-normal' } }, cell: ({ row }: { row: { original: Alarm } }) => getAlarmDetailMessage(row.original) },
 ]
 
 let sort = 'timestamp'

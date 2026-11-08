@@ -16,9 +16,25 @@ export default defineI18nLocale(async locale => {
         november: 'November',
         december: 'December'
       },
+      common: {
+        save: 'Save',
+        cancel: 'Cancel',
+        edit: 'Edit',
+        delete: 'Delete',
+        copy: 'Copy',
+        toggleDetails: 'Show/hide details',
+        addParticipant: 'Add participant',
+        removeParticipant: 'Remove participant',
+        acceptChange: 'Accept change',
+        showPassword: 'Show password',
+        hidePassword: 'Hide password',
+        moreInfo: 'More information',
+        empty: 'No entries yet'
+      },
       permissionDenied: {
         title: 'Permission Denied',
-        description: 'You do not have permission to access this page.'
+        description: 'You do not have permission to access this page.',
+        back: 'Back to home'
       },
       login: {
         title: 'Login',
@@ -48,24 +64,31 @@ export default defineI18nLocale(async locale => {
         uppercaseMandatory: 'At least 1 uppercase letter',
         passwordMismatch: 'Passwords do not match',
         success: 'Registration successful',
+        error: 'Registration failed',
       },
       nav: {
         home: 'Home',
+        login: 'Log in',
+        logout: 'Log out',
+        settings: 'Settings',
+        requests: 'Bugs & requests',
+        language: 'Choose language',
+        account: 'Account',
         about: 'About',
         contact: 'Contact',
         participants: {
-          menu: 'Manage Participants',
+          menu: 'Participants',
           list: 'Show Participants',
           add: 'Add Particpant',
           import: 'Import Participants'
         },
         service: {
-          menu: 'Manage Services',
+          menu: 'Services',
           list: 'Show Services',
           add: 'Add Service'
         },
         plan: {
-          menu: 'Manage Service Plans',
+          menu: 'Service Plans',
           usermenu: 'Service Plans',
           list: 'Show Service Plans',
           add: 'Add Service Plan'
@@ -78,6 +101,7 @@ export default defineI18nLocale(async locale => {
       app: {
         dateLocale: 'en-US',
         name: 'Member Area V1.0',
+        shortName: 'Member Area',
         welcome: 'Welcome to the Member Area of the ACL',
         user: {
           participantWelcome: 'You are logged in as a user and can therefore view service plans and enter your own availability.',
@@ -139,6 +163,7 @@ export default defineI18nLocale(async locale => {
         deleteSuccess: 'Participant deleted successfully',
         deleteFailure: 'Error deleting participant',
         import: 'Import Participants',
+        importFile: 'Choose CSV file',
         importSuccess: 'Participants imported successfully',
         importFailure: 'Error importing participants',
         registrationKeyCopied: 'The registration key has been copied to the clipboard.',
@@ -158,6 +183,10 @@ export default defineI18nLocale(async locale => {
         success: 'Service saved successfully',
         error: 'Error saving service',
         exists: 'Service already exists',
+        updateSuccess: 'Service updated successfully',
+        updateFailure: 'Error updating service',
+        deleteSuccess: 'Service deleted successfully',
+        deleteFailure: 'Error deleting service',
         addSetting: 'Add setting',
         rangeFrom: 'From',
         rangeTo: 'To',
@@ -191,6 +220,23 @@ export default defineI18nLocale(async locale => {
         generatedDetailsInfo: 'Details of the final service plan',
         statisticsInfo: 'View statistics of this plan',
         editDetails: 'Details',
+        actionLabels: {
+          details: 'Details',
+          availabilities: 'Availabilities',
+          myAvailability: 'Enter',
+          generate: 'Generate',
+          final: 'Service plan',
+          statistics: 'Statistics',
+          pdf: 'PDF',
+          csv: 'CSV',
+          delete: 'Delete'
+        },
+        state: {
+          draft: 'In preparation',
+          open: 'Open',
+          published: 'Published'
+        },
+        assignees: 'Count',
         saveSuccess: 'Service plan saved successfully',
         saveError: 'Error saving service plan',
         saveException: 'Severe error saving service plan',
@@ -217,6 +263,10 @@ export default defineI18nLocale(async locale => {
       },
       availabilities: {
         list: 'Manage availabilities',
+        hint: 'Let us know for each date whether you can take on a service.',
+        saved: 'Saved',
+        unsaved: 'Not saved yet',
+        matrixHint: 'Tap a field to switch its status.',
         me: 'Your availabilities',
         yes: 'I\'m available',
         no: 'I\'m not available',

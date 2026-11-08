@@ -1,50 +1,32 @@
 <template>
-  <div>
-    <NavMenu />
-  </div>
-  <div class="flex items-center justify-center min-h-screen">
-    <div class="p-8 rounded-4xl shadow-md w-full max-w-3/12 border-2">
-      <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('settings.title') }}</h2>
-      <form @submit.prevent="onSubmit">
+  <AppPage :title="$t('settings.title')" width="sm">
+    <UCard :ui="{ root: 'rounded-xl' }">
+      <form class="space-y-5" @submit.prevent="onSubmit">
         <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
-        <div class="mb-4">
-          <label class="block text-sm font-bold mb-2">
-            {{ $t('settings.holidayInfo') }}
-          </label>
-        </div>
-        <div class="mb-6">
-          <label class="block text-sm font-bold mb-2">
-            {{ $t('settings.country') }}
-          </label>
+        <p class="text-sm text-muted">{{ $t('settings.holidayInfo') }}</p>
+        <UFormField :label="$t('settings.country')">
           <USelect v-model="selectedCountryId" value-key="id" :items="availableCountries" class="w-full" @update:modelValue="fetchAvailableStates" />
-        </div>
-        <div v-if="availableStates.length > 0" class="mb-6">
-          <label class="block text-sm font-bold mb-2">
-            {{ $t('settings.state') }}
-          </label>
+        </UFormField>
+        <UFormField v-if="availableStates.length > 0" :label="$t('settings.state')">
           <USelect v-model="selectedStateId" value-key="id" :items="availableStates" class="w-full" />
-        </div>
-        <div class="mb-6">
-          <UTable :data="data" :columns="columns" class="flex-1" />
-        </div>
-        <div v-if="selectedStateId" class="text-center mt-4">
-          <UButton trailing-icon="i-lucide-arrow-right" size="md" :label="$t('settings.save')" type="submit" :loading="loading" />
-        </div>
+        </UFormField>
+        <USeparator v-if="data.length" />
+        <UFormField v-for="setting in data" :key="setting.settingKey" :label="$t('settings.keys.' + setting.settingKey)">
+          <UInput v-model="setting.settingValue" class="w-full" />
+        </UFormField>
+        <UButton v-if="selectedStateId" block size="lg" :label="$t('settings.save')" type="submit" :loading="loading" />
       </form>
-    </div>
-  </div>
+    </UCard>
+  </AppPage>
 </template>
 
 <script lang="ts" setup>
-import type { TableColumn } from '@nuxt/ui'
 import type { Country } from '~/types/country'
 import type { SelectedState } from '~/types/selectedState'
 import type { State } from '~/types/state'
 const { t } = useI18n()
 const errorMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
-
-const UInput = resolveComponent('UInput')
 
 const loading = ref(false)
 
@@ -62,28 +44,6 @@ const selectedStateId = ref<string | undefined>(undefined)
 const availableCountries = ref<DisplayCountry[]>([])
 const availableStates = ref<DisplayState[]>([])
 const data = ref<any[]>([])
-
-const columns = computed<TableColumn<any>[]>(() => [
-  {
-    accessorKey: 'settingsKey',
-    header: t('settings.name'),
-    cell: ({ row }) => {
-      return t('settings.keys.' + row.original.settingKey)
-    }
-  }, {
-    accessorKey: 'settingsValue',
-    header: t('settings.value'),
-    cell: ({ row }) => {
-      return h(UInput, {
-        modelValue: row.original.settingValue,
-        'onUpdate:modelValue': (value: string) => {
-          data.value[row.index].settingValue = value
-        },
-        class: 'w-full',
-      })
-    }
-  }
-])
 
 const fetchData = async () => {
   try {
@@ -148,10 +108,12 @@ const onSubmit = async () => {
       const { error: saveError } = await useAPI('/settings/common-settings', { method: 'POST', body: JSON.stringify(data.value) })
       if (saveError.value) {
         errorMessage.value = 'An error occurred while saving common settings.'
+        loading.value = false
         return
       }
     } catch (err) {
       errorMessage.value = 'An error occurred while saving common settings.'
+      loading.value = false
       return
     }
   }
@@ -168,7 +130,7 @@ const onSubmit = async () => {
     }
     await useAPI('/settings/selected-state', { method: 'POST', body: JSON.stringify(selectedStateData) })
     .then(async (response) => {
-      if (response.status.value === "error") {
+      if (response.error?.value) {
         errorMessage.value = 'An error occurred while saving the data.'
       } else {
         successMessage.value = t('settings.success')

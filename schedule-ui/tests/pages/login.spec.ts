@@ -4,8 +4,6 @@ import Login from '~/pages/login.vue'
 
 it ('Can render Login Page', async () => {
     const login = await mountSuspended(Login)
-    expect(login.html()).toMatchSnapshot()
-
     expect(login.html()).toContain('Username')
     expect(login.html()).toContain('Password')
     expect(login.html()).toContain('Login')

@@ -1,43 +1,29 @@
 <template>
-  <div>
-    <NavMenu />
-  </div>
-  <div class="flex items-start justify-center min-h-screen mt-6 mb-6">
-    <div class="p-8 rounded-4xl shadow-md w-full max-w-max border-2">
-      <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('plan.generatedDetailsInfo') }}</h2>
-      <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
+  <AppPage :title="$t('plan.generatedDetailsInfo')" back="/plan/list" :back-label="$t('plan.backToList')" :error-message="errorMessage" :success-message="successMessage">
+    <Spinner v-if="loading" />
 
-      <div class="flex justify-start mb-4 mt-4">
-        <UButton color="neutral" variant="subtle" icon="i-lucide-arrow-left" @click="goBack">
-          {{ $t('plan.backToList') }}
-        </UButton>
-      </div>
+    <div v-else class="space-y-4">
+      <DataTable
+        ref="table"
+        v-model:pagination="pagination"
+        :data="data"
+        :columns="columns"
+        loading-color="primary"
+        loading-animation="carousel"
+        :pagination-options="{ getPaginationRowModel: getPaginationRowModel() }"
+      />
 
-      <Spinner v-if="loading" />
-
-      <div v-else class="w-full space-y-4 pb-4">
-        <UTable
-          ref="table"
-          v-model:pagination="pagination"
-          :data="data"
-          :columns="columns"
-          loading-color="primary"
-          loading-animation="carousel"
-          :pagination-options="{ getPaginationRowModel: getPaginationRowModel() }"
-          class="flex-1 max-h-[600px]"
-          sticky />
-
-        <div class="flex justify-center border-t border-(--ui-border) pt-4">
-            <UPagination
-              :default-page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
-              :items-per-page="table?.tableApi?.getState().pagination.pageSize"
-              :total="table?.tableApi?.getFilteredRowModel().rows.length"
-              @update:page="(p) => { table?.tableApi?.setPageIndex(p - 1) }"
-            />
-        </div>
+      <div class="flex justify-center">
+        <UPagination
+          :default-page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
+          :sibling-count="1"
+          :items-per-page="table?.tableApi?.getState().pagination.pageSize"
+          :total="table?.tableApi?.getFilteredRowModel().rows.length"
+          @update:page="(p) => { table?.tableApi?.setPageIndex(p - 1) }"
+        />
       </div>
     </div>
-  </div>
+  </AppPage>
 </template>
 
 <script lang="ts" setup>
@@ -85,15 +71,11 @@ type PlanTableEntryRow = {
   }[]
 }
 
-const goBack = () => {
-  data.value = []
-  navigateTo('/plan/list')
-}
-
 const columns = computed<TableColumn<PlanTableEntryRow>[]>(() => [
   {
     accessorKey: 'date',
     header: t('plan.date'),
+    meta: { cardTitle: true, class: { td: 'font-medium text-highlighted whitespace-nowrap align-top' } },
     cell: ({ row }: { row: { getValue: (key: string) => any } }) => {
       return new Date(row.getValue('date')).toLocaleString(locale.value, {
         weekday: 'short',
@@ -106,30 +88,31 @@ const columns = computed<TableColumn<PlanTableEntryRow>[]>(() => [
   ...(data.value?.[0]?.service ?? []).map((service, index) => ({
     accessorKey: `service[${index}].servicename`,
     header: service.servicename,
+    meta: { class: { td: 'align-top' } },
     cell: ({ row }: { row: { getValue: (key: string) => any; original: PlanTableEntryRow } }) => {
       const service = row.original.service[index]
       const cellIndex = service.id + "_" + row.getValue('date')
       const participants = service.participants
       const editButton = h(UButton, {
-        variant: 'subtle',
-        icon: 'i-lucide-edit',
+        color: 'neutral',
+        variant: 'outline',
+        icon: 'i-lucide-pencil',
+        'aria-label': t('common.edit'),
         size: 'sm',
-        class: 'mr-2',
         onClick: () => startEdit()
       })
       const abortButton = h(UButton, {
-        color: 'error',
-        variant: 'subtle',
+        'aria-label': t('common.cancel'),
+        color: 'neutral',
+        variant: 'outline',
         icon: 'i-lucide-x',
         size: 'sm',
-        class: 'mr-2',
         onClick: () => editingState[cellIndex].editing = false
       })
       const saveButton = h(UButton, {
-        variant: 'subtle',
+        'aria-label': t('common.save'),
         icon: 'i-lucide-save',
         size: 'sm',
-        class: 'mr-2',
         onClick: () => saveEntry()
       })
       const startTime = new Date(service.startTime ?? '').toLocaleString(locale.value, {
@@ -176,14 +159,13 @@ const columns = computed<TableColumn<PlanTableEntryRow>[]>(() => [
             items: allParticipants,
             labelKey: 'fullname',
             valueKey: 'id',
-            class: 'w-40',
+            class: 'w-full',
             'onUpdate:modelValue': (selectedId: string) => {
               participantFields.value.selectedId = selectedId
             }
           })
 
           const participantFields = ref({
-            lineFeed: h('br'),
             select: select,
             selectedId: participant.id
           })
@@ -196,14 +178,13 @@ const columns = computed<TableColumn<PlanTableEntryRow>[]>(() => [
             items: allParticipants,
             labelKey: 'fullname',
             valueKey: 'id',
-            class: 'w-40',
+            class: 'w-full',
             'onUpdate:modelValue': (selectedId: string) => {
               participantFields.value.selectedId = selectedId
             }
           })
 
           const participantFields = ref({
-            lineFeed: h('br'),
             select: select,
             selectedId: ''
           })
@@ -274,50 +255,39 @@ const columns = computed<TableColumn<PlanTableEntryRow>[]>(() => [
         editingState[cellIndex].elements.pop()
       }
 
-      const elements: any[] = []
       if (!editingState[cellIndex]?.editing) {
-        if (user.value?.roles.includes('ROLE_ADMIN')) {
-          elements.push(editButton)
-          elements.push(h('br'))
-        }
-        elements.push(h('label', {}, hours))
-        elements.push(h('br'))
-        participants.forEach(participant => {
-          elements.push(h('label', {}, `${participant.lastname}, ${participant.firstname}`))
-          elements.push(h('br'))
-        })
-      } else {
-        elements.push(abortButton)
-        elements.push(saveButton)
-        elements.push(h('br'))
-        elements.push(startTimeInput)
-        elements.push(" - ")
-        elements.push(endTimeInput)
-
-        editingState[cellIndex].elements.forEach((element: any) => {
-          elements.push(element.lineFeed)
-          elements.push(element.select)
-          elements.push(element.removeSelect)
-        })
-
-        elements.push(h(UButton, {
-          color: 'error',
-          variant: 'subtle',
-          icon: 'i-lucide-x',
-          size: 'sm',
-          class: 'ml-2',
-          onClick: () => removeEntry()
-        }))
-        elements.push(h('br'))
-        elements.push(h(UButton, {
-          variant: 'subtle',
-          icon: 'i-lucide-plus',
-          size: 'sm',
-          class: 'mr-2',
-          onClick: () => addParticipant()
-        }))
+        return h('div', { class: 'flex items-start justify-between gap-2' }, [
+          h('div', { class: 'min-w-0' }, [
+            hours ? h('p', { class: 'mb-1 text-xs text-muted' }, hours) : null,
+            ...participants.map(participant => h('p', { class: 'text-sm' }, `${participant.lastname}, ${participant.firstname}`))
+          ]),
+          user.value?.roles.includes('ROLE_ADMIN') ? editButton : null
+        ])
       }
-      return elements
+
+      return h('div', { class: 'flex min-w-48 flex-col gap-2' }, [
+        h('div', { class: 'flex justify-end gap-2' }, [abortButton, saveButton]),
+        h('div', { class: 'grid grid-cols-2 gap-2' }, [startTimeInput, endTimeInput]),
+        ...editingState[cellIndex].elements.map((element: any) => element.select),
+        h('div', { class: 'flex justify-end gap-2' }, [
+          h(UButton, {
+            'aria-label': t('common.removeParticipant'),
+            color: 'error',
+            variant: 'ghost',
+            icon: 'i-lucide-user-minus',
+            size: 'sm',
+            onClick: () => removeEntry()
+          }),
+          h(UButton, {
+            color: 'neutral',
+            variant: 'outline',
+            icon: 'i-lucide-user-plus',
+            'aria-label': t('common.addParticipant'),
+            size: 'sm',
+            onClick: () => addParticipant()
+          })
+        ])
+      ])
     }
   })) || []
 ])

@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
 describe('User Store', () => {
-    const userStore = useUserStore()
+    let userStore: ReturnType<typeof useUserStore>
+
+    beforeEach(() => {
+        userStore = useUserStore()
+    })
 
     beforeEach(async () => {
         await userStore.logout()

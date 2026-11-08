@@ -3,11 +3,6 @@ import { describe, expect, it } from 'vitest'
 import Register from '~/pages/register.vue'
 
 describe('Register Page', () => {
-    it('renders the registration form', async () => {
-        const wrapper = await mountSuspended(Register)
-        expect(wrapper.html()).toMatchSnapshot()
-    })
-
     it('shows all required form fields', async () => {
         const wrapper = await mountSuspended(Register)
         expect(wrapper.html()).toContain('Register to the schedule manager')

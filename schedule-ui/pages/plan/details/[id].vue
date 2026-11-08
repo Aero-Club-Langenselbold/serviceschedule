@@ -1,56 +1,48 @@
 <template>
-  <div>
-    <NavMenu />
-  </div>
-  <div class="flex items-center justify-center min-h-screen mt-6 mb-6">
-    <div class="p-8 rounded-4xl shadow-md w-full max-w-max border-2">
-      <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('plan.details') }}</h2>
-      <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
-      <div class="flex justify-start mb-4 mt-4">
-        <UButton color="neutral" variant="subtle" icon="i-lucide-arrow-left" @click="navigateTo('/plan/list')">
-          {{ $t('plan.backToList') }}
+  <AppPage :title="$t('plan.details')" :description="plan?.name" back="/plan/list" :back-label="$t('plan.backToList')" :error-message="errorMessage" :success-message="successMessage">
+    <template #actions>
+      <UPopover>
+        <UButton color="neutral" variant="outline" icon="i-lucide-calendar-plus">
+          {{ selectedDate ? df.format(selectedDate.toDate(getLocalTimeZone())) : t('plan.addDate') }}
         </UButton>
-      </div>
-      <div class="flex justify-end mb-4">
-        <UPopover>
-          <UButton color="neutral" variant="subtle" icon="i-lucide-calendar">
-            {{ selectedDate ? df.format(selectedDate.toDate(getLocalTimeZone())) : t('plan.addDate') }}
-          </UButton>
+        <template #content>
+          <UCalendar v-model="selectedDate" @update:modelValue="addDate" :is-date-unavailable="isDateUnavailable" class="p-2" />
+        </template>
+      </UPopover>
+      <UButton icon="i-lucide-save" :loading="isSaving" @click="saveDetails">{{ $t('plan.save') }}</UButton>
+    </template>
 
-          <template #content>
-            <UCalendar v-model="selectedDate" @update:modelValue="addDate" :is-date-unavailable="isDateUnavailable" class="p-2" />
-          </template>
-        </UPopover>
-        <UButton color="primary" @click="saveDetails" class="ml-4" :loading="isSaving">{{ $t('plan.save') }}</UButton>
-      </div>
+    <Spinner v-if="loading" />
 
-      <Spinner v-if="loading" />
+    <p v-else-if="!dates.length" class="rounded-xl border border-dashed border-accented p-8 text-center text-muted">
+      {{ $t('common.empty') }}
+    </p>
 
-      <div v-else class="overflow-x-auto mt-4">
-        <table class="min-w-full border border-gray-200 mt-4 ">
-          <thead>
-            <tr>
-              <th class="px-4 py-2 border">{{ $t('plan.date') }}</th>
-              <th v-for="service in services" :key="service.id" class="px-4 py-2 border">{{ service.servicename }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(date, dateIndex) in dates">
-              <td class="border px-4 py-2">{{ date.localeString }}</td>
-              <td v-for="(service, serviceIndex) in services" :key="service.id" class="border px-4 py-2">
-                <UInput type="number" v-model="values[dateIndex][serviceIndex].mandatoryAssignees" class="w-15" />
-                <UInput type="time" v-model="values[dateIndex][serviceIndex].startTime" class="w-half" />
-                <UInput type="time" v-model="values[dateIndex][serviceIndex].endTime" class="w-half" />
-              </td>
-              <td class="border px-4 py-2 text-center">
-                <UButton color="error" variant="subtle" icon="i-lucide-trash" @click="removeDate(dateIndex)" />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+    <ul v-else class="space-y-4">
+      <li v-for="(date, dateIndex) in dates" :key="date.originalDate.getTime()" class="rounded-xl border border-default bg-default p-4">
+        <div class="mb-3 flex items-center justify-between gap-3">
+          <h2 class="font-semibold text-highlighted">{{ date.localeString }}</h2>
+          <UButton color="error" variant="ghost" icon="i-lucide-trash" :aria-label="$t('common.delete')" @click="removeDate(dateIndex)" />
+        </div>
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <fieldset v-for="(service, serviceIndex) in services" :key="service.id" class="rounded-lg bg-muted p-3">
+            <legend class="float-left mb-2 w-full text-sm font-medium text-highlighted">{{ service.servicename }}</legend>
+            <div class="clear-both grid grid-cols-3 gap-2">
+              <UFormField :label="$t('plan.assignees')" :ui="{ label: 'text-xs' }">
+                <UInput type="number" min="0" v-model="values[dateIndex][serviceIndex].mandatoryAssignees" class="w-full" />
+              </UFormField>
+              <UFormField :label="$t('service.startTime')" :ui="{ label: 'text-xs' }">
+                <UInput type="time" v-model="values[dateIndex][serviceIndex].startTime" class="w-full" />
+              </UFormField>
+              <UFormField :label="$t('service.endTime')" :ui="{ label: 'text-xs' }">
+                <UInput type="time" v-model="values[dateIndex][serviceIndex].endTime" class="w-full" />
+              </UFormField>
+            </div>
+          </fieldset>
+        </div>
+      </li>
+    </ul>
+  </AppPage>
 </template>
 
 <script lang="ts" setup>
@@ -61,13 +53,12 @@ import type { Plan } from '~/types/plan'
 import type { Service } from '~/types/service'
 import type { ServiceDate } from '~/types/serviceDate'
 
-const df = new DateFormatter('en-US', {
-  dateStyle: 'medium'
-})
-
 const route = useRoute()
 const id = route.params.id
 const { t, locale } = useI18n()
+const df = new DateFormatter(t('app.dateLocale'), {
+  dateStyle: 'medium'
+})
 const loading = ref(true)
 
 const errorMessage = ref<string | null>(null)

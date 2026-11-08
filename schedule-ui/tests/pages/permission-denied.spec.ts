@@ -5,8 +5,7 @@ import PermissionDenied from '~/pages/permission-denied.vue'
 describe('Permission Denied Page', () => {
     beforeEach(async () => {
         // Must be logged in for the authenticated middleware to pass
-        const userStore = useUserStore()
-        await userStore.login({ username: 'testuser', password: 'password' })
+        await useUserStore().login({ username: 'testuser', password: 'password' })
     })
 
     it('renders the permission denied alert', async () => {

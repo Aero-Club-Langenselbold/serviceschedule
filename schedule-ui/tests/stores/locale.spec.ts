@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
 describe('Locale Store', () => {
-    const localeStore = useLocaleStore()
+    let localeStore: ReturnType<typeof useLocaleStore>
+
+    beforeEach(() => {
+        localeStore = useLocaleStore()
+    })
 
     beforeEach(() => {
         localStorage.removeItem('locale')

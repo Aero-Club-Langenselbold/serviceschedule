@@ -1,36 +1,22 @@
 <template>
-  <div>
-    <NavMenu />
-  </div>
-  <div class="flex items-center justify-center min-h-screen">
-    <div class="p-8 rounded-4xl shadow-md w-full max-w-md border-2">
-      <h2 class="text-2xl font-bold mb-6 text-center">{{ $t('participants.add') }}</h2>
-      <form @submit.prevent="onSubmit">
+  <AppPage :title="$t('participants.add')" back="/participants/list" :back-label="$t('nav.participants.list')" width="sm">
+    <UCard :ui="{ root: 'rounded-xl' }">
+      <form class="space-y-5" @submit.prevent="onSubmit">
         <Messages :errorMessage="errorMessage" :successMessage="successMessage" />
-        <div class="mb-4">
-          <label class="block text-sm font-bold mb-2">
-            {{ $t('participants.firstname') }}
-          </label>
-          <UInput v-model="participant.firstname" type="text" :placeholder="$t('participants.firstname')" class="w-full" />
+        <div class="grid gap-5 sm:grid-cols-2">
+          <UFormField :label="$t('participants.firstname')">
+            <UInput v-model="participant.firstname" type="text" autocomplete="off" class="w-full" />
+          </UFormField>
+          <UFormField :label="$t('participants.lastname')">
+            <UInput v-model="participant.lastname" type="text" autocomplete="off" class="w-full" />
+          </UFormField>
         </div>
-        <div class="mb-6">
-          <label class="block text-sm font-bold mb-2">
-            {{ $t('participants.lastname') }}
-          </label>
-          <UInput v-model="participant.lastname" type="text" :placeholder="$t('participants.lastname')" class="w-full" />
-        </div>
-        <div class="mb-6">
-          <label class="block text-sm font-bold mb-2">
-            {{ $t('participants.email') }}
-          </label>
-          <UInput v-model="participant.email" type="email" :placeholder="$t('participants.email')" class="w-full" />
-        </div>
-        <div class="mb-6">
-          <label class="block text-sm font-bold mb-2">
-            {{ $t('participants.dateOfBirth') }}
-          </label>
+        <UFormField :label="$t('participants.email')">
+          <UInput v-model="participant.email" type="email" autocomplete="off" class="w-full" />
+        </UFormField>
+        <UFormField :label="$t('participants.dateOfBirth')">
           <UPopover>
-            <UButton color="neutral" variant="subtle" icon="i-lucide-calendar" class="w-full">
+            <UButton color="neutral" variant="outline" icon="i-lucide-calendar" class="w-full justify-start">
               {{ dateOfBirth ? df.format(dateOfBirth.toDate(getLocalTimeZone())) : $t('participants.dateOfBirth') }}
             </UButton>
 
@@ -38,50 +24,29 @@
               <UCalendar v-model="dateOfBirth" class="p-2" />
             </template>
           </UPopover>
+        </UFormField>
+        <UCheckbox v-model="status" :label="$t('participants.active')" :description="$t('participants.statusInfo')" />
+        <div class="grid gap-5 sm:grid-cols-2">
+          <UFormField :label="$t('participants.minAssignments')">
+            <UInput v-model="participant.minAssignments" type="number" min="0" class="w-full" />
+          </UFormField>
+          <UFormField :label="$t('participants.maxAssignments')">
+            <UInput v-model="participant.maxAssignments" type="number" min="0" class="w-full" />
+          </UFormField>
         </div>
-        <div class="mb-6 flex items-center ">
-          <label class="text-sm font-bold mr-6">
-            {{ $t('participants.status') }}
-          </label>
-          <UCheckbox v-model="status" />
-          <UTooltip :delay-duration="0" :text="t('participants.statusInfo')" class="ml-5">
-            <UButton icon="i-lucide-message-circle-question" color="secondary" variant="ghost" />
-          </UTooltip>
-        </div>
-        <div class="mb-6">
-          <label class="block text-sm font-bold mb-2">
-            {{ $t('participants.minAssignments') }}
-          </label>
-          <UInput v-model="participant.minAssignments" type="number" :placeholder="$t('participants.minAssignments')" class="w-full" />
-        </div>
-        <div class="mb-6">
-          <label class="block text-sm font-bold mb-2">
-            {{ $t('participants.maxAssignments') }}
-          </label>
-          <UInput v-model="participant.maxAssignments" type="number" :placeholder="$t('participants.maxAssignments')" class="w-full" />
-        </div>
-        <div class="mb-6">
-          <!-- Labels for the columns -->
-          <div class="flex items-center mb-2 w-full">
-            <span class="text-sm font-bold mr-auto">
-              {{ $t('participants.services') }}
-            </span>
-            <span class="text-sm font-bold ml-auto">
-              {{ $t('participants.autoAssign') }}
-            </span>
-          </div>
-          <div v-for="(item, index) in serviceItems" :key="item.service.id" class="flex items-center mb-2 w-full">
-            <UCheckbox :checked="serviceValue.includes(item.service.id)" @change="toggleService(item.service.id)" class="mr-2" />
-            <span class="mr-4">{{ item.service.servicename }}</span>
-            <UCheckbox v-model="item.autoAssign" class="ml-auto" />
-          </div>
-        </div>
-        <div class="flex items-center justify-between">
-          <UButton trailing-icon="i-lucide-arrow-right" size="md" :label="$t('participants.save')" type="submit" />
-        </div>
+        <fieldset v-if="serviceItems.length">
+          <legend class="mb-2 text-sm font-medium text-default">{{ $t('participants.services') }}</legend>
+          <ul class="divide-y divide-default rounded-lg border border-default">
+            <li v-for="item in serviceItems" :key="item.service.id" class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 p-3">
+              <UCheckbox :model-value="serviceValue.includes(item.service.id)" :label="item.service.servicename" @update:model-value="toggleService(item.service.id)" />
+              <UCheckbox v-model="item.autoAssign" :label="$t('participants.autoAssign')" :disabled="!serviceValue.includes(item.service.id)" :ui="{ label: 'font-normal text-muted' }" />
+            </li>
+          </ul>
+        </fieldset>
+        <UButton block size="lg" :label="$t('participants.save')" type="submit" />
       </form>
-    </div>
-  </div>
+    </UCard>
+  </AppPage>
 </template>
 
 <script lang="ts" setup>
@@ -129,9 +94,9 @@ const onSubmit = async () => {
 
   await useAPI('/participant/save', { method: 'POST', body: JSON.stringify(participant.value) })
   .then(async (response) => {
-    if (response.status.value === "error" && response.error?.value?.statusCode === 409) {
+    if (response.error?.value?.statusCode === 409) {
       errorMessage.value = t('participants.exists')
-    } else if (response.status.value === "error") {
+    } else if (response.error?.value) {
       errorMessage.value = t('participants.error')
     } else {
       successMessage.value = t('participants.success')

@@ -2,8 +2,7 @@ import { mountSuspended } from '@nuxt/test-utils/runtime'
 import { describe, expect, it } from 'vitest'
 import AlarmList from '~/pages/alarm/list.vue'
 
-const userStore = useUserStore()
-const { login } = userStore
+const login = (credentials: { username: string, password: string }) => useUserStore().login(credentials)
 
 describe('Alarm List Page', () => {
     it('renders the alarm list page for alarm admin', async () => {
@@ -16,17 +15,15 @@ describe('Alarm List Page', () => {
         await login({ username: 'testalarmadmin', password: 'password' })
         const wrapper = await mountSuspended(AlarmList)
         expect(wrapper.html()).toContain('Timestamp')
-        expect(wrapper.html()).toContain('RFID ID')
-        expect(wrapper.html()).toContain('Internal Time')
-        expect(wrapper.html()).toContain('Status')
-        expect(wrapper.html()).toContain('Raw Data')
+        expect(wrapper.html()).toContain('Message')
+        expect(wrapper.html()).toContain('Detail')
     })
 
     it('renders alarm data returned by the API', async () => {
         await login({ username: 'testalarmadmin', password: 'password' })
         const wrapper = await mountSuspended(AlarmList)
         expect(wrapper.html()).toContain('AABBCC')
-        expect(wrapper.html()).toContain('22:38:45')
+        expect(wrapper.html()).toContain('Authorized Key')
     })
 
     it('displays timestamp as formatted local time (dd.MM.yyyy HH:mm:ss)', async () => {
