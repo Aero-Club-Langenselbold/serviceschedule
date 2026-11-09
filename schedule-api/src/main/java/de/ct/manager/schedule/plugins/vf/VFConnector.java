@@ -148,9 +148,7 @@ public class VFConnector {
             } else {
                 log.info("VF user {} authenticated with roles: {}", userResponse.getEmail(),
                         user.get().getRoles().stream().map(r -> r.getName().name()).toList());
-                authorities = user.get().getRoles().stream()
-                        .map(role -> new SimpleGrantedAuthority(role.getName().name()))
-                        .collect(java.util.stream.Collectors.toList());
+                authorities = UserDetailsImpl.authoritiesOf(user.get());
             }
 
             UserDetails userDetails = new UserDetailsImpl(userResponse.getUid(),

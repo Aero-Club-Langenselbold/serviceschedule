@@ -25,3 +25,5 @@ replay_pid*
 /schedule-api/src/main/resources/application-docker.properties
 /volumes
 /schedule-api/logs
+
+/.env

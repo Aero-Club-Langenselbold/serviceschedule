@@ -36,12 +36,19 @@ export const field = (page: Page, name: string) => page.getByRole('textbox', { n
 /** A toast's visible title. Toasts also render a hidden copy for screen readers, which must not match. */
 export const toast = (page: Page, text: string) => page.locator('[data-slot="title"]', { hasText: text })
 
-export const isMobile = (page: Page) => (page.viewportSize()?.width ?? 1280) < 1024
+export const isMobile = (page: Page) => (page.viewportSize()?.width ?? 1280) < 1280
 
 /** Opens the slide-over navigation on small screens, the desktop header shows it inline. */
 export const openNavigation = async (page: Page) => {
   if (isMobile(page)) {
     await page.getByRole('button', { name: 'Menü öffnen' }).click()
+  }
+}
+
+/** The schedule entries open as a dropdown on desktop and are already expanded in the slide-over navigation. */
+export const openSchedules = async (page: Page) => {
+  if (!isMobile(page)) {
+    await page.getByRole('navigation').getByRole('button', { name: 'Dienstpläne' }).click()
   }
 }
 

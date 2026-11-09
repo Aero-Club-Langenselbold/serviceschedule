@@ -72,23 +72,23 @@ export default defineI18nLocale(async locale => {
         logout: 'Abmelden',
         settings: 'Einstellungen',
         requests: 'Bugs & Wünsche',
+        schedules: 'Dienstpläne',
+        users: 'Benutzer',
+        stopImpersonation: 'Impersonierung beenden',
         language: 'Sprache wählen',
         account: 'Benutzerkonto',
         about: 'About',
         contact: 'Kontakt',
         participants: {
-          menu: 'Teilnehmer',
           list: 'Teilnehmer anzeigen',
           add: 'Teilnehmer hinzufügen',
           import: 'Teilnehmer importieren'
         },
         service: {
-          menu: 'Dienste',
           list: 'Dienste anzeigen',
           add: 'Dienst hinzufügen'
         },
         plan: {
-          menu: 'Dienstpläne',
           usermenu: 'Dienstpläne',
           list: 'Dienstpläne anzeigen',
           add: 'Dienstplan hinzufügen'
@@ -343,7 +343,45 @@ export default defineI18nLocale(async locale => {
           error: 'Fehler beim Erstellen',
           success: 'Bug/Feature erfolgreich erstellt',
         },
-        edit: 'Bearbeiten'
+        edit: 'Bearbeiten',
+        comments: {
+          title: 'Kommentare',
+          empty: 'Noch keine Kommentare',
+          label: 'Neuer Kommentar',
+          placeholder: 'Kommentar schreiben …',
+          submit: 'Kommentieren',
+          error: 'Kommentar konnte nicht gespeichert werden',
+          loadError: 'Kommentare konnten nicht geladen werden',
+          closed: 'Nur offene Einträge können kommentiert werden.',
+          unknownAuthor: 'Unbekannt'
+        }
+      },
+      users: {
+        title: 'Benutzer',
+        description: 'Registrierte Benutzer, ihre Rollen und Rechte. Rollen werden in der Datenbank vergeben.',
+        filter: 'Benutzer suchen',
+        username: 'Benutzername',
+        fullname: 'Teilnehmer',
+        roles: 'Rollen',
+        permissions: 'Rechte',
+        noParticipant: 'Kein Teilnehmer',
+        impersonate: 'Impersonieren',
+        impersonateError: 'Impersonierung fehlgeschlagen',
+        stopImpersonationError: 'Impersonierung konnte nicht beendet werden. Bitte melde dich erneut an.',
+        permissionSuccess: 'Rechte aktualisiert',
+        permissionError: 'Rechte konnten nicht geändert werden',
+        loadError: 'Benutzer konnten nicht geladen werden',
+        impliedByRole: 'Durch die Rolle bereits enthalten',
+        roleNames: {
+          ROLE_USER: 'Benutzer',
+          ROLE_ADMIN: 'Administrator',
+          ROLE_SCHEDULE_ADMIN: 'Dienstplan-Administrator',
+          ROLE_ALARM_ADMIN: 'Alarm-Administrator'
+        },
+        permissionNames: {
+          PERMISSION_SCHEDULE_MANAGE: 'Dienstpläne verwalten',
+          PERMISSION_ALARM_MANAGE: 'Alarmanlage verwalten'
+        }
       },
       error: {
         credentials: 'Ungültige Anmeldeinformationen'

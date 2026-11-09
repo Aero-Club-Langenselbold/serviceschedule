@@ -17,12 +17,43 @@ mockNuxtImport('useAPI', () => {
                             : options.body.username === 'testalarmadmin'
                             ? ['ROLE_ALARM_ADMIN']
                             : ['ROLE_USER'],
+                        permissions: options.body.username === 'testdelegate'
+                            ? ['PERMISSION_SCHEDULE_MANAGE', 'PERMISSION_ALARM_MANAGE']
+                            : [],
                         token: 'testtoken',
                         type: 'Bearer'
                     }
                 },
                 error: {}
             }
+        } else if (url === '/user/failing/impersonate' || url === '/request/failing/comments') {
+            return { data: {}, error: { value: new Error('failed') } }
+        } else if (/^\/user\/[^/]+\/impersonate$/.test(url)) {
+            return {
+                data: { value: { id: url.split('/')[2], username: 'impersonated', roles: ['ROLE_USER'], permissions: [], impersonator: 'testadmin', token: 'impersonationtoken', type: 'Bearer' } },
+                error: {}
+            }
+        } else if (url === '/user/impersonation/stop') {
+            return {
+                data: { value: { id: '1', username: 'testadmin', roles: ['ROLE_ADMIN'], permissions: [], impersonator: null, token: 'admintoken', type: 'Bearer' } },
+                error: {}
+            }
+        } else if (url.startsWith('/user/page')) {
+            return {
+                data: { value: { content: [
+                    { id: 'u1', username: 'anna@example.org', fullname: 'Albers, Anna', roles: ['ROLE_USER'], permissions: ['PERMISSION_ALARM_MANAGE'] },
+                    { id: 'u2', username: 'testadmin', fullname: null, roles: ['ROLE_ADMIN'], permissions: [] }
+                ], totalElements: 2 } },
+                error: {}
+            }
+        } else if (url === '/user/permissions') {
+            return { data: { value: ['PERMISSION_SCHEDULE_MANAGE', 'PERMISSION_ALARM_MANAGE'] }, error: {} }
+        } else if (/^\/user\/[^/]+\/permissions$/.test(url)) {
+            return { data: { value: { permissions: options.body } }, error: {} }
+        } else if (/^\/request\/[^/]+\/comments$/.test(url)) {
+            return options.method === 'POST'
+                ? { data: { value: { id: 'c2', content: options.body.content, createdAt: '2026-11-02T10:00:00Z', author: 'Albers, Anna' } }, error: {} }
+                : { data: { value: [{ id: 'c1', content: 'Tritt bei mir auch auf', createdAt: '2026-11-01T10:00:00Z', author: 'Becker, Ben' }] }, error: {} }
         } else if (url.startsWith('/participant/fetchByMail/')) {
             const username = url.split('/').pop()
             return {

@@ -4,6 +4,8 @@ interface User {
     username: string
     id: string
     roles: string[]
+    permissions?: string[]
+    impersonator?: string | null
 }
 
 interface Session {
@@ -17,6 +19,33 @@ export const useUserStore = defineStore('user', () => {
 
     const isLoggedIn = computed(() => session !== null && session?.value?.token !== undefined)
 
+    const isImpersonating = computed(() => !!user.value?.impersonator)
+
+    const hasRole = (...roles: string[]) => roles.some(role => user.value?.roles?.includes(role))
+    const hasPermission = (permission: string) => !!user.value?.permissions?.includes(permission)
+
+    const canManageSchedule = computed(() => hasRole('ROLE_ADMIN', 'ROLE_SCHEDULE_ADMIN') || hasPermission('PERMISSION_SCHEDULE_MANAGE'))
+    const canManageAlarm = computed(() => hasRole('ROLE_ADMIN', 'ROLE_ALARM_ADMIN') || hasPermission('PERMISSION_ALARM_MANAGE'))
+
+    function storeAuthentication(data: User & Session) {
+        user.value = {
+            username: data.username,
+            id: data.id,
+            roles: data.roles,
+            permissions: data.permissions ?? [],
+            impersonator: data.impersonator ?? null
+        }
+        session.value = {
+            token: data.token,
+            type: data.type
+        }
+
+        if (import.meta.client) {
+            localStorage.setItem('user', JSON.stringify(user.value))
+            localStorage.setItem('session', JSON.stringify(session.value))
+        }
+    }
+
     async function login(credentials: { username: string | number, password: string | number}) {
         const response = await useAPI('/auth/signin', { method: 'POST', body: credentials })
 
@@ -24,21 +53,27 @@ export const useUserStore = defineStore('user', () => {
             throw new Error('Invalid credentials')
         }
 
-        // store data
-        user.value = {
-            username: (response.data.value as User).username,
-            id: (response.data.value as User).id,
-            roles: (response.data.value as User).roles
-        }
-        session.value = {
-            token: (response.data.value as Session).token,
-            type: (response.data.value as Session).type
+        storeAuthentication(response.data.value as User & Session)
+    }
+
+    async function impersonate(id: string) {
+        const response = await useAPI(`/user/${id}/impersonate`, { method: 'POST' })
+
+        if (response.error?.value) {
+            throw new Error('Impersonation failed')
         }
 
-        if (import.meta.client) {
-            localStorage.setItem('user', JSON.stringify(user.value))
-            localStorage.setItem('session', JSON.stringify(session.value))
+        storeAuthentication(response.data.value as User & Session)
+    }
+
+    async function stopImpersonation() {
+        const response = await useAPI('/user/impersonation/stop', { method: 'POST' })
+
+        if (response.error?.value) {
+            throw new Error('Could not leave impersonation')
         }
+
+        storeAuthentication(response.data.value as User & Session)
     }
 
     async function validate() {
@@ -62,5 +97,5 @@ export const useUserStore = defineStore('user', () => {
         session.value = null
     }
 
-    return { user, session, isLoggedIn, login, logout, validate }
+    return { user, session, isLoggedIn, isImpersonating, canManageSchedule, canManageAlarm, hasRole, hasPermission, login, impersonate, stopImpersonation, logout, validate }
 })

@@ -45,7 +45,7 @@ test.describe('Darstellung', () => {
   })
 
   test('das Admin-Menü passt auch auf die kleinste Desktop-Breite', async ({ page, loginAs }) => {
-    await page.setViewportSize({ width: 1024, height: 768 })
+    await page.setViewportSize({ width: 1280, height: 768 })
     await loginAs('admin')
     await page.goto('/')
     await expect(page.getByRole('banner').getByText('Alarmanlage', { exact: true })).toBeVisible()

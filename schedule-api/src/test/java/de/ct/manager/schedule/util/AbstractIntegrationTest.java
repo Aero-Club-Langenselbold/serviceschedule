@@ -30,7 +30,7 @@ import de.ct.manager.schedule.user.UserRole;
 })
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Sql(scripts = "classpath:scripts/test-users.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS)
-@Sql(statements = {"DELETE FROM auth_user_roles", "DELETE FROM auth_user", "DELETE FROM auth_role"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_CLASS)
+@Sql(statements = {"DELETE FROM request_comment", "DELETE FROM auth_user_permissions", "DELETE FROM auth_user_roles", "DELETE FROM auth_user", "DELETE FROM auth_role"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_CLASS)
 public abstract class AbstractIntegrationTest {
 
     @LocalServerPort

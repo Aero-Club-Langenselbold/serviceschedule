@@ -33,11 +33,17 @@
       </UModal>
     </template>
 
-    <DataTable v-model:expanded="expanded" :data="listData?.content" :columns="columns">
-      <template #expanded="{ row }">
-        <p class="whitespace-pre-line rounded-lg bg-muted p-3 text-sm text-default md:mx-2">{{ row.original.description }}</p>
-      </template>
-    </DataTable>
+    <div class="@container">
+      <DataTable v-model:expanded="expanded" :data="listData?.content" :columns="columns">
+        <template #expanded="{ row }">
+          <!-- The table can be wider than its scroll area, the details stay within the visible part. -->
+          <div class="[overflow-wrap:anywhere] max-md:w-[calc(100cqw-2.125rem)] md:sticky md:left-4 md:w-[calc(100cqw-2.5rem)]">
+            <p class="whitespace-pre-line rounded-lg bg-muted p-3 text-sm text-default md:mx-2">{{ row.original.description }}</p>
+            <RequestComments :request-id="row.original.id" :status="row.original.status" />
+          </div>
+        </template>
+      </DataTable>
+    </div>
     <div class="mt-4 flex justify-center">
       <UPagination v-model:page="page" :sibling-count="1" :items-per-page="pageSize" :total="listData?.totalElements" @update:page="fetchData" />
     </div>
@@ -163,7 +169,7 @@ const columns = computed<TableColumn<Request>[]>(() => [
   }, {
     accessorKey: 'headline',
     header: t('request.headline'),
-    meta: { cardTitle: true, class: { td: 'font-medium text-highlighted' } },
+    meta: { cardTitle: true, class: { td: 'font-medium text-highlighted whitespace-normal' } },
     cell: ({ row }) => row.getValue('headline')
   }, {
     accessorKey: 'createdAt',

@@ -10,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import de.ct.manager.schedule.user.UserDetailsImpl;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
@@ -21,19 +22,36 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 public class JwtUtils {
+    private static final String IMPERSONATOR_CLAIM = "impersonator";
+
     @Value("${app.jwtSecret}")
     private String jwtSecret;
 
     @Value("${app.jwtExpirationMs}")
     private int jwtExpirationMs;
 
-    public String generateJwtToken(Authentication authentication) {
-        UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
+    @Value("${app.jwtImpersonationExpirationMs:3600000}")
+    private int jwtImpersonationExpirationMs;
 
+    public String generateJwtToken(Authentication authentication) {
+        return generateJwtToken((UserDetailsImpl) authentication.getPrincipal());
+    }
+
+    public String generateJwtToken(UserDetailsImpl userPrincipal) {
         return Jwts.builder()
                 .subject(userPrincipal.getUsername())
                 .issuedAt(new Date())
                 .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
+                .signWith(getSecretKey())
+                .compact();
+    }
+
+    public String generateImpersonationToken(UserDetailsImpl target, String impersonator) {
+        return Jwts.builder()
+                .subject(target.getUsername())
+                .claim(IMPERSONATOR_CLAIM, impersonator)
+                .issuedAt(new Date())
+                .expiration(new Date((new Date()).getTime() + jwtImpersonationExpirationMs))
                 .signWith(getSecretKey())
                 .compact();
     }
@@ -43,12 +61,19 @@ public class JwtUtils {
     }
 
     public String getUserNameFromJwtToken(String token) {
+        return parseClaims(token).getSubject();
+    }
+
+    public String getImpersonatorFromJwtToken(String token) {
+        return parseClaims(token).get(IMPERSONATOR_CLAIM, String.class);
+    }
+
+    private Claims parseClaims(String token) {
         return Jwts.parser()
                 .verifyWith((SecretKey) getSecretKey())
                 .build()
                 .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+                .getPayload();
     }
 
     public boolean validateJwtToken(String authToken) {

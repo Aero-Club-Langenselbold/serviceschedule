@@ -1,5 +1,7 @@
 package de.ct.manager.schedule.participant;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -10,6 +12,8 @@ import org.springframework.data.jpa.repository.Query;
 public interface ParticipantRepository extends JpaRepository<Participant, String> {
 
     Optional<Participant> findByEmail(String email);
+
+    List<Participant> findAllByEmailIn(Collection<String> emails);
 
     @Query("SELECT p FROM Participant p WHERE "
             + "LOWER(p.firstname) LIKE LOWER(CONCAT('%', :search, '%')) OR "

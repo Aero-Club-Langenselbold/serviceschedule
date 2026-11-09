@@ -11,7 +11,14 @@ export const useFeatureStore = defineStore('features', () => {
 
   async function fetchFeatures() {
     const response = await useAPI('/featureflag/active', { method: 'GET' })
-    features.value = response.data.value as Feature[]
+    const fetched = response.data.value
+
+    // A failed request has no data: keep the last known flags instead of storing "undefined".
+    if (!Array.isArray(fetched)) {
+      return
+    }
+
+    features.value = fetched as Feature[]
 
     if (import.meta.client) {
       localStorage.setItem('features', JSON.stringify(features.value))
@@ -20,12 +27,23 @@ export const useFeatureStore = defineStore('features', () => {
 
   async function validateFeatures() {
     if (import.meta.client) {
-        const storedFeatures = localStorage.getItem('features')
-        if (storedFeatures) {
-          features.value = JSON.parse(storedFeatures)
+      const storedFeatures = localStorage.getItem('features')
+      if (!storedFeatures) {
+        return
+      }
+
+      try {
+        const parsed = JSON.parse(storedFeatures)
+        if (Array.isArray(parsed)) {
+          features.value = parsed
+          return
         }
+      } catch {
+        // handled below: older versions could store the text "undefined"
+      }
+      localStorage.removeItem('features')
     }
-}
+  }
 
   return { features, fetchFeatures, validateFeatures }
 })

@@ -7,8 +7,12 @@ import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 
 import de.ct.manager.schedule.util.AbstractPersistentEntity;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -37,6 +41,13 @@ public class User extends AbstractPersistentEntity {
     )
     @NotAudited
     private Set<Role> roles = new HashSet<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "auth_user_permissions", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "permission", length = 50, nullable = false)
+    @Enumerated(EnumType.STRING)
+    @NotAudited
+    private Set<UserPermission> permissions = new HashSet<>();
 
     @Column(length = 50, unique = true)
     @NotBlank

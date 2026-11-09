@@ -72,23 +72,23 @@ export default defineI18nLocale(async locale => {
         logout: 'Log out',
         settings: 'Settings',
         requests: 'Bugs & requests',
+        schedules: 'Service Plans',
+        users: 'Users',
+        stopImpersonation: 'Stop impersonating',
         language: 'Choose language',
         account: 'Account',
         about: 'About',
         contact: 'Contact',
         participants: {
-          menu: 'Participants',
           list: 'Show Participants',
           add: 'Add Particpant',
           import: 'Import Participants'
         },
         service: {
-          menu: 'Services',
           list: 'Show Services',
           add: 'Add Service'
         },
         plan: {
-          menu: 'Service Plans',
           usermenu: 'Service Plans',
           list: 'Show Service Plans',
           add: 'Add Service Plan'
@@ -343,7 +343,45 @@ export default defineI18nLocale(async locale => {
           error: 'Error creating',
           success: 'Bug/Feature created successfully',
         },
-        edit: 'Edit'
+        edit: 'Edit',
+        comments: {
+          title: 'Comments',
+          empty: 'No comments yet',
+          label: 'New comment',
+          placeholder: 'Write a comment …',
+          submit: 'Comment',
+          error: 'Could not save the comment',
+          loadError: 'Could not load the comments',
+          closed: 'Only open entries can be commented on.',
+          unknownAuthor: 'Unknown'
+        }
+      },
+      users: {
+        title: 'Users',
+        description: 'Registered users with their roles and rights. Roles are assigned in the database.',
+        filter: 'Search users',
+        username: 'Username',
+        fullname: 'Participant',
+        roles: 'Roles',
+        permissions: 'Rights',
+        noParticipant: 'No participant',
+        impersonate: 'Impersonate',
+        impersonateError: 'Impersonation failed',
+        stopImpersonationError: 'Could not stop impersonating. Please log in again.',
+        permissionSuccess: 'Rights updated',
+        permissionError: 'Could not change the rights',
+        loadError: 'Could not load the users',
+        impliedByRole: 'Already included in the role',
+        roleNames: {
+          ROLE_USER: 'User',
+          ROLE_ADMIN: 'Administrator',
+          ROLE_SCHEDULE_ADMIN: 'Schedule administrator',
+          ROLE_ALARM_ADMIN: 'Alarm administrator'
+        },
+        permissionNames: {
+          PERMISSION_SCHEDULE_MANAGE: 'Manage service plans',
+          PERMISSION_ALARM_MANAGE: 'Manage alarm system'
+        }
       },
       error: {
         credentials: 'Invalid credentials'

@@ -1,15 +1,15 @@
 import type { Page } from '@playwright/test'
-import { expect, expectPath, openAccountMenu, openNavigation, test } from './support/test'
+import { expect, expectPath, openAccountMenu, openNavigation, openSchedules, test } from './support/test'
 import type { Role } from './support/mock-api'
 
 const nav = (page: Page) => page.locator('nav, [role="dialog"]')
 
 test.describe('Rollen und Menü', () => {
   const visibility: [Role, string[], string[]][] = [
-    ['admin', ['Teilnehmer', 'Dienste', 'Dienstpläne', 'Alarmanlage'], []],
-    ['schedule', ['Teilnehmer', 'Dienste', 'Dienstpläne'], ['Alarmanlage']],
-    ['alarm', ['Alarmanlage'], ['Teilnehmer', 'Dienste']],
-    ['user', ['Dienstpläne'], ['Teilnehmer', 'Dienste', 'Alarmanlage']],
+    ['admin', ['Dienstpläne', 'Alarmanlage', 'Bugs & Wünsche', 'Einstellungen', 'Benutzer'], []],
+    ['schedule', ['Dienstpläne', 'Bugs & Wünsche'], ['Alarmanlage', 'Einstellungen', 'Benutzer']],
+    ['alarm', ['Alarmanlage', 'Bugs & Wünsche'], ['Dienstpläne', 'Einstellungen', 'Benutzer']],
+    ['user', ['Dienstpläne', 'Bugs & Wünsche'], ['Alarmanlage', 'Einstellungen', 'Benutzer']],
   ]
 
   for (const [role, shown, hidden] of visibility) {
@@ -40,6 +40,13 @@ test.describe('Rollen und Menü', () => {
     ['admin', '/settings', true],
     ['user', '/plan/list', true],
     ['user', '/request/list', true],
+    ['user', '/users/list', false],
+    ['schedule', '/users/list', false],
+    ['delegate', '/users/list', false],
+    ['admin', '/users/list', true],
+    // Rights open a module without a matching role
+    ['delegate', '/participants/list', true],
+    ['delegate', '/alarm/list', false],
   ]
 
   for (const [role, path, allowed] of guarded) {
@@ -65,21 +72,13 @@ test.describe('Benutzermenü', () => {
     await expect(page.getByRole('menu').getByText('user@example.org')).toBeVisible()
   })
 
-  test('führt Administratoren zu den Einstellungen', async ({ page, loginAs }) => {
+  test('enthält weder Einstellungen noch Bug-Liste', async ({ page, loginAs }) => {
     await loginAs('admin')
     await page.goto('/')
     await openAccountMenu(page)
-    await page.getByRole('menuitem', { name: 'Einstellungen' }).click()
-    await expectPath(page, '/settings')
-  })
-
-  test('zeigt Benutzern keine Einstellungen, aber die Bug-Liste', async ({ page, loginAs }) => {
-    await loginAs('user')
-    await page.goto('/')
-    await openAccountMenu(page)
+    await expect(page.getByRole('menuitem', { name: 'Abmelden' })).toBeVisible()
     await expect(page.getByRole('menuitem', { name: 'Einstellungen' })).toHaveCount(0)
-    await page.getByRole('menuitem', { name: 'Bugs & Wünsche' }).click()
-    await expectPath(page, '/request/list')
+    await expect(page.getByRole('menuitem', { name: 'Bugs & Wünsche' })).toHaveCount(0)
   })
 })
 
@@ -88,9 +87,60 @@ test.describe('Hauptmenü', () => {
     await loginAs('schedule')
     await page.goto('/')
     await openNavigation(page)
-    await page.getByText('Teilnehmer', { exact: true }).locator('visible=true').first().click()
-    await page.getByRole('link', { name: 'Teilnehmer anzeigen' }).locator('visible=true').first().click()
+    await openSchedules(page)
+    await nav(page).getByRole('link', { name: 'Teilnehmer anzeigen' }).locator('visible=true').first().click()
     await expectPath(page, '/participants/list')
+  })
+
+  const scheduleEntries: [Role, string[], string[]][] = [
+    ['admin', ['Teilnehmer anzeigen', 'Dienste anzeigen', 'Dienstpläne anzeigen', 'Dienstplan hinzufügen'], []],
+    ['schedule', ['Teilnehmer anzeigen', 'Dienste anzeigen', 'Dienstpläne anzeigen'], []],
+    ['delegate', ['Teilnehmer anzeigen', 'Dienste anzeigen'], []],
+    ['user', ['Dienstpläne anzeigen'], ['Teilnehmer anzeigen', 'Dienste anzeigen', 'Dienstplan hinzufügen']],
+  ]
+
+  for (const [role, shown, hidden] of scheduleEntries) {
+    test(`fasst die Seiten für ${role} unter Dienstpläne zusammen`, async ({ page, loginAs }) => {
+      await loginAs(role)
+      await page.goto('/')
+      await openNavigation(page)
+      await openSchedules(page)
+      for (const label of shown) {
+        await expect(nav(page).getByRole('link', { name: label, exact: true }).locator('visible=true').first()).toBeVisible()
+      }
+      for (const label of hidden) {
+        await expect(nav(page).getByRole('link', { name: label, exact: true }).locator('visible=true')).toHaveCount(0)
+      }
+    })
+  }
+
+  for (const [width, language] of [[1024, 'de'], [1279, 'de'], [1280, 'de'], [1280, 'en'], [1536, 'de']] as const) {
+    test(`passt bei ${width} px auf ${language} in die Seitenbreite`, async ({ page, loginAs }) => {
+      await loginAs('admin')
+      await page.addInitScript(locale => localStorage.setItem('locale', locale), language)
+      await page.setViewportSize({ width, height: 800 })
+      await page.goto('/')
+      await expect(page.getByRole('button', { name: /Benutzerkonto|Account/ })).toBeVisible()
+
+      const { scroll, client } = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }))
+      expect(scroll).toBeLessThanOrEqual(client)
+    })
+  }
+
+  test('führt Administratoren direkt zu den Einstellungen', async ({ page, loginAs }) => {
+    await loginAs('admin')
+    await page.goto('/')
+    await openNavigation(page)
+    await nav(page).getByRole('link', { name: 'Einstellungen', exact: true }).locator('visible=true').first().click()
+    await expectPath(page, '/settings')
+  })
+
+  test('führt Benutzer direkt zur Bug-Liste', async ({ page, loginAs }) => {
+    await loginAs('user')
+    await page.goto('/')
+    await openNavigation(page)
+    await nav(page).getByRole('link', { name: 'Bugs & Wünsche', exact: true }).locator('visible=true').first().click()
+    await expectPath(page, '/request/list')
   })
 
   test('führt über die Kacheln der Startseite zu den Dienstplänen', async ({ page, loginAs }) => {

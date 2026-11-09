@@ -19,7 +19,8 @@
 import type { Participant } from '~/types/participant'
 
 const userStore = useUserStore()
-const { user } = storeToRefs(userStore)
+const { user, canManageSchedule, canManageAlarm } = storeToRefs(userStore)
+const { hasRole } = userStore
 const { t } = useI18n()
 const userData = ref<Participant | null>({
   id: '',
@@ -38,19 +39,21 @@ definePageMeta({
     middleware: ['authenticated']
 })
 
-const hasRole = (...roles: string[]) => roles.some(role => user.value?.roles.includes(role))
 const tiles = computed(() => [
-  ...(hasRole('ROLE_ADMIN', 'ROLE_SCHEDULE_ADMIN') ? [
+  ...(canManageSchedule.value ? [
     { label: t('nav.participants.list'), icon: 'i-lucide-users', to: '/participants/list' },
     { label: t('nav.service.list'), icon: 'i-lucide-briefcase', to: '/service/list' }
   ] : []),
-  ...(hasRole('ROLE_ADMIN', 'ROLE_SCHEDULE_ADMIN', 'ROLE_USER') ? [
+  ...(canManageSchedule.value || hasRole('ROLE_USER') ? [
     { label: t('nav.plan.usermenu'), icon: 'i-lucide-calendar-days', to: '/plan/list' }
   ] : []),
-  ...(hasRole('ROLE_ADMIN', 'ROLE_ALARM_ADMIN') ? [
+  ...(canManageAlarm.value ? [
     { label: t('nav.alarms.list'), icon: 'i-lucide-bell', to: '/alarm/list' }
   ] : []),
-  { label: t('nav.requests'), icon: 'i-lucide-bug', to: '/request/list' }
+  { label: t('nav.requests'), icon: 'i-lucide-bug', to: '/request/list' },
+  ...(hasRole('ROLE_ADMIN') ? [
+    { label: t('nav.users'), icon: 'i-lucide-user-cog', to: '/users/list' }
+  ] : [])
 ])
 
 // see who we got here

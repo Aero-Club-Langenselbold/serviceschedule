@@ -1,0 +1,3 @@
+# Build context of Dockerfile-nginx: the UI itself is bind-mounted, the image only needs the nginx config.
+*
+!nginx.conf

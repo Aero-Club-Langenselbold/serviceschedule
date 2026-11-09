@@ -1,8 +1,5 @@
 package de.ct.manager.schedule.authentication;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.ff4j.FF4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -82,14 +79,8 @@ public class AuthController {
         String jwt = jwtUtils.generateJwtToken(authentication);
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        List<String> roles = userDetails.getAuthorities().stream()
-            .map(item -> item.getAuthority())
-            .collect(Collectors.toList());
 
-        return ResponseEntity.ok(new JwtResponse(jwt, "Bearer",
-                                                userDetails.getId(),
-                                                userDetails.getUsername(),
-                                                roles));
+        return ResponseEntity.ok(JwtResponse.of(jwt, userDetails, null));
     }
 
     @PostMapping("/signup")

@@ -14,14 +14,19 @@ const ROLES: Record<string, string[]> = {
   'alarm@example.org': ['ROLE_ALARM_ADMIN'],
   'user@example.org': ['ROLE_USER'],
   'nobody@example.org': ['ROLE_USER'],
+  'delegate@example.org': ['ROLE_USER'],
 }
 
-export type Role = 'admin' | 'schedule' | 'alarm' | 'user' | 'nobody'
+const PERMISSIONS: Record<string, string[]> = {
+  'delegate@example.org': ['PERMISSION_SCHEDULE_MANAGE'],
+}
+
+export type Role = 'admin' | 'schedule' | 'alarm' | 'user' | 'nobody' | 'delegate'
 
 export const sessionFor = (role: Role) => {
   const username = `${role}@example.org`
   return {
-    user: { id: `u-${role}`, username, roles: ROLES[username] },
+    user: { id: `u-${role}`, username, roles: ROLES[username], permissions: PERMISSIONS[username] ?? [] },
     session: { token: `token-${role}`, type: 'Bearer' },
   }
 }
@@ -110,6 +115,15 @@ function createState() {
       { settingKey: 'security_feature_question', settingValue: 'Lieblingsfarbe?' },
     ],
     selectedState: { country: { id: 'de' }, state: { id: 'be' } },
+    users: [
+      { id: 'u-admin', username: 'admin@example.org', fullname: null, roles: ['ROLE_ADMIN'], permissions: [] },
+      { id: 'u-schedule', username: 'schedule@example.org', fullname: null, roles: ['ROLE_SCHEDULE_ADMIN'], permissions: [] },
+      { id: 'u-user', username: 'user@example.org', fullname: 'User, Uta', roles: ['ROLE_USER'], permissions: ['PERMISSION_ALARM_MANAGE'] },
+      { id: 'u-ben', username: 'ben@example.org', fullname: 'Becker, Ben', roles: ['ROLE_USER'], permissions: [] },
+    ] as any[],
+    comments: {
+      r1: [{ id: 'c1', content: 'Tritt bei mir auch auf.', createdAt: time('2026-11-03', '09:30'), author: 'Becker, Ben' }],
+    } as Record<string, any[]>,
   }
 }
 
@@ -285,6 +299,35 @@ export class MockApi {
       if (index >= 0) s.requests[index] = saved
       else s.requests.push(saved)
       return saved
+    }
+
+    if ((m = path.match(/^\/request\/([^/]+)\/comments$/))) {
+      const comments = s.comments[m[1]!] ??= []
+      if (method === 'GET') return comments
+      const saved = { id: `c${Date.now()}`, content: body.content, createdAt: time('2026-11-05', '10:00'), author: 'User, Uta' }
+      comments.push(saved)
+      return saved
+    }
+
+    // users
+    if (key === 'GET /user/permissions') return ['PERMISSION_SCHEDULE_MANAGE', 'PERMISSION_ALARM_MANAGE']
+    if (key === 'GET /user/page') {
+      const search = (query.get('search') ?? '').toLowerCase()
+      return page_(s.users.filter(u => `${u.username} ${u.fullname}`.toLowerCase().includes(search)), query)
+    }
+    if ((m = path.match(/^\/user\/([^/]+)\/permissions$/)) && method === 'PUT') {
+      const target = s.users.find(u => u.id === m![1])
+      if (!target) return new HttpError(404)
+      target.permissions = body
+      return target
+    }
+    if ((m = path.match(/^\/user\/([^/]+)\/impersonate$/)) && method === 'POST') {
+      const target = s.users.find(u => u.id === m![1])
+      if (!target) return new HttpError(404)
+      return { id: target.id, username: target.username, roles: target.roles, permissions: target.permissions, impersonator: 'admin@example.org', token: 'token-impersonated', type: 'Bearer' }
+    }
+    if (key === 'POST /user/impersonation/stop') {
+      return { id: 'u-admin', username: 'admin@example.org', roles: ['ROLE_ADMIN'], permissions: [], impersonator: null, token: 'token-admin', type: 'Bearer' }
     }
 
     // alarm system

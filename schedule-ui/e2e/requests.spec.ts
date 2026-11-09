@@ -24,6 +24,72 @@ test.describe('Bug- und Feature-Liste', () => {
     await expect(page.getByText('Der Kalender reagiert nicht.')).toBeVisible()
   })
 
+  test('zeigt Kommentare und ergänzt einen neuen', async ({ page, api, loginAs }) => {
+    await loginAs('user')
+    await page.goto('/request/list')
+
+    await row(page, 'Kalender hakt').getByRole('button', { name: 'Details ein-/ausblenden' }).locator('visible=true').click()
+    await expect(page.getByText('Tritt bei mir auch auf.')).toBeVisible()
+    await expect(page.getByText(/Becker, Ben · 03\.11\.2026/)).toBeVisible()
+
+    const submit = page.getByRole('button', { name: 'Kommentieren' })
+    await expect(submit).toBeDisabled()
+    await page.getByRole('textbox', { name: 'Neuer Kommentar' }).fill('Bei mir hilft ein Neuladen.')
+    await submit.click()
+
+    await expect(page.getByText('Bei mir hilft ein Neuladen.')).toBeVisible()
+    await expect(page.getByRole('textbox', { name: 'Neuer Kommentar' })).toHaveValue('')
+    expect(api.sent('POST', '/request/r1/comments')[0]!.body).toEqual({ content: 'Bei mir hilft ein Neuladen.' })
+  })
+
+  test('hält den Kommentarbereich bei langen Texten innerhalb der Tabelle', async ({ page, api, loginAs }) => {
+    await loginAs('user')
+    api.state.requests[0]!.headline = 'Kalender hakt ' + 'beim Wechsel zwischen den Monaten '.repeat(5)
+    api.state.requests[0]!.description = 'x'.repeat(600)
+    await page.goto('/request/list')
+
+    await row(page, 'Kalender hakt').getByRole('button', { name: 'Details ein-/ausblenden' }).locator('visible=true').click()
+    const submit = page.getByRole('button', { name: 'Kommentieren' })
+    await expect(submit).toBeVisible()
+
+    const horizontal = async (element: { boundingBox: () => Promise<{ x: number, width: number } | null> }) => {
+      const box = (await element.boundingBox())!
+      return { left: box.x, right: box.x + box.width }
+    }
+    const area = await horizontal(page.locator('table').locator('..'))
+    const textbox = await horizontal(page.getByRole('textbox', { name: 'Neuer Kommentar' }))
+    expect(textbox.right - textbox.left).toBeGreaterThan((area.right - area.left) * 0.8)
+    for (const element of [submit, page.getByRole('textbox', { name: 'Neuer Kommentar' }), page.getByText('xxxx')]) {
+      const { left, right } = await horizontal(element)
+      expect(left).toBeGreaterThanOrEqual(area.left)
+      expect(right).toBeLessThanOrEqual(area.right)
+    }
+  })
+
+  test('erlaubt keine Kommentare zu geschlossenen Einträgen', async ({ page, api, loginAs }) => {
+    await loginAs('user')
+    api.state.requests[0]!.status = 'CLOSED'
+    await page.goto('/request/list')
+
+    await row(page, 'Kalender hakt').getByRole('button', { name: 'Details ein-/ausblenden' }).locator('visible=true').click()
+    await expect(page.getByText('Tritt bei mir auch auf.')).toBeVisible()
+    await expect(page.getByText('Nur offene Einträge können kommentiert werden.')).toBeVisible()
+    await expect(page.getByRole('textbox', { name: 'Neuer Kommentar' })).toHaveCount(0)
+  })
+
+  test('meldet Fehler beim Kommentieren und behält den Text', async ({ page, api, loginAs }) => {
+    await loginAs('user')
+    api.fail('POST', /^\/request\/r1\/comments$/)
+    await page.goto('/request/list')
+
+    await row(page, 'Kalender hakt').getByRole('button', { name: 'Details ein-/ausblenden' }).locator('visible=true').click()
+    await page.getByRole('textbox', { name: 'Neuer Kommentar' }).fill('Geht nicht')
+    await page.getByRole('button', { name: 'Kommentieren' }).click()
+
+    await expect(toast(page, 'Kommentar konnte nicht gespeichert werden')).toBeVisible()
+    await expect(page.getByRole('textbox', { name: 'Neuer Kommentar' })).toHaveValue('Geht nicht')
+  })
+
   test('legt einen neuen Eintrag an', async ({ page, api, loginAs }) => {
     await loginAs('user')
     await page.goto('/request/list')

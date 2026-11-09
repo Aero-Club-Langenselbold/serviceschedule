@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:latest
+    image: postgres:17
     ports:
       - 5432:5432
     environment:
@@ -24,6 +24,7 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - CORS_ALLOWEDORIGINS
     depends_on:
       db:
         condition: service_healthy
@@ -40,3 +41,6 @@ services:
       - "8443:443"
     volumes:
       - ./schedule-ui/.output/public:/usr/share/nginx/html:ro
+
+volumes:
+  postgres-data:

@@ -14,6 +14,8 @@ import org.springframework.core.annotation.Order;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
@@ -72,6 +74,17 @@ public class WebSecurityConfig {
     @Order(Ordered.HIGHEST_PRECEDENCE)
     public CorsFilter corsFilter() {
         return new CorsFilter(corsConfigurationSource());
+    }
+
+    // A right unlocks everything the role of that module may do, administrators hold all rights.
+    @Bean
+    static RoleHierarchy roleHierarchy() {
+        return RoleHierarchyImpl.fromHierarchy("""
+            ROLE_ADMIN > PERMISSION_SCHEDULE_MANAGE
+            ROLE_ADMIN > PERMISSION_ALARM_MANAGE
+            PERMISSION_SCHEDULE_MANAGE > ROLE_SCHEDULE_ADMIN
+            PERMISSION_ALARM_MANAGE > ROLE_ALARM_ADMIN
+            """);
     }
 
     @Bean
