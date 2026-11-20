@@ -1,7 +1,6 @@
 package de.ct.manager.schedule.maintenance;
 
 import java.time.Instant;
-import java.time.LocalDate;
 
 import de.ct.manager.schedule.util.AbstractPersistentEntity;
 import jakarta.persistence.Column;
@@ -10,7 +9,7 @@ import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-/** An aircraft (or any other object) that is maintained during the workshop period. */
+/** An aircraft (or any other object) that is maintained in the workshop; its workshop periods are {@link MaintenanceWorkshopSlot}s. */
 @Entity
 @Table(name = "maintenance_aircraft")
 @Data
@@ -22,12 +21,6 @@ public class MaintenanceAircraft extends AbstractPersistentEntity {
 
     @Column(length = 20, nullable = false, unique = true)
     private String registration;
-
-    @Column
-    private LocalDate workshopStart;
-
-    @Column
-    private LocalDate workshopEnd;
 
     @Column(nullable = false)
     private Instant createdAt = Instant.now();

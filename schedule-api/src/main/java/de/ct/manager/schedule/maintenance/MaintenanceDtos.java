@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
 /** Request and response bodies of the maintenance API. Entities never leave the service layer. */
@@ -25,21 +26,34 @@ public final class MaintenanceDtos {
 
     public record AircraftRequest(
             @NotBlank @Size(max = 100) String type,
-            @NotBlank @Size(max = 20) String registration,
-            LocalDate workshopStart,
-            LocalDate workshopEnd) {
+            @NotBlank @Size(max = 20) String registration) {
     }
 
     public record AircraftResponse(
             String id,
             String type,
             String registration,
-            LocalDate workshopStart,
-            LocalDate workshopEnd,
+            /** The current workshop period or else the next one, null if none is planned. */
+            WorkshopSlotResponse workshop,
             long taskCount,
             long doneCount,
             long signedCount,
+            /** Checklist steps of all tasks (a task without checklist is one step) – drives the progress in the schedule. */
+            long stepCount,
+            long stepDoneCount,
             long openDefectCount) {
+    }
+
+    // --- workshop schedule
+
+    public record WorkshopSlotRequest(
+            @NotBlank @Size(max = 36) String aircraftId,
+            @NotNull LocalDate startDate,
+            @NotNull LocalDate endDate,
+            @Size(max = 255) String note) {
+    }
+
+    public record WorkshopSlotResponse(String id, String aircraftId, LocalDate startDate, LocalDate endDate, String note) {
     }
 
     public record ImportResponse(int created) {
@@ -168,5 +182,39 @@ public final class MaintenanceDtos {
             Instant doneAt,
             TaskRef task,
             boolean editable) {
+    }
+
+    // --- inventory
+
+    public record InventoryItemRequest(
+            @NotBlank @Size(max = 255) String name,
+            @NotNull InventoryKind kind,
+            @Size(max = 255) String location,
+            @NotNull InventoryCounting counting,
+            @PositiveOrZero @Max(1_000_000) Integer quantity,
+            @PositiveOrZero @Max(1_000_000) Integer minQuantity,
+            @Size(max = 30) String unit,
+            @Size(max = 5000) String comment,
+            Set<@NotBlank @Size(max = 100) String> aircraftTypes) {
+    }
+
+    public record InventoryQuantityRequest(@NotNull @PositiveOrZero @Max(1_000_000) Integer quantity) {
+    }
+
+    public record InventoryItemResponse(
+            String id,
+            String name,
+            InventoryKind kind,
+            String location,
+            InventoryCounting counting,
+            int quantity,
+            Integer minQuantity,
+            String unit,
+            String comment,
+            List<String> aircraftTypes,
+            InventoryStockStatus status) {
+    }
+
+    public record InventoryHistoryResponse(String id, InventoryHistoryAction action, Integer quantity, Person actor, Instant createdAt) {
     }
 }

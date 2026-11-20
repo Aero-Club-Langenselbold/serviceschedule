@@ -56,9 +56,9 @@ Run the backend tests when `schedule-api` changed and `pnpm test` when `schedule
 
 ## Maintenance module
 
-Backend `schedule-api/.../maintenance/`, migration `V3.2__maintenance.sql`, frontend `pages/maintenance/`, `components/maintenance/`, `composables/useMaintenance.ts`, `types/maintenance.ts`. API under `/api/v1/maintenance`.
+Backend `schedule-api/.../maintenance/`, migrations `V3.2__maintenance.sql` and `V3.4__maintenance_workshop_schedule_inventory.sql`, frontend `pages/maintenance/`, `components/maintenance/`, `composables/useMaintenance.ts`, `types/maintenance.ts`. API under `/api/v1/maintenance`.
 
-Tables: `maintenance_aircraft` → `maintenance_task` (+ `_checklist_item`, `_note`, `_history`) and `maintenance_defect`; `maintenance_template` (+ `_aircraft_type`, `_checklist_item`). Deleting an aircraft cascades to its tasks and defects; deleting a template or defect only unlinks tasks; deleting a user keeps the records (`SET NULL`).
+Tables: `maintenance_aircraft` → `maintenance_task` (+ `_checklist_item`, `_note`, `_history`), `maintenance_defect` and `maintenance_workshop_slot`; `maintenance_template` (+ `_aircraft_type`, `_checklist_item`); `maintenance_inventory_item` (+ `_aircraft_type`) → `maintenance_inventory_history`. Deleting an aircraft cascades to its tasks, defects and workshop periods; deleting a template or defect only unlinks tasks; deleting a user keeps the records (`SET NULL`).
 
 Rules (enforced in `MaintenanceTaskService` / `MaintenanceDefectService`):
 
@@ -72,7 +72,17 @@ Rules (enforced in `MaintenanceTaskService` / `MaintenanceDefectService`):
 - A task resolves at most one defect of the same aircraft, a defect is linked to at most one task.
 - People are returned as `{ id, name }`, name = participant full name if one exists for the username, else the username.
 
-Not ported from vereins-wartung (possible follow-ups): seasons/archive, workshop calendar with leads per day, documents and file/photo uploads, deadlines and the Vereinsflieger sync, inventory and orders, FAQ, offline sync.
+Workshop schedule (`/maintenance/workshop`, page `pages/maintenance/schedule.vue`, Gantt chart):
+
+- Aircraft have no workshop period of their own. Maintenance administrators plan periods (`maintenance_workshop_slot`, dates inclusive) – an aircraft any number of times, periods of different aircraft may overlap, periods of the same aircraft must not (`409`). Everybody sees the chart.
+- `AircraftResponse.workshop` is the period running today or else the next one; `stepCount`/`stepDoneCount` are the checklist steps of all tasks of the aircraft (a task without checklist counts as one step, done when the task is `DONE`). The chart shows this progress on that period and in the row header, because tasks belong to the aircraft, not to a period.
+
+Inventory (`/maintenance/inventory`, page `pages/maintenance/inventory.vue`), modelled on the "Inventur" of vereins-wartung:
+
+- Items are consumables or spare parts (spare parts list the aircraft types they fit, none = all), counted as `COUNT` (units, optional unit and minimum stock) or `LEVEL` (0 = empty, 1 = low, 2 = enough). The stock status `OK`/`LOW`/`EMPTY` is derived (`MaintenanceInventoryItem#getStatus`).
+- Every signed in user counts (`PUT /maintenance/inventory/{id}/quantity`); maintenance administrators create, edit (incl. comment) and delete items. History is kept per item; counts of the same user within 15 minutes are merged into one entry, so a stepper does not flood it.
+
+Not ported from vereins-wartung (possible follow-ups): seasons/archive, leads per workshop day, documents and file/photo uploads, deadlines and the Vereinsflieger sync, the order list of the inventory, FAQ, offline sync.
 
 ## Frontend conventions
 

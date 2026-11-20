@@ -1,6 +1,7 @@
 <template>
   <AppPage :title="$t('maintenance.title')" :description="$t('maintenance.description')" :error-message="errorMessage">
     <template v-if="canManageMaintenance" #actions>
+      <UButton color="neutral" variant="outline" icon="i-lucide-chart-gantt" to="/maintenance/schedule" :label="$t('nav.maintenance.schedule')" />
       <UButton color="neutral" variant="outline" icon="i-lucide-copy" to="/maintenance/templates" :label="$t('nav.maintenance.templates')" />
       <UButton icon="i-lucide-plus" :label="$t('maintenance.aircraft.add')" @click="formOpen = true" />
     </template>
@@ -27,7 +28,7 @@
 
           <p class="flex items-center gap-1.5 text-sm text-muted">
             <UIcon name="i-lucide-calendar-range" class="size-4 shrink-0" />
-            <span v-if="item.workshopStart || item.workshopEnd">{{ formatDay(item.workshopStart) || '…' }} – {{ formatDay(item.workshopEnd) || '…' }}</span>
+            <span v-if="item.workshop">{{ formatPeriod(item.workshop.startDate, item.workshop.endDate) }}</span>
             <span v-else>{{ $t('maintenance.noPeriod') }}</span>
           </p>
 
@@ -36,7 +37,11 @@
               <span class="text-default">{{ $t('maintenance.progress', { done: item.doneCount, total: item.taskCount }) }}</span>
               <span v-if="item.signedCount" class="text-xs text-success">{{ $t('maintenance.signedProgress', { count: item.signedCount }) }}</span>
             </div>
-            <UProgress :model-value="item.doneCount" :max="Math.max(item.taskCount, 1)" size="sm" :color="item.taskCount && item.doneCount === item.taskCount ? 'success' : 'primary'" />
+            <UProgress
+              :model-value="item.stepDoneCount" :max="Math.max(item.stepCount, 1)" size="sm"
+              :color="item.stepCount && item.stepDoneCount === item.stepCount ? 'success' : 'primary'"
+              :aria-label="$t('maintenance.schedule.progress', { percent: progressPercent(item) })"
+            />
             <UBadge v-if="item.openDefectCount" color="warning" variant="subtle" icon="i-lucide-triangle-alert">
               {{ $t('maintenance.openDefects', item.openDefectCount) }}
             </UBadge>
@@ -58,7 +63,7 @@ definePageMeta({
 
 const { t } = useI18n()
 const { canManageMaintenance } = storeToRefs(useUserStore())
-const { formatDay } = useMaintenance()
+const { formatPeriod, progressPercent } = useMaintenance()
 
 const aircraft = ref<Aircraft[]>([])
 const loaded = ref(false)

@@ -157,7 +157,7 @@ const router = useRouter()
 const { t } = useI18n()
 const toast = useToast()
 const { canManageMaintenance } = storeToRefs(useUserStore())
-const { levelLabel, statusLabel, priorityLabel, levelColor, priorityColor, formatDuration, formatDay, formatWhen } = useMaintenance()
+const { levelLabel, statusLabel, priorityLabel, levelColor, priorityColor, formatDuration, formatDay, formatPeriod, formatWhen } = useMaintenance()
 
 const aircraftId = computed(() => String(route.params.id))
 const aircraft = ref<Aircraft | null>(null)
@@ -181,9 +181,9 @@ const period = computed(() => {
   if (!aircraft.value) {
     return undefined
   }
-  const { workshopStart, workshopEnd } = aircraft.value
-  return workshopStart || workshopEnd
-    ? `${t('maintenance.workshopPeriod')}: ${formatDay(workshopStart) || '…'} – ${formatDay(workshopEnd) || '…'}`
+  const { workshop } = aircraft.value
+  return workshop
+    ? `${t('maintenance.workshopPeriod')}: ${formatPeriod(workshop.startDate, workshop.endDate)}`
     : t('maintenance.noPeriod')
 })
 

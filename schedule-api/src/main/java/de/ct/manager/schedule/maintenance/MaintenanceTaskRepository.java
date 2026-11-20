@@ -33,6 +33,23 @@ public interface MaintenanceTaskRepository extends JpaRepository<MaintenanceTask
         long getSigned();
     }
 
+    /** Per aircraft: checklist steps of all its tasks and how many of them are ticked. */
+    @Query("SELECT c.task.aircraft.id AS aircraftId, COUNT(c) AS total, SUM(CASE WHEN c.done = true THEN 1 ELSE 0 END) AS done "
+            + "FROM MaintenanceTaskChecklistItem c GROUP BY c.task.aircraft.id")
+    List<StepCounts> countChecklistStepsByAircraft();
+
+    /** Per aircraft: tasks without a checklist and how many of them are done; each counts as a single step. */
+    @Query("SELECT t.aircraft.id AS aircraftId, COUNT(t) AS total, "
+            + "SUM(CASE WHEN t.status = de.ct.manager.schedule.maintenance.TaskStatus.DONE THEN 1 ELSE 0 END) AS done "
+            + "FROM MaintenanceTask t WHERE t.checklist IS EMPTY GROUP BY t.aircraft.id")
+    List<StepCounts> countTasksWithoutChecklistByAircraft();
+
+    interface StepCounts {
+        String getAircraftId();
+        long getTotal();
+        long getDone();
+    }
+
     /** Checklist progress per task of an aircraft. */
     @Query("SELECT c.task.id AS taskId, COUNT(c) AS total, SUM(CASE WHEN c.done = true THEN 1 ELSE 0 END) AS done "
             + "FROM MaintenanceTaskChecklistItem c WHERE c.task.aircraft = :aircraft GROUP BY c.task.id")

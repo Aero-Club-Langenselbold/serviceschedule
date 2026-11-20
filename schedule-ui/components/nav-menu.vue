@@ -95,13 +95,15 @@ const menu = computed(() => {
       children: schedules
     })
   }
-  // Every signed in user works on maintenance tasks, the templates are for administrators.
+  // Every signed in user works on maintenance tasks and counts the inventory, the templates are for administrators.
   items.push({
     label: t('nav.maintenance.menu'),
     icon: 'i-lucide-wrench',
     defaultOpen: true,
     children: [
       { label: t('nav.maintenance.overview'), icon: 'i-lucide-plane', to: '/maintenance' },
+      { label: t('nav.maintenance.schedule'), icon: 'i-lucide-chart-gantt', to: '/maintenance/schedule' },
+      { label: t('nav.maintenance.inventory'), icon: 'i-lucide-package', to: '/maintenance/inventory' },
       ...(canManageMaintenance.value ? [{ label: t('nav.maintenance.templates'), icon: 'i-lucide-copy', to: '/maintenance/templates' }] : [])
     ]
   })

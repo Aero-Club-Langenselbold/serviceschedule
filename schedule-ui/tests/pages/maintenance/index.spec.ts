@@ -12,7 +12,7 @@ it ('Lists the aircraft with their progress for every user', async () => {
   expect(page.html()).toContain('ASK 21')
   expect(page.html()).toContain('1 of 4 done')
   expect(page.html()).toContain('2 open defects')
-  expect(page.html()).toContain('No workshop period')
+  expect(page.html()).toContain('No workshop period planned')
   expect(page.html()).toContain('/maintenance/a1')
 })
 

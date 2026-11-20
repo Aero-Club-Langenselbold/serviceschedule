@@ -1,5 +1,8 @@
 package de.ct.manager.schedule.maintenance;
 
+import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -12,6 +15,8 @@ import org.springframework.web.server.ResponseStatusException;
 import de.ct.manager.schedule.maintenance.MaintenanceDtos.AircraftRequest;
 import de.ct.manager.schedule.maintenance.MaintenanceDtos.AircraftResponse;
 import de.ct.manager.schedule.maintenance.MaintenanceDtos.ImportResponse;
+import de.ct.manager.schedule.maintenance.MaintenanceDtos.WorkshopSlotResponse;
+import de.ct.manager.schedule.maintenance.MaintenanceTaskRepository.StepCounts;
 import de.ct.manager.schedule.maintenance.MaintenanceTaskRepository.TaskCounts;
 import de.ct.manager.schedule.user.UserDetailsImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -24,14 +29,17 @@ public class MaintenanceAircraftService {
     private final MaintenanceTemplateRepository templateRepository;
     private final MaintenanceTaskRepository taskRepository;
     private final MaintenanceDefectRepository defectRepository;
+    private final MaintenanceWorkshopSlotRepository slotRepository;
     private final MaintenanceAccess access;
 
     public MaintenanceAircraftService(MaintenanceAircraftRepository aircraftRepository, MaintenanceTemplateRepository templateRepository,
-            MaintenanceTaskRepository taskRepository, MaintenanceDefectRepository defectRepository, MaintenanceAccess access) {
+            MaintenanceTaskRepository taskRepository, MaintenanceDefectRepository defectRepository,
+            MaintenanceWorkshopSlotRepository slotRepository, MaintenanceAccess access) {
         this.aircraftRepository = aircraftRepository;
         this.templateRepository = templateRepository;
         this.taskRepository = taskRepository;
         this.defectRepository = defectRepository;
+        this.slotRepository = slotRepository;
         this.access = access;
     }
 
@@ -41,10 +49,34 @@ public class MaintenanceAircraftService {
                 .collect(Collectors.toMap(TaskCounts::getAircraftId, counts -> counts));
         Map<String, Long> openDefects = defectRepository.countOpenByAircraft().stream()
                 .collect(Collectors.toMap(MaintenanceDefectRepository.OpenDefectCounts::getAircraftId, MaintenanceDefectRepository.OpenDefectCounts::getTotal));
+        Map<String, long[]> steps = new HashMap<>();
+        for (StepCounts counts : taskRepository.countChecklistStepsByAircraft()) {
+            addSteps(steps, counts);
+        }
+        for (StepCounts counts : taskRepository.countTasksWithoutChecklistByAircraft()) {
+            addSteps(steps, counts);
+        }
+        Map<String, WorkshopSlotResponse> workshops = currentOrNextWorkshops();
 
         return aircraftRepository.findAllByOrderByTypeAscRegistrationAsc().stream()
-                .map(aircraft -> toResponse(aircraft, tasks.get(aircraft.getId()), openDefects.getOrDefault(aircraft.getId(), 0L)))
+                .map(aircraft -> toResponse(aircraft, workshops.get(aircraft.getId()), tasks.get(aircraft.getId()),
+                        steps.getOrDefault(aircraft.getId(), new long[2]), openDefects.getOrDefault(aircraft.getId(), 0L)))
                 .toList();
+    }
+
+    private static void addSteps(Map<String, long[]> steps, StepCounts counts) {
+        long[] sum = steps.computeIfAbsent(counts.getAircraftId(), id -> new long[2]);
+        sum[0] += counts.getTotal();
+        sum[1] += counts.getDone();
+    }
+
+    /** Per aircraft the workshop period running today or else the next one; past periods are ignored. */
+    private Map<String, WorkshopSlotResponse> currentOrNextWorkshops() {
+        LocalDate today = LocalDate.now();
+        return slotRepository.findAllByOrderByStartDateAscEndDateAsc().stream()
+                .filter(slot -> !slot.getEndDate().isBefore(today))
+                .sorted(Comparator.comparing(MaintenanceWorkshopSlot::getStartDate))
+                .collect(Collectors.toMap(slot -> slot.getAircraft().getId(), MaintenanceWorkshopService::toResponse, (first, second) -> first));
     }
 
     @Transactional(readOnly = true)
@@ -68,7 +100,7 @@ public class MaintenanceAircraftService {
         apply(aircraft, request);
         MaintenanceAircraft saved = aircraftRepository.save(aircraft);
         log.info("User {} created aircraft {}", currentUser.getUsername(), saved.getRegistration());
-        return toResponse(saved, null, 0);
+        return toResponse(saved, null, null, new long[2], 0);
     }
 
     @Transactional
@@ -112,21 +144,16 @@ public class MaintenanceAircraftService {
     }
 
     private static void apply(MaintenanceAircraft aircraft, AircraftRequest request) {
-        if (request.workshopStart() != null && request.workshopEnd() != null && request.workshopEnd().isBefore(request.workshopStart())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workshop period ends before it starts");
-        }
         aircraft.setType(request.type().strip());
         aircraft.setRegistration(request.registration().strip());
-        aircraft.setWorkshopStart(request.workshopStart());
-        aircraft.setWorkshopEnd(request.workshopEnd());
     }
 
-    private static AircraftResponse toResponse(MaintenanceAircraft aircraft, TaskCounts tasks, long openDefects) {
-        return new AircraftResponse(aircraft.getId(), aircraft.getType(), aircraft.getRegistration(),
-                aircraft.getWorkshopStart(), aircraft.getWorkshopEnd(),
+    private static AircraftResponse toResponse(MaintenanceAircraft aircraft, WorkshopSlotResponse workshop, TaskCounts tasks, long[] steps, long openDefects) {
+        return new AircraftResponse(aircraft.getId(), aircraft.getType(), aircraft.getRegistration(), workshop,
                 tasks == null ? 0 : tasks.getTotal(),
                 tasks == null ? 0 : tasks.getDone(),
                 tasks == null ? 0 : tasks.getSigned(),
+                steps[0], steps[1],
                 openDefects);
     }
 }

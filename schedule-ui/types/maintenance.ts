@@ -14,19 +14,62 @@ type Aircraft = {
     id: string
     type: string
     registration: string
-    workshopStart: string | null
-    workshopEnd: string | null
+    /** The workshop period running today or else the next one. */
+    workshop: WorkshopSlot | null
     taskCount: number
     doneCount: number
     signedCount: number
+    /** Checklist steps of all tasks; a task without checklist counts as one step. */
+    stepCount: number
+    stepDoneCount: number
     openDefectCount: number
 }
 
 type AircraftInput = {
     type: string
     registration: string
-    workshopStart: string | null
-    workshopEnd: string | null
+}
+
+/** A period in which an aircraft is planned into the workshop; dates as YYYY-MM-DD, both inclusive. */
+type WorkshopSlot = {
+    id: string
+    aircraftId: string
+    startDate: string
+    endDate: string
+    note: string | null
+}
+
+type WorkshopSlotInput = Omit<WorkshopSlot, 'id'>
+
+type InventoryKind = 'CONSUMABLE' | 'SPARE_PART'
+/** COUNT: number of units; LEVEL: 0 = empty, 1 = low, 2 = enough. */
+type InventoryCounting = 'COUNT' | 'LEVEL'
+type InventoryStockStatus = 'OK' | 'LOW' | 'EMPTY'
+type InventoryHistoryAction = 'CREATED' | 'UPDATED' | 'COUNTED'
+
+type InventoryItem = {
+    id: string
+    name: string
+    kind: InventoryKind
+    location: string | null
+    counting: InventoryCounting
+    quantity: number
+    minQuantity: number | null
+    unit: string | null
+    comment: string | null
+    /** Only spare parts; empty means every aircraft. */
+    aircraftTypes: string[]
+    status: InventoryStockStatus
+}
+
+type InventoryItemInput = Omit<InventoryItem, 'id' | 'status'>
+
+type InventoryHistoryEntry = {
+    id: string
+    action: InventoryHistoryAction
+    quantity: number | null
+    actor: Person | null
+    createdAt: string
 }
 
 type TaskTemplate = {
@@ -124,6 +167,8 @@ type DefectInput = {
 
 export type {
     SkillLevel, TaskStatus, DefectPriority, DefectStatus, TaskHistoryAction, Person,
-    Aircraft, AircraftInput, TaskTemplate, TaskTemplateInput, TaskSummary, ChecklistItem, TaskNote, TaskHistoryEntry,
+    Aircraft, AircraftInput, WorkshopSlot, WorkshopSlotInput,
+    InventoryKind, InventoryCounting, InventoryStockStatus, InventoryHistoryAction, InventoryItem, InventoryItemInput, InventoryHistoryEntry,
+    TaskTemplate, TaskTemplateInput, TaskSummary, ChecklistItem, TaskNote, TaskHistoryEntry,
     TaskDetail, TaskInput, Defect, DefectInput
 }

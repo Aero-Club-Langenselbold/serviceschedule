@@ -9,13 +9,8 @@
           <UFormField :label="$t('maintenance.aircraft.registration')" required :error="registrationError ?? undefined">
             <UInput v-model="form.registration" :placeholder="$t('maintenance.aircraft.registrationPlaceholder')" class="w-full" />
           </UFormField>
-          <UFormField :label="$t('maintenance.aircraft.workshopStart')">
-            <UInput v-model="form.workshopStart" type="date" class="w-full" />
-          </UFormField>
-          <UFormField :label="$t('maintenance.aircraft.workshopEnd')" :error="periodInvalid ? $t('maintenance.aircraft.invalidPeriod') : undefined">
-            <UInput v-model="form.workshopEnd" type="date" :min="form.workshopStart ?? undefined" class="w-full" />
-          </UFormField>
         </div>
+        <p class="text-xs text-muted">{{ $t('maintenance.aircraft.scheduleHint') }}</p>
       </form>
     </template>
     <template #footer>
@@ -37,7 +32,7 @@ const open = defineModel<boolean>('open', { default: false })
 const { t } = useI18n()
 const toast = useToast()
 
-const empty = (): AircraftInput => ({ type: '', registration: '', workshopStart: null, workshopEnd: null })
+const empty = (): AircraftInput => ({ type: '', registration: '' })
 const form = ref<AircraftInput>(empty())
 const saving = ref(false)
 const registrationError = ref<string | null>(null)
@@ -45,14 +40,13 @@ const registrationError = ref<string | null>(null)
 watch(open, (isOpen) => {
   if (isOpen) {
     form.value = props.aircraft
-      ? { type: props.aircraft.type, registration: props.aircraft.registration, workshopStart: props.aircraft.workshopStart, workshopEnd: props.aircraft.workshopEnd }
+      ? { type: props.aircraft.type, registration: props.aircraft.registration }
       : empty()
     registrationError.value = null
   }
 }, { immediate: true })
 
-const periodInvalid = computed(() => !!form.value.workshopStart && !!form.value.workshopEnd && form.value.workshopEnd < form.value.workshopStart)
-const valid = computed(() => !!form.value.type.trim() && !!form.value.registration.trim() && !periodInvalid.value)
+const valid = computed(() => !!form.value.type.trim() && !!form.value.registration.trim())
 
 const save = async () => {
   if (!valid.value) {
@@ -60,7 +54,7 @@ const save = async () => {
   }
   saving.value = true
   registrationError.value = null
-  const body = { ...form.value, workshopStart: form.value.workshopStart || null, workshopEnd: form.value.workshopEnd || null }
+  const body = { ...form.value }
   const { data, error } = props.aircraft
     ? await useAPI<Aircraft>(`/maintenance/aircraft/${props.aircraft.id}`, { method: 'PUT', body })
     : await useAPI<Aircraft>('/maintenance/aircraft', { method: 'POST', body })

@@ -24,7 +24,8 @@ import de.ct.manager.schedule.util.AbstractIntegrationTest;
 @Sql(statements = {
     "DELETE FROM maintenance_task_history", "DELETE FROM maintenance_task_note", "DELETE FROM maintenance_task_checklist_item",
     "DELETE FROM maintenance_task", "DELETE FROM maintenance_defect", "DELETE FROM maintenance_template_checklist_item",
-    "DELETE FROM maintenance_template_aircraft_type", "DELETE FROM maintenance_template", "DELETE FROM maintenance_aircraft",
+    "DELETE FROM maintenance_template_aircraft_type", "DELETE FROM maintenance_template", "DELETE FROM maintenance_workshop_slot",
+    "DELETE FROM maintenance_aircraft",
     "DELETE FROM auth_user_permissions"
 }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 class MaintenanceIntegrationTest extends AbstractIntegrationTest {
@@ -91,14 +92,11 @@ class MaintenanceIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void testRegistrationsAreUniqueAndPeriodsValid() throws Exception {
+    void testRegistrationsAreUnique() throws Exception {
         createAircraft("ASK 21", "D-1234");
 
         Assertions.assertThat(call(HttpMethod.POST, "aircraft", ADMIN, Map.of("type", "ASK 23", "registration", "d-1234")).getStatusCode())
                 .isEqualTo(HttpStatus.CONFLICT);
-        Assertions.assertThat(call(HttpMethod.POST, "aircraft", ADMIN,
-                Map.of("type", "ASK 23", "registration", "D-9999", "workshopStart", "2026-12-12", "workshopEnd", "2026-12-05")).getStatusCode())
-                .isEqualTo(HttpStatus.BAD_REQUEST);
         Assertions.assertThat(call(HttpMethod.POST, "aircraft", ADMIN, Map.of("type", " ", "registration", "D-9999")).getStatusCode())
                 .isEqualTo(HttpStatus.BAD_REQUEST);
     }

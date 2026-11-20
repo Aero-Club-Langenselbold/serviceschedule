@@ -2,6 +2,18 @@ import { mockNuxtImport } from '@nuxt/test-utils/runtime';
 
 mockNuxtImport('useI18n', () => () => useNuxtApp().$i18n);
 
+// Workshop periods relative to today, so "current" and "past" stay stable whenever the tests run.
+const dayFromToday = (offset: number) => {
+    const date = new Date()
+    date.setDate(date.getDate() + offset)
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+const workshopSlots = () => [
+    { id: 's0', aircraftId: 'a1', startDate: dayFromToday(-90), endDate: dayFromToday(-80), note: 'Jahresnachprüfung' },
+    { id: 's1', aircraftId: 'a1', startDate: dayFromToday(-3), endDate: dayFromToday(10), note: null },
+    { id: 's2', aircraftId: 'a2', startDate: dayFromToday(5), endDate: dayFromToday(30), note: 'Lackierung' }
+]
+
 mockNuxtImport('useAPI', () => {
     return async (url: string, options: any) => {
         if (url === '/auth/signin') {
@@ -104,8 +116,8 @@ mockNuxtImport('useAPI', () => {
         } else if (url === '/maintenance/aircraft') {
             return {
                 data: { value: [
-                    { id: 'a1', type: 'ASK 21', registration: 'D-1234', workshopStart: '2026-11-07', workshopEnd: '2026-12-19', taskCount: 4, doneCount: 1, signedCount: 1, openDefectCount: 2 },
-                    { id: 'a2', type: 'LS 8', registration: 'D-5678', workshopStart: null, workshopEnd: null, taskCount: 0, doneCount: 0, signedCount: 0, openDefectCount: 0 }
+                    { id: 'a1', type: 'ASK 21', registration: 'D-1234', workshop: workshopSlots()[1], taskCount: 4, doneCount: 1, signedCount: 1, stepCount: 8, stepDoneCount: 3, openDefectCount: 2 },
+                    { id: 'a2', type: 'LS 8', registration: 'D-5678', workshop: null, taskCount: 0, doneCount: 0, signedCount: 0, stepCount: 0, stepDoneCount: 0, openDefectCount: 0 }
                 ] },
                 error: {}
             }
@@ -118,7 +130,7 @@ mockNuxtImport('useAPI', () => {
                 error: {}
             }
         } else if (url === '/maintenance/aircraft/a1') {
-            return { data: { value: { id: 'a1', type: 'ASK 21', registration: 'D-1234', workshopStart: null, workshopEnd: null, taskCount: 2, doneCount: 0, signedCount: 0, openDefectCount: 0 } }, error: {} }
+            return { data: { value: { id: 'a1', type: 'ASK 21', registration: 'D-1234', workshop: null, taskCount: 2, doneCount: 0, signedCount: 0, stepCount: 2, stepDoneCount: 0, openDefectCount: 0 } }, error: {} }
         } else if (url === '/maintenance/aircraft/a1/tasks') {
             const task = { aircraftId: 'a1', description: null, level: 'BEGINNER', durationMinutes: null, deadline: null, fromTemplate: false, defect: null, checklistTotal: 0, checklistDone: 0, noteCount: 0, doneBy: null, doneAt: null, signedBy: null, signedAt: null }
             return { data: { value: [
@@ -129,6 +141,19 @@ mockNuxtImport('useAPI', () => {
             return { data: { value: [] }, error: {} }
         } else if (/^\/maintenance\/tasks\/[^/]+\/status$/.test(url)) {
             return { data: { value: { id: url.split('/')[3], status: options.body.status } }, error: {} }
+        } else if (url === '/maintenance/workshop') {
+            return { data: { value: workshopSlots() }, error: {} }
+        } else if (url === '/maintenance/inventory') {
+            const item = { location: null, minQuantity: null, unit: null, comment: null, aircraftTypes: [] }
+            return { data: { value: [
+                { ...item, id: 'i1', name: 'Politur', kind: 'CONSUMABLE', counting: 'COUNT', quantity: 2, minQuantity: 2, unit: 'Dosen', location: 'Regal A', status: 'LOW' },
+                { ...item, id: 'i2', name: 'Mehrzweckfett', kind: 'CONSUMABLE', counting: 'LEVEL', quantity: 2, status: 'OK' },
+                { ...item, id: 'i3', name: 'Reifenschlauch 4.00-4', kind: 'SPARE_PART', counting: 'COUNT', quantity: 0, unit: 'Stk.', aircraftTypes: ['ASK 21'], status: 'EMPTY' },
+                { ...item, id: 'i4', name: 'Batterie 12 V', kind: 'SPARE_PART', counting: 'COUNT', quantity: 3, unit: 'Stk.', status: 'OK' },
+                { ...item, id: 'i5', name: 'Bremsbeläge', kind: 'SPARE_PART', counting: 'COUNT', quantity: 1, unit: 'Satz', aircraftTypes: ['LS 8'], status: 'OK' }
+            ] }, error: {} }
+        } else if (/^\/maintenance\/inventory\/[^/]+\/quantity$/.test(url)) {
+            return { data: { value: { id: url.split('/')[3], name: 'Mehrzweckfett', kind: 'CONSUMABLE', counting: 'LEVEL', quantity: options.body.quantity, location: null, minQuantity: null, unit: null, comment: null, aircraftTypes: [], status: options.body.quantity === 0 ? 'EMPTY' : options.body.quantity === 1 ? 'LOW' : 'OK' } }, error: {} }
         } else if (url === '/maintenance/aircraft/types') {
             return { data: { value: ['ASK 21', 'LS 8'] }, error: {} }
         }
