@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Dienstplan – Anleitung für Mitglieder</title>
+<style>
+  @page { size: A4; }
+  :root {
+    --teal: #0f766e;
+    --teal-light: #e6f4f2;
+    --mark: #d9480f;
+    --text: #1c1917;
+    --muted: #57534e;
+    --line: #d6d3d1;
+    --tip: #fff7ed;
+    --tip-line: #fdba74;
+    --info: #eff6ff;
+    --info-line: #93c5fd;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Liberation Sans', 'DejaVu Sans', Arial, sans-serif;
+    font-size: 12.5pt;
+    line-height: 1.5;
+    color: var(--text);
+    background: #fff;
+  }
+  h1, h2, h3 { line-height: 1.2; margin: 0; }
+  h2 {
+    font-size: 21pt;
+    color: var(--teal);
+    margin-bottom: 4mm;
+    display: flex;
+    align-items: center;
+    gap: 4mm;
+  }
+  h2 .step {
+    flex: none;
+    width: 13mm; height: 13mm;
+    border-radius: 50%;
+    background: var(--teal);
+    color: #fff;
+    font-size: 17pt;
+    display: flex; align-items: center; justify-content: center;
+  }
+  h3 { font-size: 14pt; margin: 6mm 0 2mm; }
+  p { margin: 0 0 3mm; }
+  section { break-before: page; }
+  .intro { font-size: 13pt; color: var(--muted); margin-bottom: 5mm; }
+
+  figure { margin: 0 0 5mm; break-inside: avoid; }
+  figure img {
+    display: block;
+    max-width: 100%;
+    max-height: 125mm;
+    margin: 0 auto;
+    border: 1px solid var(--line);
+    border-radius: 3mm;
+    box-shadow: 0 1mm 3mm rgb(0 0 0 / 0.08);
+  }
+  figure.small img { max-height: 70mm; }
+  figure.tall img { max-height: 150mm; }
+  figure.phone { display: flex; gap: 8mm; justify-content: center; }
+  figure.phone img { max-height: 135mm; margin: 0; }
+  figcaption { text-align: center; font-size: 10pt; color: var(--muted); margin-top: 2mm; }
+
+  ol.steps { list-style: none; padding: 0; margin: 0 0 4mm; }
+  ol.steps > li {
+    display: flex; gap: 4mm; align-items: flex-start;
+    padding: 2.5mm 0;
+    border-bottom: 1px solid #f0efed;
+    break-inside: avoid;
+  }
+  ol.steps > li:last-child { border-bottom: none; }
+  .n {
+    flex: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 8mm; height: 8mm;
+    border-radius: 50%;
+    background: var(--mark);
+    color: #fff;
+    font-weight: bold;
+    font-size: 11pt;
+    line-height: 1;
+  }
+  p .n, li p .n, .box li .n { width: 6.5mm; height: 6.5mm; font-size: 9.5pt; vertical-align: -1mm; }
+
+  .btn {
+    display: inline-block;
+    padding: 0 2mm;
+    border-radius: 1.5mm;
+    background: var(--teal);
+    color: #fff;
+    font-weight: bold;
+    font-size: 11pt;
+    white-space: nowrap;
+  }
+  .btn.outline { background: #fff; color: var(--text); border: 1px solid var(--line); }
+  .badge { display: inline-block; padding: 0 2mm; border-radius: 1.5mm; font-size: 10.5pt; font-weight: bold; white-space: nowrap; }
+  .badge.open { background: var(--teal-light); color: var(--teal); }
+  .badge.published { background: #dcfce7; color: #15803d; }
+  .badge.draft { background: #f5f5f4; color: var(--muted); }
+  .choice { font-weight: bold; white-space: nowrap; }
+  .choice.yes { color: var(--teal); }
+  .choice.no { color: #be123c; }
+  .choice.please { color: #7c3aed; }
+
+  .box { border-radius: 3mm; padding: 4mm 5mm; margin: 4mm 0; break-inside: avoid; }
+  .box > :last-child { margin-bottom: 0; }
+  .box strong.title { display: block; margin-bottom: 1mm; }
+  .tip { background: var(--tip); border-left: 2mm solid var(--tip-line); }
+  .info { background: var(--info); border-left: 2mm solid var(--info-line); }
+  .box ul { margin: 0; padding-left: 5mm; }
+
+  /* Titelseite */
+  .cover { height: 255mm; display: flex; flex-direction: column; }
+  .cover .logo {
+    width: 22mm; height: 22mm; border-radius: 5mm; background: var(--teal);
+    display: flex; align-items: center; justify-content: center; margin-bottom: 10mm;
+  }
+  .cover h1 { font-size: 34pt; color: var(--text); margin-bottom: 4mm; }
+  .cover .subtitle { font-size: 16pt; color: var(--muted); margin-bottom: 12mm; }
+  .toc { list-style: none; padding: 0; margin: 0; columns: 1; }
+  .toc li { display: flex; gap: 4mm; align-items: center; padding: 1.8mm 0; border-bottom: 1px dashed var(--line); font-size: 13pt; }
+  .toc .step { width: 8mm; height: 8mm; border-radius: 50%; background: var(--teal); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 11pt; flex: none; }
+  .cover .bottom { margin-top: auto; }
+
+  .faq h3 { margin-top: 5mm; }
+</style>
+</head>
+<body>
+
+<!-- ================================================================ Titelseite -->
+<div class="cover">
+  <div class="logo">
+    <svg width="13mm" height="13mm" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4"/></svg>
+  </div>
+  <h1>Der Dienstplan –<br>Schritt für Schritt</h1>
+  <p class="subtitle">Eine einfache Anleitung für Mitglieder des<br>Aero-Club Langenselbold</p>
+
+  <div class="box info">
+    <strong class="title">Was du brauchst</strong>
+    <ul>
+      <li>einen Computer, ein Tablet oder ein Handy mit Internet,</li>
+      <li>die <b>Internetadresse des Mitgliederbereichs</b> (bekommst du vom Verein),</li>
+      <li>deine <b>Zugangsdaten von Vereinsflieger</b> (E-Mail-Adresse und Passwort),</li>
+      <li>die <b>Antwort auf die Sicherheitsfrage</b> (bekommst du vom Verein),</li>
+      <li>falls du bei Vereinsflieger die Zwei-Faktor-Anmeldung eingeschaltet hast: dein Handy mit der <b>Authenticator-App</b>.</li>
+    </ul>
+  </div>
+
+  <h3>Das steht in dieser Anleitung</h3>
+  <ol class="toc">
+    <li><span class="step">1</span> Anmelden</li>
+    <li><span class="step">2</span> Die Startseite</li>
+    <li><span class="step">3</span> Die Dienstpläne im Überblick</li>
+    <li><span class="step">4</span> Eintragen, wann du kannst</li>
+    <li><span class="step">5</span> Den fertigen Dienstplan ansehen</li>
+    <li><span class="step">6</span> Meine Dienste und der eigene Kalender</li>
+    <li><span class="step">7</span> Am Handy benutzen</li>
+    <li><span class="step">8</span> Abmelden</li>
+    <li><span class="step">?</span> Wenn etwas nicht klappt</li>
+  </ol>
+
+  <div class="bottom box tip">
+    <strong class="title">So liest du die Bilder</strong>
+    <p>In den Bildern sind wichtige Stellen <b>orange umrahmt</b> und mit einer Zahl versehen, zum Beispiel <span class="n">1</span>. Im Text darunter steht, was du an dieser Stelle tun musst. Die Namen und Daten in den Bildern sind nur Beispiele.</p>
+  </div>
+</div>
+
+<!-- ================================================================ 1 Anmelden -->
+<section>
+  <h2><span class="step">1</span> Anmelden</h2>
+  <p class="intro">Du meldest dich mit deinen <b>Zugangsdaten von Vereinsflieger</b> an. Ein eigenes Konto für den Dienstplan brauchst du nicht – beim ersten Anmelden wird es automatisch angelegt.</p>
+
+  <p>Öffne die Internetadresse des Mitgliederbereichs. Diese Seite erscheint:</p>
+  <figure class="tall"><img src="screenshots/01-anmelden.png" alt="Formular zum Anmelden"></figure>
+
+  <ol class="steps">
+    <li><span class="n">1</span><p><b>Benutzername:</b> Tippe deine <b>E-Mail-Adresse von Vereinsflieger</b> ein.</p></li>
+    <li><span class="n">2</span><p><b>Passwort:</b> Tippe dein <b>Passwort von Vereinsflieger</b> ein. Mit dem Auge-Symbol rechts im Feld siehst du, was du getippt hast.</p></li>
+    <li><span class="n">3</span><p><b>Sicherheitsfrage:</b> Über dem Feld steht eine Frage. Tippe die Antwort ein. Die Antwort ist für alle Mitglieder gleich und du erfährst sie vom Verein. Groß- oder Kleinschreibung ist egal.</p></li>
+    <li><span class="n">4</span><p><b>Sicherheitscode:</b> Dieses Feld brauchst du nur, wenn du bei Vereinsflieger die <b>Zwei-Faktor-Anmeldung</b> eingeschaltet hast. Sonst lässt du es <b>leer</b>.</p></li>
+    <li><span class="n">5</span><p>Klicke auf <span class="btn">Anmelden</span>. Danach siehst du die Startseite.</p></li>
+  </ol>
+
+  <div class="box tip">
+    <strong class="title">Mit Zwei-Faktor-Anmeldung: so geht der Sicherheitscode</strong>
+    <ul>
+      <li>Fülle zuerst die Felder <span class="n">1</span> bis <span class="n">3</span> aus.</li>
+      <li>Öffne auf deinem Handy die <b>Authenticator-App</b>, die du für Vereinsflieger eingerichtet hast, und tippe auf den Eintrag von Vereinsflieger.</li>
+      <li>Tippe die angezeigte <b>6-stellige Zahl</b> ins Feld <span class="n">4</span> ein und klicke <b>gleich danach</b> auf <span class="btn">Anmelden</span>.</li>
+      <li>Die Zahl wechselt alle 30 Sekunden. Wenn die Anmeldung nicht klappt, nimm einfach die nächste Zahl und versuche es noch einmal.</li>
+    </ul>
+  </div>
+
+  <div class="box info">
+    <strong class="title">Gut zu wissen</strong>
+    <p>Dein Browser merkt sich die Anmeldung. Wenn du die Seite später wieder öffnest, bist du oft noch angemeldet und landest direkt auf der Startseite.</p>
+    <p>Passwort vergessen? Dann wende dich bitte an den Dienstplan-Verantwortlichen.</p>
+  </div>
+</section>
+
+<!-- ================================================================ 2 Startseite -->
+<section>
+  <h2><span class="step">2</span> Die Startseite</h2>
+  <p class="intro">Nach dem Anmelden begrüßt dich die Startseite mit deinem Namen. Von hier aus erreichst du alles mit einem Klick auf eine der Kacheln.</p>
+
+  <figure><img src="screenshots/02-startseite.png" alt="Startseite mit Kacheln"></figure>
+
+  <ol class="steps">
+    <li><span class="n">1</span><p><b>Meine Dienste</b> zeigt dir, wann du eingeteilt bist (siehe Schritt 6).</p></li>
+    <li><span class="n">2</span><p><b>Dienstpläne</b> zeigt alle Dienstpläne. Hier trägst du ein, wann du kannst (siehe Schritte 3 und 4).</p></li>
+    <li><span class="n">3</span><p>Das <b>Personen-Symbol</b> oben rechts brauchst du zum Abmelden (siehe Schritt 8).</p></li>
+  </ol>
+
+  <div class="box tip">
+    <strong class="title">Zurück zur Startseite</strong>
+    <p>Wenn du dich einmal „verlaufen“ hast: Klicke oben links auf <b>Mitgliederbereich</b>. Dann bist du wieder auf der Startseite.</p>
+  </div>
+</section>
+
+<!-- ================================================================ 3 Übersicht -->
+<section>
+  <h2><span class="step">3</span> Die Dienstpläne im Überblick</h2>
+  <p class="intro">Auf der Seite „Dienstpläne“ steht jeder Dienstplan in einem eigenen Kasten. Oben rechts im Kasten siehst du, in welchem Zustand der Plan gerade ist.</p>
+
+  <figure><img src="screenshots/03-dienstplaene.png" alt="Übersicht der Dienstpläne"></figure>
+
+  <ol class="steps">
+    <li><span class="n">1</span><p><span class="badge open">Offen</span> – Der Verein sammelt gerade, wer wann kann. <b>Jetzt bist du gefragt.</b></p></li>
+    <li><span class="n">2</span><p>Mit <span class="btn">Eintragen</span> sagst du, an welchen Tagen du kannst (siehe Schritt 4).</p></li>
+    <li><span class="n">3</span><p><span class="badge published">Veröffentlicht</span> – Der Plan ist fertig. Eintragen geht nicht mehr.</p></li>
+    <li><span class="n">4</span><p>Mit <span class="btn">Dienstplan</span> siehst du, wer an welchem Tag welchen Dienst hat (siehe Schritt 5).</p></li>
+    <li><span class="n">5</span><p>Mit <span class="btn outline">PDF</span> lädst du den fertigen Plan als Datei herunter, zum Beispiel zum Ausdrucken.</p></li>
+    <li><span class="n">6</span><p><span class="badge draft">In Vorbereitung</span> – Der Verein bereitet den Plan noch vor. Hier musst du noch nichts tun.</p></li>
+  </ol>
+
+  <div class="box info">
+    <p>Graue Knöpfe lassen sich gerade nicht anklicken. Das ist kein Fehler – der Knopf passt nur nicht zum Zustand des Plans.</p>
+  </div>
+</section>
+
+<!-- ================================================================ 4 Verfügbarkeit -->
+<section>
+  <h2><span class="step">4</span> Eintragen, wann du kannst</h2>
+  <p class="intro">Nach dem Klick auf <span class="btn">Eintragen</span> siehst du alle Tage des Dienstplans untereinander. Bei jedem Tag wählst du eine von drei Möglichkeiten.</p>
+
+  <figure class="tall"><img src="screenshots/04-verfuegbarkeit-ausgefuellt.png" alt="Verfügbarkeiten eintragen"></figure>
+
+  <ol class="steps">
+    <li><span class="n">1</span><p><span class="choice yes">Ich kann</span> – An diesem Tag kannst du Dienst machen.</p></li>
+    <li><span class="n">2</span><p><span class="choice no">Ich kann nicht</span> – An diesem Tag hast du keine Zeit.</p></li>
+    <li><span class="n">3</span><p><span class="choice please">Möchte ich gerne</span> – An diesem Tag möchtest du besonders gerne Dienst machen.</p></li>
+    <li><span class="n">4</span><p>Bei „Möchte ich gerne“ erscheint das Feld <b>Dienstwunsch</b>. Klicke darauf und wähle, welchen Dienst du an diesem Tag gerne hättest.</p></li>
+    <li><span class="n">5</span><p>Hier steht <b>„Noch nicht gespeichert“</b>, solange deine Auswahl noch nicht beim Verein angekommen ist.</p></li>
+    <li><span class="n">6</span><p>Klicke zum Schluss auf <span class="btn">Speichern</span>. <b>Das ist der wichtigste Schritt!</b></p></li>
+  </ol>
+
+  <p>Nach dem Speichern steht unten <b>„Gespeichert“</b> mit einem grünen Haken <span class="n">1</span>. Jetzt hat der Verein deine Angaben.</p>
+  <figure class="small"><img src="screenshots/05-verfuegbarkeit-gespeichert.png" alt="Hinweis Gespeichert"></figure>
+
+  <div class="box tip">
+    <strong class="title">Gut zu wissen</strong>
+    <ul>
+      <li>Am Anfang steht jeder Tag auf „Ich kann“. Ändere nur die Tage, an denen es bei dir anders ist.</li>
+      <li>Ohne <span class="btn">Speichern</span> geht deine Auswahl verloren, wenn du die Seite verlässt.</li>
+      <li>Solange der Plan „Offen“ ist, kannst du deine Angaben jederzeit ändern und neu speichern.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================================================================ 5 Fertiger Plan -->
+<section>
+  <h2><span class="step">5</span> Den fertigen Dienstplan ansehen</h2>
+  <p class="intro">Sobald der Verein den Plan veröffentlicht hat, klickst du in der Übersicht auf <span class="btn">Dienstplan</span>. Du siehst eine Tabelle: in jeder Zeile ein Tag, in jeder Spalte ein Dienst.</p>
+
+  <figure><img src="screenshots/06-fertiger-dienstplan.png" alt="Fertiger Dienstplan als Tabelle"></figure>
+
+  <ol class="steps">
+    <li><span class="n">1</span><p>In jedem Feld stehen die <b>Uhrzeit</b> und der <b>Name</b> der eingeteilten Person. Suche nach deinem Namen (Nachname, Vorname).</p></li>
+    <li><span class="n">2</span><p>Die Tabelle zeigt immer nur einige Tage auf einmal. Mit den <b>Pfeilen</b> unter der Tabelle blätterst du weiter.</p></li>
+  </ol>
+
+  <div class="box tip">
+    <strong class="title">Einfacher geht es mit „Meine Dienste“</strong>
+    <p>Du musst nicht selbst suchen: Unter „Meine Dienste“ stehen nur deine eigenen Termine (nächster Schritt).</p>
+  </div>
+</section>
+
+<!-- ================================================================ 6 Meine Dienste -->
+<section>
+  <h2><span class="step">6</span> Meine Dienste und der eigene Kalender</h2>
+  <p class="intro">„Meine Dienste“ ist die bequemste Seite: Hier stehen alle deine kommenden Dienste aus veröffentlichten Plänen – mit Datum, Uhrzeit und wer mit dir zusammen Dienst hat.</p>
+
+  <figure><img src="screenshots/07-meine-dienste.png" alt="Meine Dienste"></figure>
+
+  <ol class="steps">
+    <li><span class="n">1</span><p>Ein Kasten ist <b>ein Dienst</b>: links der Tag, rechts der Dienst, die Uhrzeit, der Name des Plans und mit wem du eingeteilt bist.</p></li>
+    <li><span class="n">2</span><p><span class="btn">Kalender (ICS)</span> lädt eine Datei mit all deinen Diensten herunter. Öffnest du diese Datei, werden die Termine in den Kalender deines Handys oder Computers übernommen. So wirst du von deinem Kalender an den Dienst erinnert.</p></li>
+    <li><span class="n">3</span><p>Mit dem Schalter <b>Vergangene Dienste anzeigen</b> siehst du auch Dienste, die schon vorbei sind.</p></li>
+  </ol>
+
+  <div class="box info">
+    <strong class="title">Die Kalender-Datei öffnen</strong>
+    <p>Nach dem Herunterladen erscheint die Datei meist unten oder oben im Browser oder im Ordner „Downloads“. Tippe bzw. klicke sie an und bestätige „Hinzufügen“ oder „Importieren“. Ändert sich der Plan später, lade die Datei einfach erneut herunter.</p>
+  </div>
+</section>
+
+<!-- ================================================================ 7 Handy -->
+<section>
+  <h2><span class="step">7</span> Am Handy benutzen</h2>
+  <p class="intro">Auf dem Handy sieht alles etwas schmaler aus, funktioniert aber genauso. Nur das Menü ist versteckt.</p>
+
+  <figure class="phone">
+    <img src="screenshots/08-handy-start.png" alt="Startseite auf dem Handy">
+    <img src="screenshots/09-handy-menue.png" alt="Geöffnetes Menü auf dem Handy">
+  </figure>
+
+  <ol class="steps">
+    <li><span class="n">1</span><p>Tippe oben rechts auf die <b>drei Striche</b>. Das Menü öffnet sich.</p></li>
+    <li><span class="n">2</span><p><b>Dienstpläne anzeigen</b> führt zur Übersicht der Dienstpläne (Schritt 3).</p></li>
+    <li><span class="n">3</span><p><b>Meine Dienste</b> führt zu deinen eigenen Terminen (Schritt 6).</p></li>
+  </ol>
+  <p>Mit dem <b>X</b> oben rechts schließt du das Menü wieder.</p>
+</section>
+
+<!-- ================================================================ 8 Abmelden -->
+<section>
+  <h2><span class="step">8</span> Abmelden</h2>
+  <p class="intro">Wenn du an einem fremden oder gemeinsam genutzten Computer warst (zum Beispiel im Vereinsheim), melde dich bitte am Ende ab.</p>
+
+  <figure class="small"><img src="screenshots/10-abmelden.png" alt="Menü zum Abmelden"></figure>
+
+  <ol class="steps">
+    <li><span class="n">1</span><p>Klicke oben rechts auf das <b>Personen-Symbol</b>. Es öffnet sich ein kleines Menü mit deiner E-Mail-Adresse. Klicke dort auf <b>Abmelden</b>.</p></li>
+  </ol>
+
+  <!-- ============================================================== Hilfe -->
+  <div class="faq">
+    <h2 style="margin-top:8mm"><span class="step">?</span> Wenn etwas nicht klappt</h2>
+
+    <h3>Der Knopf „Eintragen“ ist grau.</h3>
+    <p>Entweder ist der Plan schon <span class="badge published">Veröffentlicht</span> – dann kann nichts mehr eingetragen werden – oder er ist noch <span class="badge draft">In Vorbereitung</span>. Frage im Zweifel beim Verein nach.</p>
+
+    <h3>Die Anmeldung klappt nicht.</h3>
+    <ul>
+      <li>Prüfe E-Mail-Adresse und Passwort – es sind die gleichen wie bei Vereinsflieger.</li>
+      <li>Prüfe die Antwort auf die Sicherheitsfrage.</li>
+      <li>Mit Zwei-Faktor-Anmeldung: Nimm einen neuen Code aus der Authenticator-App und klicke sofort auf „Anmelden“.</li>
+      <li>Klappt es weiterhin nicht, wende dich an den Dienstplan-Verantwortlichen.</li>
+    </ul>
+
+    <h3>Ich finde mich nicht im Dienstplan.</h3>
+    <p>Schau unter <b>Meine Dienste</b>. Steht dort nichts, bist du in den veröffentlichten Plänen nicht eingeteilt. Wenn du meinst, das stimmt nicht, melde dich beim Dienstplan-Verantwortlichen: Deine E-Mail-Adresse von Vereinsflieger muss die sein, die im Dienstplan für dich hinterlegt ist.</p>
+
+    <h3>Ich habe meine Tage eingetragen, aber vergessen zu speichern.</h3>
+    <p>Kein Problem, solange der Plan noch „Offen“ ist: Klicke erneut auf <span class="btn">Eintragen</span>, wähle deine Tage noch einmal und klicke auf <span class="btn">Speichern</span>.</p>
+
+    <h3>Die Seite zeigt eine Fehlermeldung oder bleibt leer.</h3>
+    <p>Lade die Seite neu (am Computer die Taste <b>F5</b>, am Handy die Seite nach unten ziehen). Hilft das nicht, melde dich ab und wieder an.</p>
+  </div>
+</section>
+
+</body>
+</html>

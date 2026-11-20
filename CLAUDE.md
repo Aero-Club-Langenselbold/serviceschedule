@@ -93,6 +93,10 @@ Not ported from vereins-wartung (possible follow-ups): seasons/archive, leads pe
 - `USelect` items need non-empty values: use sentinels (`NO_SELECTION`, duration `0`) and map to `null` in the form.
 - Component tests: `mountSuspended`; API answers are mocked in `tests/setup.ts` (add new endpoints and test users there). Components that render `UTooltip` (e.g. `ConfirmationDialog`) need `global.stubs` in page tests, the test mount has no `UApp` tooltip provider.
 
+## Member guide
+
+`Anleitung-Dienstplan.pdf` (root) is a step-by-step guide for members (log in via Vereinsflieger with security question and 2FA code, enter availabilities, published plan, my services, mobile). It assumes the production setup: `vfLoginFeature` and `securityQuestionFeature` active, so there is no registration; the security answer is deliberately not shown. Sources in `docs/anleitung-dienstplan/`: `anleitung.html` (text) and `generate.cjs` (screenshots with invented sample data against the static UI build, then Chromium prints the PDF). Regenerate after UI changes to those pages: `(cd schedule-ui && pnpm exec nuxt generate) && NODE_PATH=schedule-ui/node_modules node docs/anleitung-dienstplan/generate.cjs`.
+
 ## Configuration
 
 - `schedule-api/src/main/resources/application.properties` – local defaults (Postgres on localhost, CORS for `localhost:3000`/`8081`).
