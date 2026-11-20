@@ -93,6 +93,11 @@ export default defineI18nLocale(async locale => {
           list: 'Show Service Plans',
           add: 'Add Service Plan'
         },
+        maintenance: {
+          menu: 'Maintenance',
+          overview: 'Aircraft & tasks',
+          templates: 'Task templates'
+        },
         alarms: {
           menu: 'Alarm system',
           list: 'Event log'
@@ -356,6 +361,155 @@ export default defineI18nLocale(async locale => {
           unknownAuthor: 'Unknown'
         }
       },
+      maintenance: {
+        title: 'Maintenance',
+        description: 'Aircraft in the workshop, their tasks and reported defects.',
+        empty: 'No aircraft yet.',
+        emptyAdmin: 'Add the first aircraft to plan its tasks.',
+        loadError: 'Data could not be loaded',
+        saveError: 'Saving failed',
+        conflict: 'Someone else changed this entry in the meantime. The view was refreshed.',
+        saved: 'Saved',
+        deleted: 'Deleted',
+        workshopPeriod: 'Workshop period',
+        noPeriod: 'No workshop period',
+        progress: '{done} of {total} done',
+        signedProgress: '{count} signed off',
+        openDefects: 'No open defects | 1 open defect | {count} open defects',
+        level: {
+          name: 'Suitable for',
+          all: 'All',
+          BEGINNER: 'Beginners',
+          EXPERIENCED: 'Experienced',
+          WORKSHOP_LEAD: 'Workshop lead'
+        },
+        status: {
+          name: 'Status',
+          OPEN: 'Open',
+          IN_PROGRESS: 'In progress',
+          DONE: 'Done'
+        },
+        priority: {
+          name: 'Priority',
+          HIGH: 'High',
+          NORMAL: 'Normal',
+          LOW: 'Low',
+          VERY_LOW: 'Very low'
+        },
+        duration: {
+          name: 'Estimated duration',
+          none: 'Not specified',
+          minutes: '{count} min',
+          hours: '{count} h'
+        },
+        aircraft: {
+          add: 'Add aircraft',
+          edit: 'Edit aircraft',
+          delete: 'Delete aircraft',
+          deleteConfirm: 'Delete the aircraft with all its tasks and defects?',
+          type: 'Type',
+          typePlaceholder: 'e.g. ASK 21',
+          registration: 'Registration',
+          registrationPlaceholder: 'e.g. D-1234',
+          workshopStart: 'In workshop from',
+          workshopEnd: 'In workshop until',
+          exists: 'This registration already exists',
+          invalidPeriod: 'The end lies before the start'
+        },
+        tabs: {
+          tasks: 'Tasks',
+          defects: 'Defects & findings'
+        },
+        board: {
+          noTasks: 'No tasks',
+          importTemplates: 'Create from templates',
+          imported: 'No new tasks from templates | 1 task created from templates | {count} tasks created from templates',
+          notSigned: 'Sign-off pending',
+          deadline: 'Due {date}',
+          notes: 'No notes | 1 note | {count} notes',
+          dragHint: 'Drag to another column to change the status',
+          locked: 'Signed off – withdraw the sign-off to move it',
+          moveError: 'The task could not be moved'
+        },
+        task: {
+          add: 'Add task',
+          edit: 'Edit task',
+          delete: 'Delete task',
+          deleteConfirm: 'Delete the task with its checklist, notes and history?',
+          title: 'Title',
+          titlePlaceholder: 'e.g. Grease elevator connections',
+          description: 'Description',
+          descriptionPlaceholder: 'What needs to be done? What should one watch out for?',
+          deadline: 'Due date',
+          checklist: 'Checklist',
+          checklistHint: 'One step per line. Ticked steps stay ticked as long as their text stays the same.',
+          defect: 'Resolves defect/finding',
+          noDefect: 'No link',
+          fromDefect: 'Created from defect/finding',
+          fromTemplate: 'From template',
+          start: 'Start work',
+          reset: 'Back to open',
+          finish: 'Report as done',
+          reopen: 'Back to work',
+          sign: 'Sign off',
+          unsign: 'Withdraw sign-off',
+          signedBy: 'Signed off by {name} · {date}',
+          doneBy: 'Done by {name} · {date}',
+          locked: 'Signed off tasks are locked until the sign-off is withdrawn.',
+          notes: 'Notes',
+          noNotes: 'No notes yet',
+          notePlaceholder: 'What did you notice?',
+          addNote: 'Add note',
+          deleteNote: 'Delete note',
+          history: 'History',
+          close: 'Close',
+          unknownUser: 'Unknown',
+          actions: {
+            CREATED: 'Created',
+            UPDATED: 'Edited',
+            STARTED: 'Work started',
+            RESET: 'Back to open',
+            FINISHED: 'Reported as done',
+            REOPENED: 'Back to work',
+            SIGNED: 'Signed off',
+            UNSIGNED: 'Sign-off withdrawn',
+            NOTE_ADDED: 'Note added',
+            NOTE_DELETED: 'Note deleted'
+          }
+        },
+        defect: {
+          add: 'Report defect/finding',
+          edit: 'Edit defect/finding',
+          delete: 'Delete defect/finding',
+          deleteConfirm: 'Delete the defect/finding? A linked task is kept.',
+          empty: 'No defects or findings reported.',
+          title: 'Title',
+          titlePlaceholder: 'e.g. Crack in the canopy',
+          description: 'Description',
+          descriptionPlaceholder: 'Where exactly? How big?',
+          reportedBy: 'Reported by {name} · {date}',
+          doneBy: 'Done by {name} · {date}',
+          markDone: 'Mark as done',
+          markOpen: 'Reopen',
+          createTask: 'Create task',
+          task: 'Task',
+          statusOpen: 'Open',
+          statusDone: 'Done'
+        },
+        templates: {
+          title: 'Task templates',
+          description: 'The tasks of an aircraft are created from the templates. Changes only affect tasks created later.',
+          add: 'Add template',
+          edit: 'Edit template',
+          delete: 'Delete template',
+          deleteConfirm: 'Delete the template? Tasks already created are kept.',
+          empty: 'No templates yet.',
+          aircraftTypes: 'Applies to types',
+          aircraftTypesHint: 'Leave empty so the template applies to every aircraft.',
+          allAircraft: 'All aircraft',
+          steps: 'No steps | 1 step | {count} steps'
+        }
+      },
       users: {
         title: 'Users',
         description: 'Registered users with their roles and rights. Roles are assigned in the database.',
@@ -376,11 +530,13 @@ export default defineI18nLocale(async locale => {
           ROLE_USER: 'User',
           ROLE_ADMIN: 'Administrator',
           ROLE_SCHEDULE_ADMIN: 'Schedule administrator',
-          ROLE_ALARM_ADMIN: 'Alarm administrator'
+          ROLE_ALARM_ADMIN: 'Alarm administrator',
+          ROLE_MAINTENANCE_ADMIN: 'Maintenance administrator'
         },
         permissionNames: {
           PERMISSION_SCHEDULE_MANAGE: 'Manage service plans',
-          PERMISSION_ALARM_MANAGE: 'Manage alarm system'
+          PERMISSION_ALARM_MANAGE: 'Manage alarm system',
+          PERMISSION_MAINTENANCE_MANAGE: 'Manage maintenance'
         }
       },
       error: {

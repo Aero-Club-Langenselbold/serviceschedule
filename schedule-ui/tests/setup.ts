@@ -16,9 +16,13 @@ mockNuxtImport('useAPI', () => {
                             ? ['ROLE_SCHEDULE_ADMIN']
                             : options.body.username === 'testalarmadmin'
                             ? ['ROLE_ALARM_ADMIN']
+                            : options.body.username === 'testmaintenanceadmin'
+                            ? ['ROLE_MAINTENANCE_ADMIN']
                             : ['ROLE_USER'],
                         permissions: options.body.username === 'testdelegate'
                             ? ['PERMISSION_SCHEDULE_MANAGE', 'PERMISSION_ALARM_MANAGE']
+                            : options.body.username === 'testmaintenancedelegate'
+                            ? ['PERMISSION_MAINTENANCE_MANAGE']
                             : [],
                         token: 'testtoken',
                         type: 'Bearer'
@@ -91,6 +95,36 @@ mockNuxtImport('useAPI', () => {
                 data: { value: { content: [{ id: '1', timestamp: '2026-05-07T22:38:45', rfidId: 'AABBCC', internalTime: '22:38:45', rawData: 'raw', status: 1 }], totalElements: 1 } },
                 error: {}
             }
+        } else if (url === '/maintenance/aircraft') {
+            return {
+                data: { value: [
+                    { id: 'a1', type: 'ASK 21', registration: 'D-1234', workshopStart: '2026-11-07', workshopEnd: '2026-12-19', taskCount: 4, doneCount: 1, signedCount: 1, openDefectCount: 2 },
+                    { id: 'a2', type: 'LS 8', registration: 'D-5678', workshopStart: null, workshopEnd: null, taskCount: 0, doneCount: 0, signedCount: 0, openDefectCount: 0 }
+                ] },
+                error: {}
+            }
+        } else if (url === '/maintenance/templates') {
+            return {
+                data: { value: [
+                    { id: 't1', title: 'Rumpf reinigen', description: 'Innen und außen', level: 'BEGINNER', durationMinutes: 60, aircraftTypes: [], checklist: ['Innen', 'Außen'] },
+                    { id: 't2', title: 'Haube polieren', description: null, level: 'EXPERIENCED', durationMinutes: null, aircraftTypes: ['ASK 21'], checklist: [] }
+                ] },
+                error: {}
+            }
+        } else if (url === '/maintenance/aircraft/a1') {
+            return { data: { value: { id: 'a1', type: 'ASK 21', registration: 'D-1234', workshopStart: null, workshopEnd: null, taskCount: 2, doneCount: 0, signedCount: 0, openDefectCount: 0 } }, error: {} }
+        } else if (url === '/maintenance/aircraft/a1/tasks') {
+            const task = { aircraftId: 'a1', description: null, level: 'BEGINNER', durationMinutes: null, deadline: null, fromTemplate: false, defect: null, checklistTotal: 0, checklistDone: 0, noteCount: 0, doneBy: null, doneAt: null, signedBy: null, signedAt: null }
+            return { data: { value: [
+                { ...task, id: 'k1', title: 'Reifen prüfen', status: 'OPEN' },
+                { ...task, id: 'k2', title: 'Haube polieren', status: 'DONE', signedBy: { id: 'u2', name: 'testadmin' }, signedAt: '2026-11-10T10:00:00Z' }
+            ] }, error: {} }
+        } else if (url === '/maintenance/aircraft/a1/defects') {
+            return { data: { value: [] }, error: {} }
+        } else if (/^\/maintenance\/tasks\/[^/]+\/status$/.test(url)) {
+            return { data: { value: { id: url.split('/')[3], status: options.body.status } }, error: {} }
+        } else if (url === '/maintenance/aircraft/types') {
+            return { data: { value: ['ASK 21', 'LS 8'] }, error: {} }
         }
         // Default fallback
         return { data: { value: null }, error: {} }

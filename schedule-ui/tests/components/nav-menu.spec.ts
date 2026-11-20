@@ -98,7 +98,25 @@ it ('Shows bug list and settings as separate entries next to the service plans',
   expect(userMenu).not.toContain('/settings')
 })
 
+it ('Shows bug list and settings as icons only in the header bar', async () => {
+  await login({username: "testadmin", password: "howwouldiknow"})
+  const navMenu = await mountSuspended(NavMenu)
+  for (const [path, label] of [['/request/list', 'Bugs & requests'], ['/settings', 'Settings']]) {
+    const link = navMenu.find(`a[href="${path}"]`)
+    expect(link.attributes('title')).toBe(label)
+    expect(link.find('[data-slot="linkLabel"]').classes()).toContain('sr-only')
+  }
+})
+
 it ('Hides the service plans entry without any schedule page', async () => {
   await login({username: "testalarmadmin", password: "howwouldiknow"})
   expect((await mountSuspended(NavMenu)).html()).not.toContain('Service Plans')
+})
+
+it ('Shows the maintenance menu to every signed in user', async () => {
+  await login({username: "testuser", password: "howwouldiknow"})
+  expect((await mountSuspended(NavMenu)).html()).toContain('Maintenance')
+
+  await login({username: "testalarmadmin", password: "howwouldiknow"})
+  expect((await mountSuspended(NavMenu)).html()).toContain('Maintenance')
 })

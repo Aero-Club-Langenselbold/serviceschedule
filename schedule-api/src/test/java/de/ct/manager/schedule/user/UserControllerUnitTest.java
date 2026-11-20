@@ -108,7 +108,7 @@ public class UserControllerUnitTest extends AbstractControllerUnitTest {
 
         mockMvc.perform(get("/user/permissions").header("Authorization", bearer(UserRole.ROLE_ADMIN)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$", contains("PERMISSION_SCHEDULE_MANAGE", "PERMISSION_ALARM_MANAGE")));
+            .andExpect(jsonPath("$", contains("PERMISSION_SCHEDULE_MANAGE", "PERMISSION_ALARM_MANAGE", "PERMISSION_MAINTENANCE_MANAGE")));
     }
 
     @Test

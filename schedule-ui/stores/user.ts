@@ -26,6 +26,7 @@ export const useUserStore = defineStore('user', () => {
 
     const canManageSchedule = computed(() => hasRole('ROLE_ADMIN', 'ROLE_SCHEDULE_ADMIN') || hasPermission('PERMISSION_SCHEDULE_MANAGE'))
     const canManageAlarm = computed(() => hasRole('ROLE_ADMIN', 'ROLE_ALARM_ADMIN') || hasPermission('PERMISSION_ALARM_MANAGE'))
+    const canManageMaintenance = computed(() => hasRole('ROLE_ADMIN', 'ROLE_MAINTENANCE_ADMIN') || hasPermission('PERMISSION_MAINTENANCE_MANAGE'))
 
     function storeAuthentication(data: User & Session) {
         user.value = {
@@ -97,5 +98,5 @@ export const useUserStore = defineStore('user', () => {
         session.value = null
     }
 
-    return { user, session, isLoggedIn, isImpersonating, canManageSchedule, canManageAlarm, hasRole, hasPermission, login, impersonate, stopImpersonation, logout, validate }
+    return { user, session, isLoggedIn, isImpersonating, canManageSchedule, canManageAlarm, canManageMaintenance, hasRole, hasPermission, login, impersonate, stopImpersonation, logout, validate }
 })

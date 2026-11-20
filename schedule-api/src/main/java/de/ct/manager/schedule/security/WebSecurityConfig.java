@@ -82,8 +82,10 @@ public class WebSecurityConfig {
         return RoleHierarchyImpl.fromHierarchy("""
             ROLE_ADMIN > PERMISSION_SCHEDULE_MANAGE
             ROLE_ADMIN > PERMISSION_ALARM_MANAGE
+            ROLE_ADMIN > PERMISSION_MAINTENANCE_MANAGE
             PERMISSION_SCHEDULE_MANAGE > ROLE_SCHEDULE_ADMIN
             PERMISSION_ALARM_MANAGE > ROLE_ALARM_ADMIN
+            PERMISSION_MAINTENANCE_MANAGE > ROLE_MAINTENANCE_ADMIN
             """);
     }
 

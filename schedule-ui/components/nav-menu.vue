@@ -9,7 +9,7 @@
       </span>
     </template>
 
-    <UNavigationMenu v-if="menu.length" :items="menu" orientation="horizontal" content-orientation="vertical" :ui="{ linkLeadingIcon: 'size-4' }" />
+    <UNavigationMenu v-if="menu.length" :items="barMenu" orientation="horizontal" content-orientation="vertical" :ui="{ linkLeadingIcon: 'size-4' }" />
 
     <template #right>
       <UButton v-if="isImpersonating" color="warning" icon="i-lucide-user-round-x" :aria-label="$t('nav.stopImpersonation')" @click="leaveImpersonation">
@@ -46,7 +46,7 @@ const switchLocalePath = useSwitchLocalePath()
 const { setUserLocale } = localeStore
 const userStore = useUserStore()
 const { logout, hasRole, stopImpersonation } = userStore
-const { isLoggedIn, isImpersonating, canManageSchedule, canManageAlarm, user } = storeToRefs(userStore)
+const { isLoggedIn, isImpersonating, canManageSchedule, canManageAlarm, canManageMaintenance, user } = storeToRefs(userStore)
 const toast = useToast()
 
 const leaveImpersonation = async () => {
@@ -92,6 +92,16 @@ const menu = computed(() => {
       children: schedules
     })
   }
+  // Every signed in user works on maintenance tasks, the templates are for administrators.
+  items.push({
+    label: t('nav.maintenance.menu'),
+    icon: 'i-lucide-wrench',
+    defaultOpen: true,
+    children: [
+      { label: t('nav.maintenance.overview'), icon: 'i-lucide-plane', to: '/maintenance' },
+      ...(canManageMaintenance.value ? [{ label: t('nav.maintenance.templates'), icon: 'i-lucide-copy', to: '/maintenance/templates' }] : [])
+    ]
+  })
   if (canManageAlarm.value) {
     items.push({
       label: t('nav.alarms.menu'),
@@ -102,15 +112,21 @@ const menu = computed(() => {
       ]
     })
   }
-  items.push({ label: t('nav.requests'), icon: 'i-lucide-bug', to: '/request/list' })
   if (hasRole('ROLE_ADMIN')) {
-    items.push(
-      { label: t('nav.settings'), icon: 'i-lucide-settings', to: '/settings' },
-      { label: t('nav.users'), icon: 'i-lucide-user-cog', to: '/users/list' }
-    )
+    items.push({ label: t('nav.users'), icon: 'i-lucide-user-cog', to: '/users/list' })
+  }
+  items.push({ label: t('nav.requests'), icon: 'i-lucide-bug', to: '/request/list', iconOnly: true })
+  if (hasRole('ROLE_ADMIN')) {
+    items.push({ label: t('nav.settings'), icon: 'i-lucide-settings', to: '/settings', iconOnly: true })
   }
   return items
 })
+
+// In the header bar some entries show only their icon; the label stays for screen readers and as hover title.
+// The slideover menu on small screens keeps all labels.
+const barMenu = computed(() => menu.value.map(({ iconOnly, ...item }) => iconOnly
+  ? { ...item, title: item.label, ui: { linkLabel: 'sr-only' } }
+  : item))
 
 const account = computed(() => [
   [{ label: user.value?.username, type: 'label' as const }],

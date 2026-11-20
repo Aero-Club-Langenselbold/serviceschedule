@@ -34,7 +34,8 @@ const savingUsers = reactive<Record<string, boolean>>({})
 // Rights that a role grants anyway. Roles are managed in the database, so these cannot be changed here.
 const permissionsOfRole: Record<string, string[]> = {
   ROLE_SCHEDULE_ADMIN: ['PERMISSION_SCHEDULE_MANAGE'],
-  ROLE_ALARM_ADMIN: ['PERMISSION_ALARM_MANAGE']
+  ROLE_ALARM_ADMIN: ['PERMISSION_ALARM_MANAGE'],
+  ROLE_MAINTENANCE_ADMIN: ['PERMISSION_MAINTENANCE_MANAGE']
 }
 
 const isImpliedByRole = (row: UserOverview, permission: string) =>

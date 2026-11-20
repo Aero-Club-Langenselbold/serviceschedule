@@ -1,0 +1,71 @@
+import type { DefectPriority, SkillLevel, TaskStatus } from '~/types/maintenance'
+
+type BadgeColor = 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
+
+export const SKILL_LEVELS: SkillLevel[] = ['BEGINNER', 'EXPERIENCED', 'WORKSHOP_LEAD']
+export const TASK_STATUSES: TaskStatus[] = ['OPEN', 'IN_PROGRESS', 'DONE']
+export const DEFECT_PRIORITIES: DefectPriority[] = ['HIGH', 'NORMAL', 'LOW', 'VERY_LOW']
+export const DURATIONS = [15, 30, 60, 90, 120, 180, 240, 480]
+
+export const NO_SELECTION = 'none'
+
+/** Select items need a value: 0 stands for "no duration". */
+export const toDuration = (minutes: number | null | undefined) => minutes ?? 0
+export const fromDuration = (minutes: number) => minutes || null
+
+/** One checklist step per line, blank lines dropped. */
+export const splitLines = (text: string) => text.split('\n').map(line => line.trim()).filter(Boolean)
+
+const LEVEL_COLORS: Record<SkillLevel, BadgeColor> = { BEGINNER: 'success', EXPERIENCED: 'info', WORKSHOP_LEAD: 'secondary' }
+const STATUS_COLORS: Record<TaskStatus, BadgeColor> = { OPEN: 'neutral', IN_PROGRESS: 'warning', DONE: 'success' }
+const PRIORITY_COLORS: Record<DefectPriority, BadgeColor> = { HIGH: 'error', NORMAL: 'warning', LOW: 'info', VERY_LOW: 'neutral' }
+
+/** Labels, colors and formatting shared by the maintenance pages. */
+export function useMaintenance() {
+    const { t, locale } = useI18n()
+
+    const levelLabel = (level: SkillLevel) => t(`maintenance.level.${level}`)
+    const statusLabel = (status: TaskStatus) => t(`maintenance.status.${status}`)
+    const priorityLabel = (priority: DefectPriority) => t(`maintenance.priority.${priority}`)
+
+    const levelColor = (level: SkillLevel) => LEVEL_COLORS[level]
+    const statusColor = (status: TaskStatus) => STATUS_COLORS[status]
+    const priorityColor = (priority: DefectPriority) => PRIORITY_COLORS[priority]
+
+    const formatDuration = (minutes: number | null | undefined) => {
+        if (!minutes) {
+            return ''
+        }
+        if (minutes < 60) {
+            return t('maintenance.duration.minutes', { count: minutes })
+        }
+        const hours = minutes / 60
+        return t('maintenance.duration.hours', { count: Number.isInteger(hours) ? hours : hours.toLocaleString(locale.value, { maximumFractionDigits: 1 }) })
+    }
+
+    // Dates without time come as YYYY-MM-DD and are shown as they are, without any time zone shift.
+    const formatDay = (day: string | null | undefined) => {
+        if (!day) {
+            return ''
+        }
+        const [year, month, date] = day.split('-').map(Number)
+        return new Date(year!, month! - 1, date!).toLocaleDateString(locale.value, { day: '2-digit', month: '2-digit', year: 'numeric' })
+    }
+
+    const formatWhen = (timestamp: string | null | undefined) => timestamp
+        ? new Date(timestamp).toLocaleString(locale.value, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : ''
+
+    // Select items need a value, 0 stands for "not specified" (see toDuration/fromDuration).
+    const durationItems = computed(() => [
+        { label: t('maintenance.duration.none'), value: 0 },
+        ...DURATIONS.map(minutes => ({ label: formatDuration(minutes), value: minutes }))
+    ])
+    const levelItems = computed(() => SKILL_LEVELS.map(level => ({ label: levelLabel(level), value: level })))
+    const priorityItems = computed(() => DEFECT_PRIORITIES.map(priority => ({ label: priorityLabel(priority), value: priority })))
+
+    return {
+        levelLabel, statusLabel, priorityLabel, levelColor, statusColor, priorityColor,
+        formatDuration, formatDay, formatWhen, durationItems, levelItems, priorityItems
+    }
+}

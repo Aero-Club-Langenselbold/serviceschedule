@@ -93,6 +93,11 @@ export default defineI18nLocale(async locale => {
           list: 'Dienstpläne anzeigen',
           add: 'Dienstplan hinzufügen'
         },
+        maintenance: {
+          menu: 'Wartung',
+          overview: 'Flugzeuge & Aufgaben',
+          templates: 'Aufgaben-Vorlagen'
+        },
         alarms: {
           menu: 'Alarmanlage',
           list: 'Ereignisprotokoll'
@@ -356,6 +361,155 @@ export default defineI18nLocale(async locale => {
           unknownAuthor: 'Unbekannt'
         }
       },
+      maintenance: {
+        title: 'Wartung',
+        description: 'Flugzeuge in der Werkstatt, ihre Aufgaben und gemeldete Mängel.',
+        empty: 'Noch keine Flugzeuge angelegt.',
+        emptyAdmin: 'Lege das erste Flugzeug an, um Aufgaben zu planen.',
+        loadError: 'Daten konnten nicht geladen werden',
+        saveError: 'Speichern fehlgeschlagen',
+        conflict: 'Jemand anderes hat den Eintrag inzwischen geändert. Die Ansicht wurde aktualisiert.',
+        saved: 'Gespeichert',
+        deleted: 'Gelöscht',
+        workshopPeriod: 'Werkstattzeitraum',
+        noPeriod: 'Kein Werkstattzeitraum',
+        progress: '{done} von {total} erledigt',
+        signedProgress: '{count} abgezeichnet',
+        openDefects: 'Keine offenen Mängel | 1 offener Mangel | {count} offene Mängel',
+        level: {
+          name: 'Geeignet für',
+          all: 'Alle',
+          BEGINNER: 'Einsteiger',
+          EXPERIENCED: 'Erfahrene',
+          WORKSHOP_LEAD: 'Werkstattleitung'
+        },
+        status: {
+          name: 'Status',
+          OPEN: 'Offen',
+          IN_PROGRESS: 'In Arbeit',
+          DONE: 'Erledigt'
+        },
+        priority: {
+          name: 'Priorität',
+          HIGH: 'Hoch',
+          NORMAL: 'Normal',
+          LOW: 'Niedrig',
+          VERY_LOW: 'Sehr niedrig'
+        },
+        duration: {
+          name: 'Geschätzte Dauer',
+          none: 'Keine Angabe',
+          minutes: '{count} Min.',
+          hours: '{count} Std.'
+        },
+        aircraft: {
+          add: 'Flugzeug hinzufügen',
+          edit: 'Flugzeug bearbeiten',
+          delete: 'Flugzeug löschen',
+          deleteConfirm: 'Flugzeug mit allen Aufgaben und Mängeln löschen?',
+          type: 'Muster',
+          typePlaceholder: 'z. B. ASK 21',
+          registration: 'Kennzeichen',
+          registrationPlaceholder: 'z. B. D-1234',
+          workshopStart: 'Werkstatt ab',
+          workshopEnd: 'Werkstatt bis',
+          exists: 'Dieses Kennzeichen gibt es bereits',
+          invalidPeriod: 'Das Ende liegt vor dem Beginn'
+        },
+        tabs: {
+          tasks: 'Aufgaben',
+          defects: 'Mängel & Befunde'
+        },
+        board: {
+          noTasks: 'Keine Aufgaben',
+          importTemplates: 'Aus Vorlagen anlegen',
+          imported: 'Keine neuen Aufgaben aus Vorlagen | 1 Aufgabe aus Vorlagen angelegt | {count} Aufgaben aus Vorlagen angelegt',
+          notSigned: 'Abzeichnung offen',
+          deadline: 'Frist {date}',
+          notes: 'Keine Notizen | 1 Notiz | {count} Notizen',
+          dragHint: 'In eine andere Spalte ziehen, um den Status zu ändern',
+          locked: 'Abgezeichnet – zum Verschieben erst die Abzeichnung zurücknehmen',
+          moveError: 'Die Aufgabe konnte nicht verschoben werden'
+        },
+        task: {
+          add: 'Aufgabe anlegen',
+          edit: 'Aufgabe bearbeiten',
+          delete: 'Aufgabe löschen',
+          deleteConfirm: 'Aufgabe mit Checkliste, Notizen und Verlauf löschen?',
+          title: 'Titel',
+          titlePlaceholder: 'z. B. Höhenruder-Anschlüsse schmieren',
+          description: 'Beschreibung',
+          descriptionPlaceholder: 'Was ist zu tun? Worauf muss man achten?',
+          deadline: 'Frist',
+          checklist: 'Checkliste',
+          checklistHint: 'Ein Schritt pro Zeile. Abgehakte Schritte bleiben abgehakt, solange ihr Text gleich bleibt.',
+          defect: 'Behebt Mangel/Befund',
+          noDefect: 'Keine Verknüpfung',
+          fromDefect: 'Entstanden aus Mangel/Befund',
+          fromTemplate: 'Aus Vorlage',
+          start: 'Arbeit starten',
+          reset: 'Zurück auf Offen',
+          finish: 'Als erledigt melden',
+          reopen: 'Wieder in Arbeit',
+          sign: 'Abzeichnen',
+          unsign: 'Abzeichnung zurücknehmen',
+          signedBy: 'Abgezeichnet von {name} · {date}',
+          doneBy: 'Erledigt von {name} · {date}',
+          locked: 'Abgezeichnete Aufgaben sind gesperrt, bis die Abzeichnung zurückgenommen wird.',
+          notes: 'Notizen',
+          noNotes: 'Noch keine Notizen',
+          notePlaceholder: 'Was ist dir aufgefallen?',
+          addNote: 'Notiz hinzufügen',
+          deleteNote: 'Notiz löschen',
+          history: 'Verlauf',
+          close: 'Schließen',
+          unknownUser: 'Unbekannt',
+          actions: {
+            CREATED: 'Angelegt',
+            UPDATED: 'Bearbeitet',
+            STARTED: 'Arbeit gestartet',
+            RESET: 'Zurück auf Offen',
+            FINISHED: 'Als erledigt gemeldet',
+            REOPENED: 'Wieder in Arbeit',
+            SIGNED: 'Abgezeichnet',
+            UNSIGNED: 'Abzeichnung zurückgenommen',
+            NOTE_ADDED: 'Notiz hinzugefügt',
+            NOTE_DELETED: 'Notiz gelöscht'
+          }
+        },
+        defect: {
+          add: 'Mangel/Befund melden',
+          edit: 'Mangel/Befund bearbeiten',
+          delete: 'Mangel/Befund löschen',
+          deleteConfirm: 'Mangel/Befund löschen? Eine verknüpfte Aufgabe bleibt erhalten.',
+          empty: 'Keine Mängel oder Befunde gemeldet.',
+          title: 'Titel',
+          titlePlaceholder: 'z. B. Riss in der Haube',
+          description: 'Beschreibung',
+          descriptionPlaceholder: 'Wo genau? Wie groß?',
+          reportedBy: 'Gemeldet von {name} · {date}',
+          doneBy: 'Erledigt von {name} · {date}',
+          markDone: 'Als erledigt markieren',
+          markOpen: 'Wieder öffnen',
+          createTask: 'Aufgabe erstellen',
+          task: 'Aufgabe',
+          statusOpen: 'Offen',
+          statusDone: 'Erledigt'
+        },
+        templates: {
+          title: 'Aufgaben-Vorlagen',
+          description: 'Aus den Vorlagen entstehen die Aufgaben eines Flugzeugs. Änderungen wirken nur auf künftig angelegte Aufgaben.',
+          add: 'Vorlage anlegen',
+          edit: 'Vorlage bearbeiten',
+          delete: 'Vorlage löschen',
+          deleteConfirm: 'Vorlage löschen? Bereits angelegte Aufgaben bleiben erhalten.',
+          empty: 'Noch keine Vorlagen angelegt.',
+          aircraftTypes: 'Gilt für Muster',
+          aircraftTypesHint: 'Leer lassen, damit die Vorlage für alle Flugzeuge gilt.',
+          allAircraft: 'Alle Flugzeuge',
+          steps: 'Keine Schritte | 1 Schritt | {count} Schritte'
+        }
+      },
       users: {
         title: 'Benutzer',
         description: 'Registrierte Benutzer, ihre Rollen und Rechte. Rollen werden in der Datenbank vergeben.',
@@ -376,11 +530,13 @@ export default defineI18nLocale(async locale => {
           ROLE_USER: 'Benutzer',
           ROLE_ADMIN: 'Administrator',
           ROLE_SCHEDULE_ADMIN: 'Dienstplan-Administrator',
-          ROLE_ALARM_ADMIN: 'Alarm-Administrator'
+          ROLE_ALARM_ADMIN: 'Alarm-Administrator',
+          ROLE_MAINTENANCE_ADMIN: 'Wartungs-Administrator'
         },
         permissionNames: {
           PERMISSION_SCHEDULE_MANAGE: 'Dienstpläne verwalten',
-          PERMISSION_ALARM_MANAGE: 'Alarmanlage verwalten'
+          PERMISSION_ALARM_MANAGE: 'Alarmanlage verwalten',
+          PERMISSION_MAINTENANCE_MANAGE: 'Wartung verwalten'
         }
       },
       error: {

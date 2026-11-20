@@ -16,6 +16,6 @@ import lombok.EqualsAndHashCode;
 public class Role extends AbstractPersistentEntity {
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20, unique = true, nullable = false)
+    @Column(length = 30, unique = true, nullable = false)
     private UserRole name;
 }

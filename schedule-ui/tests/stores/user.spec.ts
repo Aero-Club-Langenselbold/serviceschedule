@@ -145,4 +145,19 @@ describe('User Store', () => {
         expect(userStore.user?.username).toBe('testuser')
         expect(userStore.session?.token).toBe('testtoken')
     })
+
+    it('the maintenance module is unlocked by its role, its right or the administrator role', async () => {
+        await userStore.login({ username: 'testuser', password: 'password' })
+        expect(userStore.canManageMaintenance).toBe(false)
+
+        await userStore.login({ username: 'testmaintenanceadmin', password: 'password' })
+        expect(userStore.canManageMaintenance).toBe(true)
+        expect(userStore.canManageSchedule).toBe(false)
+
+        await userStore.login({ username: 'testmaintenancedelegate', password: 'password' })
+        expect(userStore.canManageMaintenance).toBe(true)
+
+        await userStore.login({ username: 'testadmin', password: 'password' })
+        expect(userStore.canManageMaintenance).toBe(true)
+    })
 })
