@@ -50,6 +50,10 @@ Run the backend tests when `schedule-api` changed and `pnpm test` when `schedule
 - Frontend mirrors this in `stores/user.ts` (`canManageSchedule`, `canManageAlarm`, `canManageMaintenance`) and in route middlewares (`middleware/*-admin.ts`). A new right also needs: i18n names under `users.permissionNames` / `users.roleNames`, and `permissionsOfRole` in `pages/users/list.vue`.
 - The frontend only hides controls; the backend enforces every rule.
 
+## My services
+
+`GET /plan/mine` (`?past=true` includes past services) and `/plan/mine/ics` list the plan entries of the signed in user: user ↔ participant by e-mail, only published plans, with the colleagues of the same service and time. Page `pages/plan/mine.vue`. Plan times are local wall clock times (`LocalDateTime`); the ICS export converts them to UTC with `schedule.calendar.timezone` (default `Europe/Berlin`).
+
 ## Maintenance module
 
 Backend `schedule-api/.../maintenance/`, migration `V3.2__maintenance.sql`, frontend `pages/maintenance/`, `components/maintenance/`, `composables/useMaintenance.ts`, `types/maintenance.ts`. API under `/api/v1/maintenance`.

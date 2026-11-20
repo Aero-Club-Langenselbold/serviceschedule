@@ -91,7 +91,8 @@ export default defineI18nLocale(async locale => {
         plan: {
           usermenu: 'Service Plans',
           list: 'Show Service Plans',
-          add: 'Add Service Plan'
+          add: 'Add Service Plan',
+          mine: 'My services'
         },
         maintenance: {
           menu: 'Maintenance',
@@ -360,6 +361,21 @@ export default defineI18nLocale(async locale => {
           closed: 'Only open entries can be commented on.',
           unknownAuthor: 'Unknown'
         }
+      },
+      myServices: {
+        title: 'My services',
+        description: 'Your services from published service plans',
+        download: 'Calendar (ICS)',
+        fileName: 'my-services.ics',
+        showPast: 'Show past services',
+        showPastHint: 'As long as their service plan has not been deleted',
+        past: 'Past',
+        with: 'With {names}',
+        empty: 'No upcoming services',
+        emptyAll: 'No services',
+        emptyHint: 'Services show up here as soon as a service plan with your assignments is published.',
+        loadError: 'Your services could not be loaded',
+        downloadError: 'The calendar file could not be created'
       },
       maintenance: {
         title: 'Maintenance',

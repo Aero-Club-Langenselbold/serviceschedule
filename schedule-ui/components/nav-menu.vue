@@ -85,6 +85,9 @@ const menu = computed(() => {
     schedules.push({ label: t('nav.plan.list'), icon: 'i-lucide-calendar-days', to: '/plan/list' })
   }
   if (schedules.length) {
+    schedules.push({ label: t('nav.plan.mine'), icon: 'i-lucide-calendar-check', to: '/plan/mine' })
+  }
+  if (schedules.length) {
     items.push({
       label: t('nav.schedules'),
       icon: 'i-lucide-calendar-days',

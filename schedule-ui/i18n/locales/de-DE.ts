@@ -91,7 +91,8 @@ export default defineI18nLocale(async locale => {
         plan: {
           usermenu: 'Dienstpläne',
           list: 'Dienstpläne anzeigen',
-          add: 'Dienstplan hinzufügen'
+          add: 'Dienstplan hinzufügen',
+          mine: 'Meine Dienste'
         },
         maintenance: {
           menu: 'Wartung',
@@ -360,6 +361,21 @@ export default defineI18nLocale(async locale => {
           closed: 'Nur offene Einträge können kommentiert werden.',
           unknownAuthor: 'Unbekannt'
         }
+      },
+      myServices: {
+        title: 'Meine Dienste',
+        description: 'Deine Dienste aus veröffentlichten Dienstplänen',
+        download: 'Kalender (ICS)',
+        fileName: 'meine-dienste.ics',
+        showPast: 'Vergangene Dienste anzeigen',
+        showPastHint: 'Solange ihr Dienstplan noch nicht gelöscht wurde',
+        past: 'Vergangen',
+        with: 'Mit {names}',
+        empty: 'Keine anstehenden Dienste',
+        emptyAll: 'Keine Dienste',
+        emptyHint: 'Dienste erscheinen hier, sobald ein Dienstplan mit deinen Einteilungen veröffentlicht wurde.',
+        loadError: 'Deine Dienste konnten nicht geladen werden',
+        downloadError: 'Die Kalenderdatei konnte nicht erstellt werden'
       },
       maintenance: {
         title: 'Wartung',

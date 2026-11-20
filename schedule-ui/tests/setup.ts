@@ -95,6 +95,12 @@ mockNuxtImport('useAPI', () => {
                 data: { value: { content: [{ id: '1', timestamp: '2026-05-07T22:38:45', rfidId: 'AABBCC', internalTime: '22:38:45', rawData: 'raw', status: 1 }], totalElements: 1 } },
                 error: {}
             }
+        } else if (url.startsWith('/plan/mine/ics')) {
+            return { data: { value: 'BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n' }, error: {} }
+        } else if (url.startsWith('/plan/mine')) {
+            const upcoming = { id: 'e2', planId: 'p1', planName: 'Saison 2099', serviceName: 'Flugleiter', startTime: '2099-04-12T09:00:00', endTime: '2099-04-12T13:30:00', colleagues: ['Kurt Kollege'] }
+            const past = { id: 'e1', planId: 'p0', planName: 'Saison 2020', serviceName: 'Windenfahrer', startTime: '2020-05-02T09:00:00', endTime: '2020-05-02T18:00:00', colleagues: [] }
+            return { data: { value: url.endsWith('past=true') ? [past, upcoming] : [upcoming] }, error: {} }
         } else if (url === '/maintenance/aircraft') {
             return {
                 data: { value: [

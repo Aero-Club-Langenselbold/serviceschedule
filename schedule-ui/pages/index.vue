@@ -45,6 +45,7 @@ const tiles = computed(() => [
     { label: t('nav.service.list'), icon: 'i-lucide-briefcase', to: '/service/list' }
   ] : []),
   ...(canManageSchedule.value || hasRole('ROLE_USER') ? [
+    { label: t('nav.plan.mine'), icon: 'i-lucide-calendar-check', to: '/plan/mine' },
     { label: t('nav.plan.usermenu'), icon: 'i-lucide-calendar-days', to: '/plan/list' }
   ] : []),
   { label: t('nav.maintenance.overview'), icon: 'i-lucide-wrench', to: '/maintenance' },

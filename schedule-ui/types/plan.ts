@@ -12,4 +12,15 @@ type Plan = {
     serviceDates: ServiceDate[]
 }
 
-export type { Plan }
+/** One service of the signed in user (GET /plan/mine), times are local times without zone. */
+type PersonalService = {
+    id: string
+    planId: string
+    planName: string
+    serviceName: string
+    startTime: string
+    endTime: string
+    colleagues: string[]
+}
+
+export type { Plan, PersonalService }
