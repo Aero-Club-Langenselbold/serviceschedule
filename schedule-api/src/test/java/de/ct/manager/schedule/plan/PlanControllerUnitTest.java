@@ -65,7 +65,7 @@ class PlanControllerUnitTest extends AbstractControllerUnitTest {
     void testListPlans() throws Exception {
         mockValidAuthentication(UserRole.ROLE_ADMIN);
 
-        when(planRepository.findAll()).thenReturn(generateListResponse());
+        when(planRepository.findAllByOrderByDateFromDescDateUntilDescNameAsc()).thenReturn(generateListResponse());
 
         mockMvc.perform(
             get("/plan/list")

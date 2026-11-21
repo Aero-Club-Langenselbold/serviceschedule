@@ -39,7 +39,10 @@
           <!-- The table can be wider than its scroll area, the details stay within the visible part. -->
           <div class="[overflow-wrap:anywhere] max-md:w-[calc(100cqw-2.125rem)] md:sticky md:left-4 md:w-[calc(100cqw-2.5rem)]">
             <p class="whitespace-pre-line rounded-lg bg-muted p-3 text-sm text-default md:mx-2">{{ row.original.description }}</p>
-            <RequestComments :request-id="row.original.id" :status="row.original.status" />
+            <RequestComments
+              :request-id="row.original.id" :status="row.original.status" :can-close="isAdmin"
+              @status-changed="fetchData"
+            />
           </div>
         </template>
       </DataTable>
@@ -62,6 +65,8 @@ const UButton = resolveComponent('UButton')
 const { t, locale } = useI18n()
 const userStore = useUserStore()
 const { user } = storeToRefs(userStore)
+// administrators see all entries and close or reject them with a comment
+const isAdmin = computed(() => userStore.hasRole('ROLE_ADMIN'))
 
 const errorMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)

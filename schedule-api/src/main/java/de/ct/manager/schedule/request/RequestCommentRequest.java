@@ -14,4 +14,7 @@ public class RequestCommentRequest {
     @NotBlank
     @Size(max = 5000)
     private String content;
+
+    /** Optional: administrators close ({@code CLOSED}) or reject ({@code REJECTED}) the request with the comment. */
+    private RequestStatus status;
 }

@@ -77,8 +77,17 @@ test.describe('Dienstplanliste', () => {
     await page.goto('/plan/list')
     await action(page, 'Winterplan', GENERATE).click()
 
-    await expect(page.getByText('Plan generated successfully.')).toBeVisible()
+    await expect(page.getByText('Dienstplan wurde generiert.')).toBeVisible()
     expect(api.sent('POST', '/plan/generate/plan-open')).toHaveLength(1)
+
+    // services the generator could not staff are listed right away
+    const dialog = page.getByRole('dialog', { name: 'Nicht besetzte Dienste' })
+    await expect(dialog).toBeVisible()
+    await expect(dialog).toContainText('Für 1 Dienst wurde nicht genug Personal gefunden.')
+    await expect(dialog).toContainText('Samstag, 05.12.2026')
+    await expect(dialog).toContainText('Niemand eingeteilt')
+    await dialog.getByRole('button', { name: 'Schließen' }).last().click()
+    await expect(dialog).toHaveCount(0)
     await expect(action(page, 'Winterplan', FINAL)).toBeEnabled()
   })
 

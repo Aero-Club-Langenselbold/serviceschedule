@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.ct.manager.schedule.maintenance.MaintenanceDtos.WorkshopSlotRequest;
@@ -34,8 +35,8 @@ public class MaintenanceWorkshopController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<WorkshopSlotResponse>> getSlots() {
-        return ResponseEntity.ok(workshopService.getSlots());
+    public ResponseEntity<List<WorkshopSlotResponse>> getSlots(@RequestParam(required = false) String aircraftId) {
+        return ResponseEntity.ok(workshopService.getSlots(aircraftId));
     }
 
     @PostMapping

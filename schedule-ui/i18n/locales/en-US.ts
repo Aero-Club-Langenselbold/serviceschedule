@@ -29,7 +29,8 @@ export default defineI18nLocale(async locale => {
         showPassword: 'Show password',
         hidePassword: 'Hide password',
         moreInfo: 'More information',
-        empty: 'No entries yet'
+        empty: 'No entries yet',
+        close: 'Close'
       },
       permissionDenied: {
         title: 'Permission Denied',
@@ -222,6 +223,15 @@ export default defineI18nLocale(async locale => {
         detailsInfo: 'Add or edit the details of the service plan.',
         generateInfo: 'Generate final service plan',
         deleteInfo: 'Delete service plan',
+        generateSuccess: 'Service plan generated.',
+        unfilled: {
+          title: 'Unfilled services',
+          description: 'Service plan "{name}"',
+          summary: 'Not enough people were found for 1 service. Add the missing people by hand in the service plan. | Not enough people were found for {count} services. Add the missing people by hand in the service plan.',
+          nobody: 'Nobody assigned',
+          partly: '{assigned} of {required} assigned',
+          edit: 'Edit service plan'
+        },
         availabilityInfo: 'View/edit availabilities',
         pdfInfo: 'Download as PDF',
         csvInfo: 'Download as CSV',
@@ -361,7 +371,15 @@ export default defineI18nLocale(async locale => {
           error: 'Could not save the comment',
           loadError: 'Could not load the comments',
           closed: 'Only open entries can be commented on.',
-          unknownAuthor: 'Unknown'
+          unknownAuthor: 'Unknown',
+          moreActions: 'More actions',
+          commentOnly: 'Comment only',
+          commentAndClose: 'Comment and close',
+          commentAndReject: 'Comment and reject',
+          statusChanged: {
+            CLOSED: 'Entry closed',
+            REJECTED: 'Entry rejected'
+          }
         }
       },
       myServices: {
@@ -393,6 +411,7 @@ export default defineI18nLocale(async locale => {
         noPeriod: 'No workshop period planned',
         progress: '{done} of {total} done',
         signedProgress: '{count} signed off',
+        unscheduledTasks: 'No tasks without workshop period | 1 task without workshop period | {count} tasks without workshop period',
         openDefects: 'No open defects | 1 open defect | {count} open defects',
         level: {
           name: 'Suitable for',
@@ -436,7 +455,16 @@ export default defineI18nLocale(async locale => {
           tasks: 'Tasks',
           defects: 'Defects & findings'
         },
+        visits: {
+          running: 'Running',
+          past: 'Finished visits',
+          showPast: 'No finished visits | Show 1 finished visit | Show {count} finished visits',
+          hidePast: 'Hide finished visits'
+        },
         board: {
+          visit: 'Workshop visit',
+          unscheduled: 'Without workshop period',
+          unscheduledDescription: 'Tasks outside a workshop visit',
           noTasks: 'No tasks',
           importTemplates: 'Create from templates',
           imported: 'No new tasks from templates | 1 task created from templates | {count} tasks created from templates',
@@ -446,6 +474,15 @@ export default defineI18nLocale(async locale => {
           dragHint: 'Drag to another column to change the status',
           locked: 'Signed off – withdraw the sign-off to move it',
           moveError: 'The task could not be moved'
+        },
+        import: {
+          hint: 'Choose the work due on this visit.',
+          empty: 'No templates for this aircraft type.',
+          all: 'Select all',
+          none: 'Select none',
+          steps: 'No steps | 1 step | {count} steps',
+          existing: 'Already on the board',
+          create: 'Create tasks | Create 1 task | Create {count} tasks'
         },
         task: {
           add: 'Add task',
@@ -519,7 +556,7 @@ export default defineI18nLocale(async locale => {
           add: 'Plan workshop period',
           edit: 'Edit workshop period',
           delete: 'Delete period',
-          deleteConfirm: 'Delete the workshop period? Tasks of the aircraft are kept.',
+          deleteConfirm: 'Delete the workshop period? Its tasks are kept on the board "Without workshop period".',
           aircraft: 'Aircraft',
           chooseAircraft: 'Choose aircraft',
           start: 'From',
@@ -536,9 +573,14 @@ export default defineI18nLocale(async locale => {
           steps: '{done}/{total} steps',
           progress: '{percent} % of the checklist steps done',
           clickToPlan: 'Click to plan the aircraft from this day',
+          openBoard: 'Open board',
+          noTasks: 'No tasks yet',
+          aircraftLocked: 'The visit already has tasks, its aircraft cannot change any more.',
+          deleteAsk: 'Delete period?',
+          details: 'Workshop period details',
           legend: {
             planned: 'Planned',
-            progress: 'Current/next period with progress',
+            progress: 'Progress of the visit',
             past: 'Past',
             today: 'Today'
           }

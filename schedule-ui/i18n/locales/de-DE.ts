@@ -29,7 +29,8 @@ export default defineI18nLocale(async locale => {
         showPassword: 'Passwort anzeigen',
         hidePassword: 'Passwort verbergen',
         moreInfo: 'Weitere Informationen',
-        empty: 'Keine Einträge vorhanden'
+        empty: 'Keine Einträge vorhanden',
+        close: 'Schließen'
       },
       permissionDenied: {
         title: 'Zugang verweigert',
@@ -227,6 +228,15 @@ export default defineI18nLocale(async locale => {
         statisticsInfo: 'Statistiken dieses Plans einsehen',
         generateInfo: 'Dienstplan final generieren',
         deleteInfo: 'Dienstplan löschen',
+        generateSuccess: 'Dienstplan wurde generiert.',
+        unfilled: {
+          title: 'Nicht besetzte Dienste',
+          description: 'Dienstplan „{name}“',
+          summary: 'Für 1 Dienst wurde nicht genug Personal gefunden. Trage die fehlenden Personen von Hand im Dienstplan ein. | Für {count} Dienste wurde nicht genug Personal gefunden. Trage die fehlenden Personen von Hand im Dienstplan ein.',
+          nobody: 'Niemand eingeteilt',
+          partly: '{assigned} von {required} eingeteilt',
+          edit: 'Dienstplan bearbeiten'
+        },
         editDetails: 'Details',
         actionLabels: {
           details: 'Details',
@@ -361,7 +371,15 @@ export default defineI18nLocale(async locale => {
           error: 'Kommentar konnte nicht gespeichert werden',
           loadError: 'Kommentare konnten nicht geladen werden',
           closed: 'Nur offene Einträge können kommentiert werden.',
-          unknownAuthor: 'Unbekannt'
+          unknownAuthor: 'Unbekannt',
+          moreActions: 'Weitere Aktionen',
+          commentOnly: 'Nur kommentieren',
+          commentAndClose: 'Kommentieren und schließen',
+          commentAndReject: 'Kommentieren und abweisen',
+          statusChanged: {
+            CLOSED: 'Eintrag geschlossen',
+            REJECTED: 'Eintrag abgewiesen'
+          }
         }
       },
       myServices: {
@@ -393,6 +411,7 @@ export default defineI18nLocale(async locale => {
         noPeriod: 'Kein Werkstattzeitraum geplant',
         progress: '{done} von {total} erledigt',
         signedProgress: '{count} abgezeichnet',
+        unscheduledTasks: 'Keine Aufgaben ohne Werkstattzeitraum | 1 Aufgabe ohne Werkstattzeitraum | {count} Aufgaben ohne Werkstattzeitraum',
         openDefects: 'Keine offenen Mängel | 1 offener Mangel | {count} offene Mängel',
         level: {
           name: 'Geeignet für',
@@ -436,7 +455,16 @@ export default defineI18nLocale(async locale => {
           tasks: 'Aufgaben',
           defects: 'Mängel & Befunde'
         },
+        visits: {
+          running: 'Läuft',
+          past: 'Abgeschlossene Aufenthalte',
+          showPast: 'Keine abgeschlossenen Aufenthalte | 1 abgeschlossenen Aufenthalt anzeigen | {count} abgeschlossene Aufenthalte anzeigen',
+          hidePast: 'Abgeschlossene ausblenden'
+        },
         board: {
+          visit: 'Werkstattaufenthalt',
+          unscheduled: 'Ohne Werkstattzeitraum',
+          unscheduledDescription: 'Aufgaben außerhalb eines Werkstattaufenthalts',
           noTasks: 'Keine Aufgaben',
           importTemplates: 'Aus Vorlagen anlegen',
           imported: 'Keine neuen Aufgaben aus Vorlagen | 1 Aufgabe aus Vorlagen angelegt | {count} Aufgaben aus Vorlagen angelegt',
@@ -446,6 +474,15 @@ export default defineI18nLocale(async locale => {
           dragHint: 'In eine andere Spalte ziehen, um den Status zu ändern',
           locked: 'Abgezeichnet – zum Verschieben erst die Abzeichnung zurücknehmen',
           moveError: 'Die Aufgabe konnte nicht verschoben werden'
+        },
+        import: {
+          hint: 'Wähle die Arbeiten, die bei diesem Aufenthalt anfallen.',
+          empty: 'Keine Vorlagen für diesen Flugzeugtyp.',
+          all: 'Alle auswählen',
+          none: 'Keine auswählen',
+          steps: 'Keine Schritte | 1 Schritt | {count} Schritte',
+          existing: 'Schon auf dem Board',
+          create: 'Aufgaben anlegen | 1 Aufgabe anlegen | {count} Aufgaben anlegen'
         },
         task: {
           add: 'Aufgabe anlegen',
@@ -519,7 +556,7 @@ export default defineI18nLocale(async locale => {
           add: 'Werkstattzeitraum einplanen',
           edit: 'Werkstattzeitraum bearbeiten',
           delete: 'Zeitraum löschen',
-          deleteConfirm: 'Werkstattzeitraum löschen? Die Aufgaben des Flugzeugs bleiben erhalten.',
+          deleteConfirm: 'Werkstattzeitraum löschen? Seine Aufgaben bleiben auf dem Board „Ohne Werkstattzeitraum“ erhalten.',
           aircraft: 'Flugzeug',
           chooseAircraft: 'Flugzeug wählen',
           start: 'Von',
@@ -536,9 +573,14 @@ export default defineI18nLocale(async locale => {
           steps: '{done}/{total} Schritte',
           progress: '{percent} % der Checklisten-Schritte erledigt',
           clickToPlan: 'Klicken, um das Flugzeug ab diesem Tag einzuplanen',
+          openBoard: 'Zum Board',
+          noTasks: 'Noch keine Aufgaben',
+          aircraftLocked: 'Der Aufenthalt hat schon Aufgaben, das Flugzeug lässt sich nicht mehr ändern.',
+          deleteAsk: 'Zeitraum löschen?',
+          details: 'Details zum Werkstattzeitraum',
           legend: {
             planned: 'Geplant',
-            progress: 'Aktueller/nächster Zeitraum mit Fortschritt',
+            progress: 'Fortschritt des Aufenthalts',
             past: 'Vergangen',
             today: 'Heute'
           }

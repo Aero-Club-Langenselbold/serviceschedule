@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.ct.manager.schedule.maintenance.MaintenanceDtos.AircraftRequest;
 import de.ct.manager.schedule.maintenance.MaintenanceDtos.AircraftResponse;
 import de.ct.manager.schedule.maintenance.MaintenanceDtos.ImportResponse;
+import de.ct.manager.schedule.maintenance.MaintenanceDtos.TemplateImportRequest;
 import de.ct.manager.schedule.user.UserDetailsImpl;
 import jakarta.validation.Valid;
 
@@ -72,7 +73,8 @@ public class MaintenanceAircraftController {
 
     @PostMapping("/{id}/import-templates")
     @PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
-    public ResponseEntity<ImportResponse> importTemplates(@PathVariable String id, @AuthenticationPrincipal UserDetailsImpl currentUser) {
-        return ResponseEntity.ok(aircraftService.importTemplates(id, currentUser));
+    public ResponseEntity<ImportResponse> importTemplates(@PathVariable String id, @Valid @RequestBody TemplateImportRequest request,
+            @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        return ResponseEntity.ok(aircraftService.importTemplates(id, request, currentUser));
     }
 }

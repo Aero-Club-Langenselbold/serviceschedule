@@ -12,6 +12,9 @@ public interface MaintenanceWorkshopSlotRepository extends JpaRepository<Mainten
     @EntityGraph(attributePaths = "aircraft")
     List<MaintenanceWorkshopSlot> findAllByOrderByStartDateAscEndDateAsc();
 
+    @EntityGraph(attributePaths = "aircraft")
+    List<MaintenanceWorkshopSlot> findAllByAircraftIdOrderByStartDateAscEndDateAsc(String aircraftId);
+
     /** Whether another slot of the aircraft shares at least one day with the given period. */
     @Query("SELECT COUNT(s) > 0 FROM MaintenanceWorkshopSlot s WHERE s.aircraft = :aircraft AND s.id <> :excludedId "
             + "AND s.startDate <= :endDate AND s.endDate >= :startDate")

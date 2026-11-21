@@ -9,9 +9,9 @@ const dayFromToday = (offset: number) => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 const workshopSlots = () => [
-    { id: 's0', aircraftId: 'a1', startDate: dayFromToday(-90), endDate: dayFromToday(-80), note: 'Jahresnachprüfung' },
-    { id: 's1', aircraftId: 'a1', startDate: dayFromToday(-3), endDate: dayFromToday(10), note: null },
-    { id: 's2', aircraftId: 'a2', startDate: dayFromToday(5), endDate: dayFromToday(30), note: 'Lackierung' }
+    { id: 's0', aircraftId: 'a1', startDate: dayFromToday(-90), endDate: dayFromToday(-80), note: 'Jahresnachprüfung', taskCount: 2, doneCount: 2, signedCount: 2, stepCount: 5, stepDoneCount: 5 },
+    { id: 's1', aircraftId: 'a1', startDate: dayFromToday(-3), endDate: dayFromToday(10), note: null, taskCount: 4, doneCount: 1, signedCount: 1, stepCount: 8, stepDoneCount: 3 },
+    { id: 's2', aircraftId: 'a2', startDate: dayFromToday(5), endDate: dayFromToday(30), note: 'Lackierung', taskCount: 0, doneCount: 0, signedCount: 0, stepCount: 0, stepDoneCount: 0 }
 ]
 
 mockNuxtImport('useAPI', () => {
@@ -116,8 +116,8 @@ mockNuxtImport('useAPI', () => {
         } else if (url === '/maintenance/aircraft') {
             return {
                 data: { value: [
-                    { id: 'a1', type: 'ASK 21', registration: 'D-1234', workshop: workshopSlots()[1], taskCount: 4, doneCount: 1, signedCount: 1, stepCount: 8, stepDoneCount: 3, openDefectCount: 2 },
-                    { id: 'a2', type: 'LS 8', registration: 'D-5678', workshop: null, taskCount: 0, doneCount: 0, signedCount: 0, stepCount: 0, stepDoneCount: 0, openDefectCount: 0 }
+                    { id: 'a1', type: 'ASK 21', registration: 'D-1234', workshop: workshopSlots()[1], unscheduledTaskCount: 0, openDefectCount: 2 },
+                    { id: 'a2', type: 'LS 8', registration: 'D-5678', workshop: null, unscheduledTaskCount: 3, openDefectCount: 0 }
                 ] },
                 error: {}
             }
@@ -130,12 +130,16 @@ mockNuxtImport('useAPI', () => {
                 error: {}
             }
         } else if (url === '/maintenance/aircraft/a1') {
-            return { data: { value: { id: 'a1', type: 'ASK 21', registration: 'D-1234', workshop: null, taskCount: 2, doneCount: 0, signedCount: 0, stepCount: 2, stepDoneCount: 0, openDefectCount: 0 } }, error: {} }
+            return { data: { value: { id: 'a1', type: 'ASK 21', registration: 'D-1234', workshop: workshopSlots()[1], unscheduledTaskCount: 0, openDefectCount: 0 } }, error: {} }
         } else if (url === '/maintenance/aircraft/a1/tasks') {
-            const task = { aircraftId: 'a1', description: null, level: 'BEGINNER', durationMinutes: null, deadline: null, fromTemplate: false, defect: null, checklistTotal: 0, checklistDone: 0, noteCount: 0, doneBy: null, doneAt: null, signedBy: null, signedAt: null }
+            // the board of the visit s1 (the default), the past visit s0 has one done task
+            if (options.query?.workshopId === 's0') {
+                return { data: { value: [{ id: 'k0', aircraftId: 'a1', workshopId: 's0', templateId: null, title: 'Reifen wechseln', status: 'DONE', description: null, level: 'BEGINNER', durationMinutes: null, deadline: null, fromTemplate: false, defect: null, checklistTotal: 0, checklistDone: 0, noteCount: 0, doneBy: null, doneAt: null, signedBy: null, signedAt: null }] }, error: {} }
+            }
+            const task = { aircraftId: 'a1', workshopId: 's1', templateId: null, description: null, level: 'BEGINNER', durationMinutes: null, deadline: null, fromTemplate: false, defect: null, checklistTotal: 0, checklistDone: 0, noteCount: 0, doneBy: null, doneAt: null, signedBy: null, signedAt: null }
             return { data: { value: [
                 { ...task, id: 'k1', title: 'Reifen prüfen', status: 'OPEN' },
-                { ...task, id: 'k2', title: 'Haube polieren', status: 'DONE', signedBy: { id: 'u2', name: 'testadmin' }, signedAt: '2026-11-10T10:00:00Z' }
+                { ...task, id: 'k2', title: 'Haube polieren', templateId: 't2', fromTemplate: true, status: 'DONE', signedBy: { id: 'u2', name: 'testadmin' }, signedAt: '2026-11-10T10:00:00Z' }
             ] }, error: {} }
         } else if (url === '/maintenance/aircraft/a1/defects') {
             return { data: { value: [] }, error: {} }

@@ -8,7 +8,7 @@
     width="full"
   >
     <template v-if="canManageMaintenance && aircraft" #actions>
-      <UButton color="neutral" variant="outline" icon="i-lucide-copy-plus" :label="$t('maintenance.board.importTemplates')" :loading="importing" @click="importTemplates" />
+      <UButton color="neutral" variant="outline" icon="i-lucide-copy-plus" :label="$t('maintenance.board.importTemplates')" @click="importOpen = true" />
       <UButton color="neutral" variant="outline" icon="i-lucide-pencil" :aria-label="$t('maintenance.aircraft.edit')" @click="aircraftFormOpen = true" />
       <ConfirmationDialog
         variant="outline" color="error" icon="i-lucide-trash-2" :loading="false" :button-label="undefined" button-class=""
@@ -21,13 +21,20 @@
 
     <!-- Kanban board -->
     <template v-if="tab === 'tasks'">
-      <div class="mb-4 flex flex-wrap items-center gap-2">
-        <span class="mr-1 text-sm text-muted">{{ $t('maintenance.level.name') }}</span>
-        <UButton
-          v-for="option in levelFilters" :key="option.value" size="sm" :label="option.label"
-          color="neutral" :variant="level === option.value ? 'solid' : 'outline'"
-          :aria-pressed="level === option.value" @click="level = option.value"
-        />
+      <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <!-- every workshop visit has its own board -->
+        <div class="flex items-center gap-2">
+          <span id="visit-label" class="shrink-0 text-sm text-muted">{{ $t('maintenance.board.visit') }}</span>
+          <USelect v-model="visit" :items="visitItems" aria-labelledby="visit-label" class="w-full sm:w-80" data-visit-select />
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="mr-1 text-sm text-muted">{{ $t('maintenance.level.name') }}</span>
+          <UButton
+            v-for="option in levelFilters" :key="option.value" size="sm" :label="option.label"
+            color="neutral" :variant="level === option.value ? 'solid' : 'outline'"
+            :aria-pressed="level === option.value" @click="level = option.value"
+          />
+        </div>
       </div>
 
       <div class="grid items-start gap-4 lg:grid-cols-3">
@@ -138,7 +145,11 @@
     <MaintenanceTaskDetail v-model:open="detailOpen" :task-id="openTaskId" @changed="refresh" @deleted="refresh" @edit="editTask" />
     <MaintenanceTaskForm
       v-model:open="taskFormOpen" :aircraft-id="aircraftId" :aircraft-label="aircraft ? `${aircraft.registration} · ${aircraft.type}` : undefined"
-      :task="editedTask" :defect="defectForTask" :defects="defects" @saved="onTaskSaved"
+      :task="editedTask" :defect="defectForTask" :defects="defects" :workshops="visits" :workshop-id="selectedVisit?.id ?? null" @saved="onTaskSaved"
+    />
+    <MaintenanceTemplateImport
+      v-if="aircraft" v-model:open="importOpen" :aircraft="aircraft" :workshop-id="selectedVisit?.id ?? null" :board-label="boardLabel"
+      :existing="existingTemplateIds" @imported="onImported"
     />
     <MaintenanceDefectForm v-model:open="defectFormOpen" :aircraft-id="aircraftId" :defect="editedDefect" @saved="refresh" />
     <MaintenanceAircraftForm v-model:open="aircraftFormOpen" :aircraft="aircraft" @saved="refresh" />
@@ -146,7 +157,8 @@
 </template>
 
 <script lang="ts" setup>
-import type { Aircraft, Defect, DefectStatus, SkillLevel, TaskDetail, TaskStatus, TaskSummary } from '~/types/maintenance'
+import type { Aircraft, Defect, DefectStatus, SkillLevel, TaskDetail, TaskStatus, TaskSummary, WorkshopSlot } from '~/types/maintenance'
+import { NO_SELECTION } from '~/composables/useMaintenance'
 
 definePageMeta({
   middleware: ['authenticated']
@@ -162,9 +174,9 @@ const { levelLabel, statusLabel, priorityLabel, levelColor, priorityColor, forma
 const aircraftId = computed(() => String(route.params.id))
 const aircraft = ref<Aircraft | null>(null)
 const tasks = ref<TaskSummary[]>([])
+const visits = ref<WorkshopSlot[]>([])
 const defects = ref<Defect[]>([])
 const errorMessage = ref<string | null>(null)
-const importing = ref(false)
 
 // The tab and an open task live in the URL, so they survive a reload and can be shared.
 const tab = computed({
@@ -177,14 +189,45 @@ const tabs = computed(() => [
   { label: t('maintenance.tabs.defects'), value: 'defects', icon: 'i-lucide-triangle-alert', badge: openDefects.value || undefined }
 ])
 
+// --- workshop visits: every visit has its own board, tasks outside the workshop are on the board without period
+
+// Without a choice in the URL: the visit running today or else the next one, else the board without period.
+// Finished visits only open when chosen explicitly.
+const defaultVisit = computed(() => aircraft.value?.workshop?.id ?? NO_SELECTION)
+const visit = computed({
+  get: () => {
+    const chosen = route.query.visit
+    return typeof chosen === 'string' && (chosen === NO_SELECTION || visits.value.some(slot => slot.id === chosen)) ? chosen : defaultVisit.value
+  },
+  set: (value: string) => router.replace({ query: { ...route.query, visit: value } })
+})
+const selectedVisit = computed(() => visits.value.find(slot => slot.id === visit.value) ?? null)
+const visitLabel = (slot: WorkshopSlot) => [formatPeriod(slot.startDate, slot.endDate), slot.note].filter(Boolean).join(' · ')
+const boardLabel = computed(() => selectedVisit.value ? visitLabel(selectedVisit.value) : t('maintenance.board.unscheduled'))
+const todayIso = () => {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+}
+// running and upcoming visits first (in date order), finished ones below their own heading, latest first
+const visitItems = computed(() => {
+  const today = todayIso()
+  const toItem = (slot: WorkshopSlot) => ({ label: visitLabel(slot), value: slot.id })
+  const upcoming = visits.value.filter(slot => slot.endDate >= today).map(toItem)
+  const past = visits.value.filter(slot => slot.endDate < today).reverse().map(toItem)
+  return [
+    ...upcoming,
+    { label: t('maintenance.board.unscheduled'), value: NO_SELECTION },
+    ...(past.length ? [{ type: 'separator' as const }, { type: 'label' as const, label: t('maintenance.visits.past') }, ...past] : [])
+  ]
+})
+
 const period = computed(() => {
   if (!aircraft.value) {
     return undefined
   }
-  const { workshop } = aircraft.value
-  return workshop
-    ? `${t('maintenance.workshopPeriod')}: ${formatPeriod(workshop.startDate, workshop.endDate)}`
-    : t('maintenance.noPeriod')
+  return selectedVisit.value
+    ? `${t('maintenance.workshopPeriod')}: ${visitLabel(selectedVisit.value)}`
+    : t('maintenance.board.unscheduledDescription')
 })
 
 const level = ref<SkillLevel | 'ALL'>('ALL')
@@ -195,22 +238,45 @@ const levelFilters = computed(() => [
 const dotClass: Record<TaskStatus, string> = { OPEN: 'bg-(--ui-text-dimmed)', IN_PROGRESS: 'bg-warning', DONE: 'bg-success' }
 const column = (status: TaskStatus) => tasks.value.filter(task => task.status === status && (level.value === 'ALL' || task.level === level.value))
 
+const existingTemplateIds = computed(() => tasks.value.map(task => task.templateId).filter((id): id is string => !!id))
+
+// The latest request wins, so switching visits quickly never shows the board of the previous one.
+let taskRequest = 0
+const fetchTasks = async () => {
+  const request = ++taskRequest
+  const workshopId = selectedVisit.value?.id
+  const { data, error } = await useAPI<TaskSummary[]>(`/maintenance/aircraft/${aircraftId.value}/tasks`, { method: 'GET', query: workshopId ? { workshopId } : {} })
+  if (request !== taskRequest) {
+    return
+  }
+  if (error.value) {
+    errorMessage.value = t('maintenance.loadError')
+  }
+  tasks.value = data.value ?? []
+}
+
 const fetchData = async () => {
   const id = aircraftId.value
-  const [aircraftResult, taskResult, defectResult] = await Promise.all([
+  const boardBefore = visit.value
+  const [aircraftResult, visitResult, defectResult] = await Promise.all([
     useAPI<Aircraft>(`/maintenance/aircraft/${id}`, { method: 'GET' }),
-    useAPI<TaskSummary[]>(`/maintenance/aircraft/${id}/tasks`, { method: 'GET' }),
+    useAPI<WorkshopSlot[]>('/maintenance/workshop', { method: 'GET', query: { aircraftId: id } }),
     useAPI<Defect[]>(`/maintenance/aircraft/${id}/defects`, { method: 'GET' })
   ])
   if (aircraftResult.error.value?.statusCode === 404) {
     return navigateTo('/maintenance')
   }
-  errorMessage.value = aircraftResult.error.value || taskResult.error.value || defectResult.error.value ? t('maintenance.loadError') : null
+  errorMessage.value = aircraftResult.error.value || visitResult.error.value || defectResult.error.value ? t('maintenance.loadError') : null
   aircraft.value = aircraftResult.data.value ?? aircraft.value
-  tasks.value = taskResult.data.value ?? []
+  visits.value = (visitResult.data.value ?? []).filter(slot => slot.aircraftId === id)
   defects.value = defectResult.data.value ?? []
+  // when the shown board changed (e.g. the default visit is known now), the watcher below loads it
+  if (visit.value === boardBefore) {
+    await fetchTasks()
+  }
 }
 const refresh = () => fetchData()
+watch(visit, fetchTasks)
 
 // --- drag and drop between the columns
 
@@ -291,21 +357,15 @@ const editTask = (task: TaskDetail) => {
   detailOpen.value = false
   openTaskForm(task)
 }
+// The board switches to the visit of the saved task, so it shows up where it was put.
 const onTaskSaved = async (task: TaskDetail) => {
   toast.add({ title: t('maintenance.saved'), icon: 'i-lucide-circle-check', color: 'primary' })
+  await router.replace({ query: { ...route.query, visit: task.workshopId ?? NO_SELECTION, task: task.id } })
   await fetchData()
-  openTask(task.id)
 }
 
-const importTemplates = async () => {
-  importing.value = true
-  const { data, error } = await useAPI<{ created: number }>(`/maintenance/aircraft/${aircraftId.value}/import-templates`, { method: 'POST' })
-  importing.value = false
-  if (error.value) {
-    toast.add({ title: t('maintenance.saveError'), icon: 'i-lucide-bomb', color: 'error' })
-    return
-  }
-  const created = (data.value as { created: number }).created
+const importOpen = ref(false)
+const onImported = async (created: number) => {
   toast.add({ title: t('maintenance.board.imported', created), icon: 'i-lucide-circle-check', color: 'primary' })
   await fetchData()
 }

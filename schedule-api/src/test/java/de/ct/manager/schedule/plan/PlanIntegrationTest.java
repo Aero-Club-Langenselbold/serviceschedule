@@ -47,6 +47,10 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
         Assertions.assertThat(response.getBody()).isNotNull();
         Assertions.assertThat(response.getBody()).isNotEmpty();
         Assertions.assertThat(response.getBody()).hasSize(10);
+        // newest plan first
+        Assertions.assertThat(response.getBody().stream().map(Plan::getName).toList())
+            .startsWith("New Year Kickoff", "Holiday Season Campaign")
+            .endsWith("World Domination tour");
     }
 
     @Test
@@ -372,5 +376,34 @@ class PlanIntegrationTest extends AbstractIntegrationTest {
         long minEntries = participantEntryCounts.values().stream().min(Long::compare).orElse(0L);
 
         Assertions.assertThat(maxEntries - minEntries).isLessThanOrEqualTo(4);
+    }
+
+    @Test
+    @Sql(scripts = "classpath:scripts/test-plans.sql", statements = {
+        "INSERT INTO service_date (id, version, date, service_id, plan_id, mandatory_assignees, start_time, end_time) VALUES ('sd1', 0, '2020-01-01', '5111', '6000', 1, '10:00:00', '18:00:00')",
+        "INSERT INTO service_date (id, version, date, service_id, plan_id, mandatory_assignees, start_time, end_time) VALUES ('sd2', 0, '2020-01-02', '5113', '6000', 1, '09:00:00', '17:00:00')",
+        "INSERT INTO service_date (id, version, date, service_id, plan_id, mandatory_assignees, start_time, end_time) VALUES ('sd3', 0, '2020-01-03', '5113', '6000', 2, '08:00:00', '16:00:00')"
+    }, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(scripts = "classpath:scripts/delete-test-plans.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void testUnfilledServiceDates() throws Exception {
+        ResponseEntity<String> response = restTemplate.exchange(createURLWithPort("plan/unfilled/6000"), HttpMethod.GET,
+            new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN)), String.class);
+
+        Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        com.fasterxml.jackson.databind.JsonNode unfilled = objectMapper.readTree(response.getBody());
+        // 2020-01-01 is staffed; nobody on 2020-01-02 and one of two people on 2020-01-03
+        Assertions.assertThat(unfilled).hasSize(2);
+        Assertions.assertThat(unfilled.get(0).get("date").asText()).isEqualTo("2020-01-02");
+        Assertions.assertThat(unfilled.get(0).get("servicename").asText()).isEqualTo("Awesome Service");
+        Assertions.assertThat(unfilled.get(0).get("assigned").asInt()).isZero();
+        Assertions.assertThat(unfilled.get(0).get("startTime").asText()).startsWith("09:00");
+        Assertions.assertThat(unfilled.get(1).get("date").asText()).isEqualTo("2020-01-03");
+        Assertions.assertThat(unfilled.get(1).get("required").asInt()).isEqualTo(2);
+        Assertions.assertThat(unfilled.get(1).get("assigned").asInt()).isEqualTo(1);
+
+        Assertions.assertThat(restTemplate.exchange(createURLWithPort("plan/unfilled/6000"), HttpMethod.GET,
+            new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_USER)), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        Assertions.assertThat(restTemplate.exchange(createURLWithPort("plan/unfilled/nope"), HttpMethod.GET,
+            new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN)), String.class).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 }

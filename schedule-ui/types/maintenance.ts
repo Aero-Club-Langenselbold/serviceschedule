@@ -14,14 +14,10 @@ type Aircraft = {
     id: string
     type: string
     registration: string
-    /** The workshop period running today or else the next one. */
+    /** The workshop period running today or else the next one, with its progress. */
     workshop: WorkshopSlot | null
-    taskCount: number
-    doneCount: number
-    signedCount: number
-    /** Checklist steps of all tasks; a task without checklist counts as one step. */
-    stepCount: number
-    stepDoneCount: number
+    /** Tasks on the board without workshop period. */
+    unscheduledTaskCount: number
     openDefectCount: number
 }
 
@@ -30,16 +26,22 @@ type AircraftInput = {
     registration: string
 }
 
-/** A period in which an aircraft is planned into the workshop; dates as YYYY-MM-DD, both inclusive. */
+/** A workshop visit: a period in which an aircraft is planned into the workshop; dates as YYYY-MM-DD, both inclusive. Every visit has its own board. */
 type WorkshopSlot = {
     id: string
     aircraftId: string
     startDate: string
     endDate: string
     note: string | null
+    taskCount: number
+    doneCount: number
+    signedCount: number
+    /** Checklist steps of the tasks of the visit; a task without checklist counts as one step. */
+    stepCount: number
+    stepDoneCount: number
 }
 
-type WorkshopSlotInput = Omit<WorkshopSlot, 'id'>
+type WorkshopSlotInput = Pick<WorkshopSlot, 'aircraftId' | 'startDate' | 'endDate' | 'note'>
 
 type InventoryKind = 'CONSUMABLE' | 'SPARE_PART'
 /** COUNT: number of units; LEVEL: 0 = empty, 1 = low, 2 = enough. */
@@ -87,6 +89,9 @@ type TaskTemplateInput = Omit<TaskTemplate, 'id'>
 type TaskSummary = {
     id: string
     aircraftId: string
+    /** Workshop visit whose board shows the task, null for the board without period. */
+    workshopId: string | null
+    templateId: string | null
     title: string
     description: string | null
     level: SkillLevel
@@ -127,7 +132,7 @@ type TaskHistoryEntry = {
     createdAt: string
 }
 
-type TaskDetail = Omit<TaskSummary, 'checklistTotal' | 'checklistDone' | 'noteCount'> & {
+type TaskDetail = Omit<TaskSummary, 'templateId' | 'checklistTotal' | 'checklistDone' | 'noteCount'> & {
     aircraftLabel: string
     checklist: ChecklistItem[]
     notes: TaskNote[]
@@ -141,6 +146,7 @@ type TaskInput = {
     durationMinutes: number | null
     deadline: string | null
     defectId: string | null
+    workshopId: string | null
     checklist: string[]
 }
 

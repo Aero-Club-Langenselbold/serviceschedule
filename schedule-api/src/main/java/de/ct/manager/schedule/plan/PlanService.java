@@ -21,6 +21,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import org.springframework.data.util.Pair;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.pdf.PdfDocument;
@@ -65,7 +67,7 @@ public class PlanService {
     }
 
     public List<Plan> listPlans() {
-        return planRepository.findAll();
+        return planRepository.findAllByOrderByDateFromDescDateUntilDescNameAsc();
     }
 
     public Plan getPlan(String id) {
@@ -393,6 +395,36 @@ public class PlanService {
         plan.setPublished(true);
 
         return planRepository.save(plan);
+    }
+
+    /**
+     * The services of the plan with fewer assigned people than required, ordered by day and service name.
+     */
+    @Transactional
+    public List<UnfilledServiceDate> getUnfilledServiceDates(String planId) {
+        Plan plan = planRepository.findById(planId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plan not found"));
+
+        Map<String, Long> assigned = plan.getEntries().stream()
+            .collect(Collectors.groupingBy(entry -> entry.getDate() + "|" + entry.getService().getId(), Collectors.counting()));
+
+        return serviceDateRepository.findByPlan(plan).orElse(List.of()).stream()
+            .map(serviceDate -> {
+                LocalDate date = toLocalDate(serviceDate.getDate());
+                int count = assigned.getOrDefault(date + "|" + serviceDate.getService().getId(), 0L).intValue();
+                return new UnfilledServiceDate(date, serviceDate.getService().getId(), serviceDate.getService().getServicename(),
+                    serviceDate.getStartTime(), serviceDate.getEndTime(), serviceDate.getMandatoryAssignees(), count);
+            })
+            .filter(unfilled -> unfilled.assigned() < unfilled.required())
+            .sorted(Comparator.comparing(UnfilledServiceDate::date).thenComparing(UnfilledServiceDate::servicename, String.CASE_INSENSITIVE_ORDER))
+            .toList();
+    }
+
+    // java.sql.Date (as loaded from a DATE column) does not support toInstant()
+    private static LocalDate toLocalDate(Date date) {
+        return date instanceof java.sql.Date sqlDate
+            ? sqlDate.toLocalDate()
+            : date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
     @Transactional

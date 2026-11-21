@@ -63,7 +63,7 @@ class PlanServiceUnitTest {
 
     @Test
     void testLoadPlanList() {
-        when(planRepository.findAll()).thenReturn(generateListResponse());
+        when(planRepository.findAllByOrderByDateFromDescDateUntilDescNameAsc()).thenReturn(generateListResponse());
 
         List<Plan> result = planService.listPlans();
 

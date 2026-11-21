@@ -110,4 +110,43 @@ class RequestCommentIntegrationTest extends AbstractIntegrationTest {
         Assertions.assertThat(deleted.getStatusCode()).isEqualTo(HttpStatus.OK);
         Assertions.assertThat(getComments(OPEN_BUG, UserRole.ROLE_ADMIN).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
+
+    private String statusOf(String requestId) throws Exception {
+        ResponseEntity<String> response = restTemplate.exchange(createURLWithPort("request/fetch/" + requestId), HttpMethod.GET, new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN)), String.class);
+        return objectMapper.readTree(response.getBody()).get("status").asText();
+    }
+
+    @Test
+    @Sql(scripts = "classpath:scripts/test-requests.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(statements = { "DELETE FROM request_comment", "DELETE FROM request", "DELETE FROM participant" }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void testAdministratorsCloseAndRejectWithAComment() throws Exception {
+        Assertions.assertThat(addComment(OPEN_BUG, UserRole.ROLE_ADMIN, "{\"content\":\"fixed\",\"status\":\"CLOSED\"}").getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(addComment(IN_PROGRESS, UserRole.ROLE_ADMIN, "{\"content\":\"not planned\",\"status\":\"REJECTED\"}").getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        Assertions.assertThat(statusOf(OPEN_BUG)).isEqualTo("CLOSED");
+        Assertions.assertThat(statusOf(IN_PROGRESS)).isEqualTo("REJECTED");
+        JsonNode comments = objectMapper.readTree(getComments(OPEN_BUG, UserRole.ROLE_ADMIN).getBody());
+        Assertions.assertThat(comments.get(0).get("content").asText()).isEqualTo("fixed");
+    }
+
+    @Test
+    @Sql(scripts = "classpath:scripts/test-requests.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(statements = { "DELETE FROM request_comment", "DELETE FROM request", "DELETE FROM participant" }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void testOnlyClosingOrRejectingIsAllowedWithAComment() throws Exception {
+        Assertions.assertThat(addComment(OPEN_BUG, UserRole.ROLE_ADMIN, "{\"content\":\"hm\",\"status\":\"IN_PROGRESS\"}").getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        Assertions.assertThat(addComment(OPEN_BUG, UserRole.ROLE_ADMIN, "{\"content\":\"   \",\"status\":\"CLOSED\"}").getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+        Assertions.assertThat(statusOf(OPEN_BUG)).isEqualTo("OPEN");
+        Assertions.assertThat(objectMapper.readTree(getComments(OPEN_BUG, UserRole.ROLE_ADMIN).getBody())).isEmpty();
+    }
+
+    @Test
+    @Sql(scripts = "classpath:scripts/test-requests.sql", statements = "UPDATE request SET participant_id = '4711' WHERE id = '1a2b3c4d-5678-90ab-cdef-1234567890ab'", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(statements = { "DELETE FROM request_comment", "DELETE FROM request", "DELETE FROM participant" }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void testAuthorsCannotCloseTheirOwnRequestWithAComment() throws Exception {
+        Assertions.assertThat(addComment(OPEN_BUG, UserRole.ROLE_USER, "{\"content\":\"done?\",\"status\":\"CLOSED\"}").getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
+        Assertions.assertThat(statusOf(OPEN_BUG)).isEqualTo("OPEN");
+        Assertions.assertThat(objectMapper.readTree(getComments(OPEN_BUG, UserRole.ROLE_USER).getBody())).isEmpty();
+    }
 }

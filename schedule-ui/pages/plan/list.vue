@@ -53,12 +53,14 @@
         </article>
       </li>
     </ul>
+
+    <PlanUnfilledDialog v-if="unfilledPlan" v-model:open="unfilledOpen" :plan-id="unfilledPlan.id" :plan-name="unfilledPlan.name" :items="unfilled" />
   </AppPage>
 </template>
 
 <script lang="ts" setup>
 import iconv from 'iconv-lite'
-import type { Plan } from '~/types/plan'
+import type { Plan, UnfilledServiceDate } from '~/types/plan'
 import type { Service } from '~/types/service'
 
 const { t, locale } = useI18n()
@@ -168,6 +170,11 @@ const fetchData = async () => {
 }
 
 const generating = ref<string | null>(null)
+// after generating, the administrator sees which services could not be staffed
+const unfilled = ref<UnfilledServiceDate[]>([])
+const unfilledPlan = ref<Plan | null>(null)
+const unfilledOpen = ref(false)
+
 const deleting = ref<string | null>(null)
 const generatePlan = async (id: string) => {
   errorMessage.value = null
@@ -179,8 +186,14 @@ const generatePlan = async (id: string) => {
     if (error.value) {
       errorMessage.value = error.value.message
     } else {
-      await fetchData()
-      successMessage.value = 'Plan generated successfully.'
+      const [, unfilledResult] = await Promise.all([
+        fetchData(),
+        useAPI<UnfilledServiceDate[]>(`/plan/unfilled/${id}`, { method: 'GET' })
+      ])
+      successMessage.value = t('plan.generateSuccess')
+      unfilled.value = unfilledResult.data.value ?? []
+      unfilledPlan.value = listData.value.find(plan => plan.id === id) ?? null
+      unfilledOpen.value = unfilled.value.length > 0
     }
   } catch (err) {
     errorMessage.value = 'An error occurred while generating the plan.'

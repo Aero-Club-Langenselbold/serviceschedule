@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.ct.manager.schedule.maintenance.MaintenanceDtos.ChecklistToggleRequest;
@@ -38,8 +39,8 @@ public class MaintenanceTaskController {
 
     @GetMapping("/aircraft/{aircraftId}/tasks")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<TaskSummary>> getTasks(@PathVariable String aircraftId) {
-        return ResponseEntity.ok(taskService.getTasks(aircraftId));
+    public ResponseEntity<List<TaskSummary>> getTasks(@PathVariable String aircraftId, @RequestParam(required = false) String workshopId) {
+        return ResponseEntity.ok(taskService.getTasks(aircraftId, workshopId));
     }
 
     @PostMapping("/aircraft/{aircraftId}/tasks")

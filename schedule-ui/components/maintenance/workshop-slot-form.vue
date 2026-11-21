@@ -2,8 +2,9 @@
   <UModal v-model:open="open" :title="slot ? $t('maintenance.schedule.edit') : $t('maintenance.schedule.add')">
     <template #body>
       <form id="workshop-slot-form" class="space-y-5" @submit.prevent="save">
-        <UFormField :label="$t('maintenance.schedule.aircraft')" required>
-          <USelect v-model="form.aircraftId" :items="aircraftItems" :placeholder="$t('maintenance.schedule.chooseAircraft')" class="w-full" />
+        <!-- the tasks of a visit belong to its aircraft -->
+        <UFormField :label="$t('maintenance.schedule.aircraft')" required :help="slot?.taskCount ? $t('maintenance.schedule.aircraftLocked') : undefined">
+          <USelect v-model="form.aircraftId" :items="aircraftItems" :disabled="!!slot?.taskCount" :placeholder="$t('maintenance.schedule.chooseAircraft')" class="w-full" />
         </UFormField>
         <div class="grid gap-4 sm:grid-cols-2">
           <UFormField :label="$t('maintenance.schedule.start')" required>

@@ -7,6 +7,7 @@ import java.util.Set;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -33,14 +34,10 @@ public final class MaintenanceDtos {
             String id,
             String type,
             String registration,
-            /** The current workshop period or else the next one, null if none is planned. */
+            /** The current workshop period or else the next one with its progress, null if none is planned. */
             WorkshopSlotResponse workshop,
-            long taskCount,
-            long doneCount,
-            long signedCount,
-            /** Checklist steps of all tasks (a task without checklist is one step) – drives the progress in the schedule. */
-            long stepCount,
-            long stepDoneCount,
+            /** Tasks on the board without workshop period. */
+            long unscheduledTaskCount,
             long openDefectCount) {
     }
 
@@ -53,7 +50,25 @@ public final class MaintenanceDtos {
             @Size(max = 255) String note) {
     }
 
-    public record WorkshopSlotResponse(String id, String aircraftId, LocalDate startDate, LocalDate endDate, String note) {
+    /** A workshop visit with the progress of its board. */
+    public record WorkshopSlotResponse(
+            String id,
+            String aircraftId,
+            LocalDate startDate,
+            LocalDate endDate,
+            String note,
+            long taskCount,
+            long doneCount,
+            long signedCount,
+            /** Checklist steps of the tasks of the visit (a task without checklist is one step). */
+            long stepCount,
+            long stepDoneCount) {
+    }
+
+    /** Creates a task from each of the chosen templates on the board of the workshop visit (null = without period). */
+    public record TemplateImportRequest(
+            @Size(max = 36) String workshopId,
+            @NotEmpty List<@NotBlank @Size(max = 36) String> templateIds) {
     }
 
     public record ImportResponse(int created) {
@@ -89,6 +104,8 @@ public final class MaintenanceDtos {
             @Positive @Max(10000) Integer durationMinutes,
             LocalDate deadline,
             String defectId,
+            /** Workshop visit of the same aircraft, null for the board without period. */
+            @Size(max = 36) String workshopId,
             List<@NotBlank @Size(max = 500) String> checklist) {
     }
 
@@ -99,6 +116,8 @@ public final class MaintenanceDtos {
     public record TaskSummary(
             String id,
             String aircraftId,
+            String workshopId,
+            String templateId,
             String title,
             String description,
             SkillLevel level,
@@ -129,6 +148,7 @@ public final class MaintenanceDtos {
             String id,
             String aircraftId,
             String aircraftLabel,
+            String workshopId,
             String title,
             String description,
             SkillLevel level,

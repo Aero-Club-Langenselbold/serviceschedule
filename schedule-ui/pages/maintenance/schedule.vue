@@ -58,10 +58,12 @@
                 <span class="shrink-0 text-xs font-medium" :class="row.percent === 100 ? 'text-success' : 'text-default'">{{ row.percent }} %</span>
               </span>
               <span class="hidden truncate text-xs text-muted sm:block">
-                {{ row.aircraft.type }} · {{ $t('maintenance.schedule.steps', { done: row.aircraft.stepDoneCount, total: row.aircraft.stepCount }) }}
+                {{ row.aircraft.type }}<template v-if="row.aircraft.workshop"> · {{ $t('maintenance.schedule.steps', { done: row.aircraft.workshop.stepDoneCount, total: row.aircraft.workshop.stepCount }) }}</template>
               </span>
+              <!-- the row shows the visit running today or else the next one -->
               <UProgress
-                :model-value="row.aircraft.stepDoneCount" :max="Math.max(row.aircraft.stepCount, 1)" size="xs"
+                v-if="row.aircraft.workshop"
+                :model-value="row.aircraft.workshop.stepDoneCount" :max="Math.max(row.aircraft.workshop.stepCount, 1)" size="xs"
                 :color="row.percent === 100 ? 'success' : 'primary'" :aria-label="$t('maintenance.schedule.progress', { percent: row.percent })"
               />
             </NuxtLink>
@@ -73,17 +75,30 @@
             >
               <div v-for="week in weeks" :key="week.offset" class="pointer-events-none absolute inset-y-0 border-l border-default/70 first:border-l-0" :style="{ left: px(week.offset) }" />
               <div v-if="todayOffset >= 0" class="pointer-events-none absolute inset-y-0 z-[1] w-0.5 bg-error/80" :style="{ left: px(todayOffset + 0.5) }" />
-              <button
-                v-for="slot in row.slots" :key="slot.id" type="button" :data-slot="slot.id"
-                class="absolute top-3 bottom-3 z-[2] min-w-3 overflow-hidden rounded-md border text-left text-xs transition-colors focus-visible:outline-2 focus-visible:outline-primary"
-                :class="barClass(slot)" :style="barStyle(slot)" :title="barTitle(row.aircraft, slot)"
-                @click.stop="onBarClick(row.aircraft, slot)"
+              <!-- A click on a bar opens a dropdown below it: details, quick changes and the way to the aircraft -->
+              <UPopover
+                v-for="slot in row.slots" :key="slot.id"
+                :open="openSlot === slot.id" :content="{ side: 'bottom', align: 'start', collisionPadding: 16 }"
+                @update:open="(isOpen: boolean) => { openSlot = isOpen ? slot.id : (openSlot === slot.id ? null : openSlot) }"
               >
-                <span v-if="isActive(row.aircraft, slot)" class="absolute inset-y-0 left-0 bg-primary/45" :style="{ width: `${row.percent}%` }" />
-                <span class="relative flex h-full items-center px-2">
-                  <span class="truncate font-medium">{{ barLabel(row, slot) }}</span>
-                </span>
-              </button>
+                <button
+                  type="button" :data-slot="slot.id" :aria-label="`${row.aircraft.registration}, ${formatPeriod(slot.startDate, slot.endDate)}: ${$t('maintenance.schedule.details')}`"
+                  class="absolute top-3 bottom-3 z-[2] min-w-3 overflow-hidden rounded-md border text-left text-xs transition-colors focus-visible:outline-2 focus-visible:outline-primary"
+                  :class="[barClass(slot), { 'ring-2 ring-primary': openSlot === slot.id }]" :style="barStyle(slot)" :title="barTitle(row.aircraft, slot)"
+                  @click.stop
+                >
+                  <span v-if="slot.stepCount" class="absolute inset-y-0 left-0" :class="isPast(slot) ? 'bg-(--ui-border-accented)/60' : 'bg-primary/45'" :style="{ width: `${progressPercent(slot)}%` }" />
+                  <span class="relative flex h-full items-center px-2">
+                    <span class="truncate font-medium">{{ barLabel(row.aircraft, slot) }}</span>
+                  </span>
+                </button>
+                <template #content>
+                  <MaintenanceWorkshopSlotPanel
+                    :slot="slot" :aircraft="row.aircraft" :can-manage="canManageMaintenance"
+                    @saved="onPanelChanged" @deleted="onPanelChanged"
+                  />
+                </template>
+              </UPopover>
             </div>
           </div>
         </div>
@@ -99,13 +114,14 @@
           <span class="flex size-10 shrink-0 items-center justify-center rounded-lg" :class="isPast(slot) ? 'bg-elevated text-muted' : 'bg-primary/10 text-primary'">
             <UIcon name="i-lucide-calendar-range" class="size-5" />
           </span>
-          <div class="min-w-0 flex-1">
+          <NuxtLink :to="boardLink(slot)" class="min-w-0 flex-1 rounded-sm hover:text-primary focus-visible:outline-2 focus-visible:outline-primary">
             <p class="truncate font-medium text-highlighted">{{ aircraftLabel(slot.aircraftId) }}</p>
             <p class="text-sm text-muted">
               {{ formatPeriod(slot.startDate, slot.endDate) }} · {{ $t('maintenance.schedule.days', dayCount(slot)) }}
+              <template v-if="slot.taskCount"> · {{ $t('maintenance.progress', { done: slot.doneCount, total: slot.taskCount }) }}</template>
               <template v-if="slot.note"> · {{ slot.note }}</template>
             </p>
-          </div>
+          </NuxtLink>
           <UButton v-if="canManageMaintenance" color="neutral" variant="ghost" icon="i-lucide-pencil" :aria-label="$t('maintenance.schedule.edit')" @click="openForm(slot)" />
         </li>
       </ul>
@@ -198,12 +214,17 @@ const months = computed(() => {
 const rows = computed(() => aircraft.value
   .map((item) => {
     const own = visibleSlots.value.filter(slot => slot.aircraftId === item.id)
-    return { aircraft: item, slots: own, first: own.length ? Math.min(...own.map(slot => toDay(slot.startDate))) : Infinity, percent: progressPercent(item) }
+    return {
+      aircraft: item,
+      slots: own,
+      first: own.length ? Math.min(...own.map(slot => toDay(slot.startDate))) : Infinity,
+      percent: item.workshop ? progressPercent(item.workshop) : 0
+    }
   })
   .sort((a, b) => a.first - b.first || a.aircraft.registration.localeCompare(b.aircraft.registration)))
 
-// Tasks belong to the aircraft, not to a period: the progress is shown on the period running today or else the next one.
-const isActive = (item: Aircraft, slot: WorkshopSlot) => item.workshop?.id === slot.id
+// Every period is a workshop visit with its own board, so every bar shows the progress of its own tasks.
+const boardLink = (slot: WorkshopSlot) => `/maintenance/${slot.aircraftId}?visit=${slot.id}`
 
 const barStyle = (slot: WorkshopSlot) => ({
   left: px(toDay(slot.startDate) - rangeStart.value),
@@ -212,13 +233,14 @@ const barStyle = (slot: WorkshopSlot) => ({
 const barClass = (slot: WorkshopSlot) => isPast(slot)
   ? 'border-default bg-elevated text-muted hover:border-(--ui-border-accented)'
   : 'border-primary/50 bg-primary/15 text-highlighted hover:border-primary'
-const barLabel = (row: { aircraft: Aircraft, percent: number }, slot: WorkshopSlot) => isActive(row.aircraft, slot)
-  ? `${row.aircraft.registration} · ${row.percent} %`
-  : slot.note || row.aircraft.registration
+const barLabel = (item: Aircraft, slot: WorkshopSlot) => {
+  const label = slot.note || item.registration
+  return slot.stepCount ? `${label} · ${progressPercent(slot)} %` : label
+}
 const barTitle = (item: Aircraft, slot: WorkshopSlot) => [
   `${item.registration} · ${item.type}`,
   formatPeriod(slot.startDate, slot.endDate),
-  isActive(item, slot) ? t('maintenance.schedule.progress', { percent: progressPercent(item) }) : null,
+  slot.stepCount ? t('maintenance.schedule.progress', { percent: progressPercent(slot) }) : null,
   slot.note
 ].filter(Boolean).join('\n')
 
@@ -239,9 +261,12 @@ const openForm = (slot: WorkshopSlot | null, prefill: Partial<WorkshopSlotInput>
   formOpen.value = true
 }
 
-const onBarClick = (item: Aircraft, slot: WorkshopSlot) => canManageMaintenance.value
-  ? openForm(slot)
-  : navigateTo(`/maintenance/${item.id}`)
+const openSlot = ref<string | null>(null)
+
+const onPanelChanged = async () => {
+  openSlot.value = null
+  await onChanged()
+}
 
 // A click into an empty part of a row plans the aircraft for a week from the clicked day.
 const onTrackClick = (event: MouseEvent, item: Aircraft) => {

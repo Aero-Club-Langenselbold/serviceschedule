@@ -47,11 +47,24 @@ public class RequestCommentService {
         return comments.stream().map(comment -> toResponse(comment, fullnames)).toList();
     }
 
+    /**
+     * Adds a comment; with {@code newStatus} CLOSED or REJECTED an administrator closes or rejects the request in the same step.
+     */
     @Transactional
-    public RequestCommentResponse addComment(String requestId, String content, UserDetailsImpl currentUser) {
+    public RequestCommentResponse addComment(String requestId, String content, RequestStatus newStatus, UserDetailsImpl currentUser) {
         Request request = findAccessibleRequest(requestId, currentUser);
         if (request.getStatus() != RequestStatus.OPEN && request.getStatus() != RequestStatus.IN_PROGRESS) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Only open requests can be commented");
+        }
+        if (newStatus != null) {
+            if (newStatus != RequestStatus.CLOSED && newStatus != RequestStatus.REJECTED) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A comment can only close or reject a request");
+            }
+            if (!isAdmin(currentUser)) {
+                throw new AccessDeniedException("Only administrators close or reject requests");
+            }
+            request.setStatus(newStatus);
+            requestRepository.save(request);
         }
         User author = userRepository.findByUsername(currentUser.getUsername())
                 .orElseThrow(() -> new AccessDeniedException("Unknown user"));
@@ -71,13 +84,16 @@ public class RequestCommentService {
         Request request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Request not found"));
 
-        boolean isAdmin = currentUser.getAuthorities().stream()
-                .anyMatch(authority -> UserRole.ROLE_ADMIN.name().equals(authority.getAuthority()));
         boolean isAuthor = request.getAuthor() != null && currentUser.getUsername().equals(request.getAuthor().getEmail());
-        if (!isAdmin && !isAuthor) {
+        if (!isAdmin(currentUser) && !isAuthor) {
             throw new AccessDeniedException("Request belongs to another user");
         }
         return request;
+    }
+
+    private boolean isAdmin(UserDetailsImpl currentUser) {
+        return currentUser.getAuthorities().stream()
+                .anyMatch(authority -> UserRole.ROLE_ADMIN.name().equals(authority.getAuthority()));
     }
 
     private RequestCommentResponse toResponse(RequestComment comment, Map<String, String> fullnames) {

@@ -5,6 +5,9 @@
         <UFormField :label="$t('maintenance.task.title')" required>
           <UInput v-model="form.title" :placeholder="$t('maintenance.task.titlePlaceholder')" class="w-full" autofocus />
         </UFormField>
+        <UFormField v-if="workshops.length" :label="$t('maintenance.board.visit')">
+          <USelect v-model="workshopId" :items="workshopItems" class="w-full" />
+        </UFormField>
         <UFormField :label="$t('maintenance.level.name')">
           <URadioGroup v-model="form.level" orientation="horizontal" variant="table" :items="levelItems" />
         </UFormField>
@@ -37,7 +40,8 @@
 </template>
 
 <script lang="ts" setup>
-import type { Defect, TaskDetail, TaskInput } from '~/types/maintenance'
+import type { Defect, TaskDetail, TaskInput, WorkshopSlot } from '~/types/maintenance'
+import { NO_SELECTION } from '~/composables/useMaintenance'
 
 /** Creates a task or (with task) edits one; with defect, prefilled from a defect/finding. */
 const props = defineProps<{
@@ -46,15 +50,19 @@ const props = defineProps<{
   task?: TaskDetail | null
   defect?: Defect | null
   defects: Defect[]
+  /** Workshop visits of the aircraft; every visit has its own board. */
+  workshops: WorkshopSlot[]
+  /** Visit of a new task: the board it was added on, null for the board without period. */
+  workshopId: string | null
 }>()
 const emit = defineEmits<{ saved: [task: TaskDetail] }>()
 const open = defineModel<boolean>('open', { default: false })
 
 const { t } = useI18n()
 const toast = useToast()
-const { durationItems, levelItems } = useMaintenance()
+const { durationItems, levelItems, formatPeriod } = useMaintenance()
 
-const empty = (): TaskInput => ({ title: '', description: null, level: 'BEGINNER', durationMinutes: null, deadline: null, defectId: null, checklist: [] })
+const empty = (): TaskInput => ({ title: '', description: null, level: 'BEGINNER', durationMinutes: null, deadline: null, defectId: null, workshopId: props.workshopId, checklist: [] })
 const form = ref<TaskInput>(empty())
 const description = ref('')
 const checklist = ref('')
@@ -64,6 +72,14 @@ const defectId = computed({
   get: () => form.value.defectId ?? NO_SELECTION,
   set: (id: string) => { form.value.defectId = id === NO_SELECTION ? null : id }
 })
+const workshopId = computed({
+  get: () => form.value.workshopId ?? NO_SELECTION,
+  set: (id: string) => { form.value.workshopId = id === NO_SELECTION ? null : id }
+})
+const workshopItems = computed(() => [
+  ...[...props.workshops].reverse().map(slot => ({ label: [formatPeriod(slot.startDate, slot.endDate), slot.note].filter(Boolean).join(' · '), value: slot.id })),
+  { label: t('maintenance.board.unscheduled'), value: NO_SELECTION }
+])
 const duration = computed({
   get: () => toDuration(form.value.durationMinutes),
   set: (minutes: number) => { form.value.durationMinutes = fromDuration(minutes) }
@@ -75,7 +91,7 @@ watch(open, (isOpen) => {
   }
   const task = props.task
   if (task) {
-    form.value = { title: task.title, description: task.description, level: task.level, durationMinutes: task.durationMinutes, deadline: task.deadline, defectId: task.defect?.id ?? null, checklist: [] }
+    form.value = { title: task.title, description: task.description, level: task.level, durationMinutes: task.durationMinutes, deadline: task.deadline, defectId: task.defect?.id ?? null, workshopId: task.workshopId, checklist: [] }
   } else if (props.defect) {
     form.value = { ...empty(), title: props.defect.title, level: 'EXPERIENCED', defectId: props.defect.id }
   } else {

@@ -2,9 +2,9 @@ import { mountSuspended } from '@nuxt/test-utils/runtime'
 import { expect, it, vi } from 'vitest'
 import Board from '~/pages/maintenance/[id].vue'
 
-const mountBoard = async () => {
-  await useUserStore().login({ username: 'testuser', password: 'howwouldiknow' })
-  const page = await mountSuspended(Board, { route: '/maintenance/a1', global: { stubs: { ConfirmationDialog: true, MaintenanceTaskDetail: true } } })
+const mountBoard = async (username = 'testuser', route = '/maintenance/a1') => {
+  await useUserStore().login({ username, password: 'howwouldiknow' })
+  const page = await mountSuspended(Board, { route, global: { stubs: { ConfirmationDialog: true, MaintenanceTaskDetail: true } } })
   await vi.waitFor(() => expect(page.html()).toContain('Reifen prüfen'))
   return page
 }
@@ -33,4 +33,35 @@ it ('Accepts a dragged card only in the other columns and highlights the target'
 
   await page.find('li[data-task="k1"]').trigger('dragend')
   expect(inProgress!.classes()).not.toContain('outline-primary')
+})
+
+it ('Shows the board of the current workshop visit and every other visit on request', async () => {
+  const page = await mountBoard()
+  expect(page.html()).toContain('Workshop period:')
+  expect(page.find('[data-visit-select]').text()).not.toContain('Jahresnachprüfung')
+  expect(page.html()).not.toContain('Reifen wechseln')
+
+  const other = await mountSuspended(Board, { route: '/maintenance/a1?visit=s0', global: { stubs: { ConfirmationDialog: true, MaintenanceTaskDetail: true } } })
+  await vi.waitFor(() => expect(other.html()).toContain('Reifen wechseln'))
+  expect(other.html()).not.toContain('Reifen prüfen')
+  expect(other.find('[data-visit-select]').text()).toContain('Jahresnachprüfung')
+})
+
+it ('Lets maintenance administrators choose the templates for a visit', async () => {
+  const page = await mountBoard('testmaintenanceadmin')
+  const button = page.findAll('button').find(candidate => candidate.text() === 'Create from templates')!
+  await button.trigger('click')
+
+  await vi.waitFor(() => expect(document.body.querySelector('[data-template="t1"]')).not.toBeNull())
+  const submit = document.body.querySelector('[data-import-submit]') as HTMLButtonElement
+  // nothing is preselected
+  expect(submit.disabled).toBe(true)
+  // the template is already on the board of the visit
+  expect(document.body.querySelector('[data-template="t2"]')?.textContent).toContain('Already on the board')
+  expect((document.body.querySelector('[data-template="t2"] button') as HTMLButtonElement).disabled).toBe(true)
+
+  ;(document.body.querySelector('[data-template="t1"] button') as HTMLButtonElement).click()
+  await vi.waitFor(() => expect(submit.disabled).toBe(false))
+  expect(submit.textContent).toContain('Create 1 task')
+  page.unmount()
 })

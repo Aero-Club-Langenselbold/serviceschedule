@@ -24,3 +24,16 @@ type PersonalService = {
 }
 
 export type { Plan, PersonalService }
+
+/** A service of a plan with fewer people than required (GET /plan/unfilled/{id}); date as ISO day, times as HH:mm:ss. */
+type UnfilledServiceDate = {
+    date: string
+    serviceId: string
+    servicename: string
+    startTime: string
+    endTime: string
+    required: number
+    assigned: number
+}
+
+export type { UnfilledServiceDate }

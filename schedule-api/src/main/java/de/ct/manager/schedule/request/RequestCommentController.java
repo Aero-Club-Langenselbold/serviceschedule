@@ -36,6 +36,6 @@ public class RequestCommentController {
     @PostMapping
     @PreAuthorize("hasAnyRole('USER', 'SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<RequestCommentResponse> addComment(@PathVariable String requestId, @Valid @RequestBody RequestCommentRequest comment, @AuthenticationPrincipal UserDetailsImpl currentUser) {
-        return ResponseEntity.ok(commentService.addComment(requestId, comment.getContent(), currentUser));
+        return ResponseEntity.ok(commentService.addComment(requestId, comment.getContent(), comment.getStatus(), currentUser));
     }
 }

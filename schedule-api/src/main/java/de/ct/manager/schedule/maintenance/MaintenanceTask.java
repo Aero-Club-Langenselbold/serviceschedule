@@ -40,6 +40,14 @@ public class MaintenanceTask extends AbstractPersistentEntity {
     @EqualsAndHashCode.Exclude
     private MaintenanceAircraft aircraft;
 
+    /** Workshop visit whose board shows the task; null for tasks outside a workshop period. Same aircraft as the task. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "workshop_slot_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private MaintenanceWorkshopSlot workshopSlot;
+
     /** Template the task was created from, null for tasks created by hand. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "template_id")

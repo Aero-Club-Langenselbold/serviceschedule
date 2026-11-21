@@ -6,10 +6,12 @@ import java.util.Map;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -32,6 +34,9 @@ class MaintenanceIntegrationTest extends AbstractIntegrationTest {
 
     private static final UserRole ADMIN = UserRole.ROLE_ADMIN;
     private static final UserRole USER = UserRole.ROLE_USER;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     private ResponseEntity<String> call(HttpMethod method, String path, UserRole role, Object body) {
         return restTemplate.exchange(createURLWithPort("maintenance/" + path), method, new HttpEntity<>(body, createHeadersWithToken(role)), String.class);
@@ -59,6 +64,13 @@ class MaintenanceIntegrationTest extends AbstractIntegrationTest {
         ResponseEntity<String> response = call(HttpMethod.POST, "aircraft/" + aircraftId + "/tasks", ADMIN, task(title, checklist));
         Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         return json(response);
+    }
+
+    private ResponseEntity<String> importTemplates(String aircraftId, String workshopId, List<String> templateIds) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("workshopId", workshopId);
+        body.put("templateIds", templateIds);
+        return call(HttpMethod.POST, "aircraft/" + aircraftId + "/import-templates", ADMIN, body);
     }
 
     @Test
@@ -110,13 +122,15 @@ class MaintenanceIntegrationTest extends AbstractIntegrationTest {
         forAll.put("durationMinutes", 60);
         Map<String, Object> forAsk = new HashMap<>(task("Haube polieren", List.of()));
         forAsk.put("aircraftTypes", List.of("ASK 21"));
-        Assertions.assertThat(call(HttpMethod.POST, "templates", ADMIN, forAll).getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        Assertions.assertThat(call(HttpMethod.POST, "templates", ADMIN, forAsk).getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        String cleaningTemplate = json(call(HttpMethod.POST, "templates", ADMIN, forAll)).get("id").asText();
+        String canopyTemplate = json(call(HttpMethod.POST, "templates", ADMIN, forAsk)).get("id").asText();
         Assertions.assertThat(call(HttpMethod.GET, "templates", USER, null).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
 
-        Assertions.assertThat(json(call(HttpMethod.POST, "aircraft/" + ask21 + "/import-templates", ADMIN, null)).get("created").asInt()).isEqualTo(2);
-        Assertions.assertThat(json(call(HttpMethod.POST, "aircraft/" + ask21 + "/import-templates", ADMIN, null)).get("created").asInt()).isZero();
-        Assertions.assertThat(json(call(HttpMethod.POST, "aircraft/" + ls8 + "/import-templates", ADMIN, null)).get("created").asInt()).isEqualTo(1);
+        Assertions.assertThat(json(importTemplates(ask21, null, List.of(cleaningTemplate, canopyTemplate))).get("created").asInt()).isEqualTo(2);
+        Assertions.assertThat(json(importTemplates(ask21, null, List.of(cleaningTemplate, canopyTemplate))).get("created").asInt()).isZero();
+        Assertions.assertThat(json(importTemplates(ls8, null, List.of(cleaningTemplate))).get("created").asInt()).isEqualTo(1);
+        // the canopy template does not fit an LS 8
+        Assertions.assertThat(importTemplates(ls8, null, List.of(canopyTemplate)).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
         JsonNode tasks = json(call(HttpMethod.GET, "aircraft/" + ask21 + "/tasks", USER, null));
         Assertions.assertThat(tasks).hasSize(2);
@@ -127,15 +141,31 @@ class MaintenanceIntegrationTest extends AbstractIntegrationTest {
         Assertions.assertThat(cleaning.get("status").asText()).isEqualTo("OPEN");
 
         JsonNode overview = json(call(HttpMethod.GET, "aircraft/" + ask21, USER, null));
-        Assertions.assertThat(overview.get("taskCount").asInt()).isEqualTo(2);
-        Assertions.assertThat(overview.get("doneCount").asInt()).isZero();
+        Assertions.assertThat(overview.get("unscheduledTaskCount").asInt()).isEqualTo(2);
+    }
+
+    @Test
+    void testOnlyTheChosenTemplatesBecomeTasks() throws Exception {
+        String aircraft = createAircraft("ASK 21", "D-1234");
+        String cleaning = json(call(HttpMethod.POST, "templates", ADMIN, task("Rumpf reinigen", List.of()))).get("id").asText();
+        json(call(HttpMethod.POST, "templates", ADMIN, task("Haube polieren", List.of())));
+
+        Assertions.assertThat(json(importTemplates(aircraft, null, List.of(cleaning))).get("created").asInt()).isEqualTo(1);
+        JsonNode tasks = json(call(HttpMethod.GET, "aircraft/" + aircraft + "/tasks", USER, null));
+        Assertions.assertThat(tasks).hasSize(1);
+        Assertions.assertThat(tasks.get(0).get("templateId").asText()).isEqualTo(cleaning);
+
+        Assertions.assertThat(importTemplates(aircraft, null, List.of()).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        Assertions.assertThat(importTemplates(aircraft, null, List.of("unknown")).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        Assertions.assertThat(call(HttpMethod.POST, "aircraft/" + aircraft + "/import-templates", USER, Map.of("templateIds", List.of(cleaning)))
+                .getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     @Test
     void testDeletingATemplateKeepsItsTasks() throws Exception {
         String aircraft = createAircraft("ASK 21", "D-1234");
         String template = json(call(HttpMethod.POST, "templates", ADMIN, task("Rumpf reinigen", List.of()))).get("id").asText();
-        call(HttpMethod.POST, "aircraft/" + aircraft + "/import-templates", ADMIN, null);
+        importTemplates(aircraft, null, List.of(template));
 
         Assertions.assertThat(call(HttpMethod.DELETE, "templates/" + template, ADMIN, null).getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
@@ -183,9 +213,51 @@ class MaintenanceIntegrationTest extends AbstractIntegrationTest {
 
         List<String> actions = reopened.get("history").findValuesAsText("action");
         Assertions.assertThat(actions).containsExactly("REOPENED", "UNSIGNED", "SIGNED", "FINISHED", "STARTED", "CREATED");
+    }
 
-        JsonNode overview = json(call(HttpMethod.GET, "aircraft/" + aircraft, USER, null));
-        Assertions.assertThat(overview.get("doneCount").asInt()).isZero();
+    @Test
+    void testFinishingATaskTicksItsOpenSteps() throws Exception {
+        String aircraft = createAircraft("ASK 21", "D-1234");
+        JsonNode task = createTask(aircraft, "Ruder schmieren", List.of("Reinigen", "Fetten"));
+        String id = task.get("id").asText();
+        call(HttpMethod.PUT, "tasks/" + id + "/checklist/" + task.get("checklist").get(0).get("id").asText(), ADMIN, Map.of("done", true));
+
+        JsonNode done = json(call(HttpMethod.POST, "tasks/" + id + "/finish", USER, null));
+        Assertions.assertThat(done.get("checklist").findValuesAsText("done")).containsOnly("true");
+        // a step ticked before keeps who ticked it
+        Assertions.assertThat(done.get("checklist").get(0).get("doneBy").get("name").asText()).isEqualTo("admin@test.de");
+        Assertions.assertThat(done.get("checklist").get(1).get("doneBy").get("name").asText()).isEqualTo("test@test.com");
+
+        // reopening leaves the steps ticked, the task is only back in progress
+        Assertions.assertThat(json(call(HttpMethod.POST, "tasks/" + id + "/reopen", USER, null)).get("checklist").findValuesAsText("done"))
+                .containsOnly("true");
+    }
+
+    @Test
+    void testDraggingATaskToDoneTicksItsSteps() throws Exception {
+        String aircraft = createAircraft("ASK 21", "D-1234");
+        String id = createTask(aircraft, "Ruder schmieren", List.of("Reinigen", "Fetten")).get("id").asText();
+
+        JsonNode done = json(call(HttpMethod.PUT, "tasks/" + id + "/status", USER, Map.of("status", "DONE")));
+        Assertions.assertThat(done.get("status").asText()).isEqualTo("DONE");
+        Assertions.assertThat(done.get("checklist").findValuesAsText("done")).containsExactly("true", "true");
+
+        JsonNode summary = json(call(HttpMethod.GET, "aircraft/" + aircraft + "/tasks", USER, null)).get(0);
+        Assertions.assertThat(summary.get("checklistDone").asInt()).isEqualTo(2);
+    }
+
+    @Test
+    void testSigningOffTicksStepsLeftOpen() throws Exception {
+        String aircraft = createAircraft("ASK 21", "D-1234");
+        JsonNode task = createTask(aircraft, "Ruder schmieren", List.of("Reinigen", "Fetten"));
+        String id = task.get("id").asText();
+        call(HttpMethod.PUT, "tasks/" + id + "/status", USER, Map.of("status", "DONE"));
+        // a task finished before steps were ticked automatically
+        jdbcTemplate.update("UPDATE maintenance_task_checklist_item SET done = false, done_by_id = NULL, done_at = NULL WHERE task_id = ?", id);
+
+        JsonNode signed = json(call(HttpMethod.POST, "tasks/" + id + "/sign", ADMIN, null));
+        Assertions.assertThat(signed.get("checklist").findValuesAsText("done")).containsExactly("true", "true");
+        Assertions.assertThat(signed.get("checklist").get(0).get("doneBy").get("name").asText()).isEqualTo("admin@test.de");
     }
 
     @Test
@@ -233,6 +305,7 @@ class MaintenanceIntegrationTest extends AbstractIntegrationTest {
         JsonNode summary = json(call(HttpMethod.GET, "aircraft/" + aircraft + "/tasks", USER, null)).get(0);
         Assertions.assertThat(summary.get("checklistDone").asInt()).isEqualTo(1);
         Assertions.assertThat(summary.get("checklistTotal").asInt()).isEqualTo(2);
+        Assertions.assertThat(summary.get("fromTemplate").asBoolean()).isFalse();
     }
 
     @Test

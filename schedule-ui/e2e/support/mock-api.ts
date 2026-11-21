@@ -262,6 +262,12 @@ export class MockApi {
       if (plan) plan.published = true
       return null
     }
+    if ((m = path.match(/^\/plan\/unfilled\/(.+)$/))) {
+      // the generator found nobody for the late service on December 5th
+      return m[1] === 'plan-open'
+        ? [{ date: '2026-12-05', serviceId: 'late', servicename: 'Spätdienst', startTime: '09:00:00', endTime: '17:00:00', required: 2, assigned: 0 }]
+        : []
+    }
     if ((m = path.match(/^\/plan\/serviceDates\/save\/(.+)$/))) return null
     if ((m = path.match(/^\/plan\/participantAvailability\/fetch\/([^/]+)\/([^/]+)$/))) {
       return s.availabilities.filter(a => a.participant.id === m![2])
@@ -306,6 +312,8 @@ export class MockApi {
       if (method === 'GET') return comments
       const saved = { id: `c${Date.now()}`, content: body.content, createdAt: time('2026-11-05', '10:00'), author: 'User, Uta' }
       comments.push(saved)
+      const request = s.requests.find(r => r.id === m![1])
+      if (body.status && request) request.status = body.status
       return saved
     }
 

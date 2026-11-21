@@ -77,6 +77,32 @@ test.describe('Bug- und Feature-Liste', () => {
     await expect(page.getByRole('textbox', { name: 'Neuer Kommentar' })).toHaveCount(0)
   })
 
+  test('lässt Administratoren mit einem Kommentar schließen', async ({ page, api, loginAs }) => {
+    await loginAs('admin')
+    await page.goto('/request/list')
+
+    await row(page, 'Kalender hakt').getByRole('button', { name: 'Details ein-/ausblenden' }).locator('visible=true').click()
+    await page.getByRole('textbox', { name: 'Neuer Kommentar' }).fill('Mit dem letzten Update behoben.')
+    await page.getByRole('button', { name: 'Weitere Aktionen' }).click()
+    await expect(page.getByRole('menuitem', { name: 'Kommentieren und abweisen' })).toBeVisible()
+    await page.getByRole('menuitem', { name: 'Kommentieren und schließen' }).click()
+
+    await expect(toast(page, 'Eintrag geschlossen')).toBeVisible()
+    expect(api.sent('POST', '/request/r1/comments')[0]!.body).toEqual({ content: 'Mit dem letzten Update behoben.', status: 'CLOSED' })
+    await expect(row(page, 'Kalender hakt')).toContainText('Geschlossen')
+    await expect(page.getByText('Mit dem letzten Update behoben.')).toBeVisible()
+    await expect(page.getByText('Nur offene Einträge können kommentiert werden.')).toBeVisible()
+  })
+
+  test('bietet Benutzern kein Schließen an', async ({ page, loginAs }) => {
+    await loginAs('user')
+    await page.goto('/request/list')
+
+    await row(page, 'Kalender hakt').getByRole('button', { name: 'Details ein-/ausblenden' }).locator('visible=true').click()
+    await expect(page.getByRole('button', { name: 'Kommentieren' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Weitere Aktionen' })).toHaveCount(0)
+  })
+
   test('meldet Fehler beim Kommentieren und behält den Text', async ({ page, api, loginAs }) => {
     await loginAs('user')
     api.fail('POST', /^\/request\/r1\/comments$/)

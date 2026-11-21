@@ -50,21 +50,26 @@ Run the backend tests when `schedule-api` changed and `pnpm test` when `schedule
 - Frontend mirrors this in `stores/user.ts` (`canManageSchedule`, `canManageAlarm`, `canManageMaintenance`) and in route middlewares (`middleware/*-admin.ts`). A new right also needs: i18n names under `users.permissionNames` / `users.roleNames`, and `permissionsOfRole` in `pages/users/list.vue`.
 - The frontend only hides controls; the backend enforces every rule.
 
+## Plan generation and requests
+
+- After `POST /plan/generate/{id}` the plan list fetches `GET /plan/unfilled/{id}` (services of the plan with fewer people than `mandatoryAssignees`, by day) and shows them in `components/plan-unfilled-dialog.vue`.
+- `POST /request/{id}/comments` takes an optional `status` (`CLOSED`/`REJECTED`): administrators close or reject an entry with the comment (split button in `components/request-comments.vue`), anybody else gets `403`.
+
 ## My services
 
 `GET /plan/mine` (`?past=true` includes past services) and `/plan/mine/ics` list the plan entries of the signed in user: user ↔ participant by e-mail, only published plans, with the colleagues of the same service and time. Page `pages/plan/mine.vue`. Plan times are local wall clock times (`LocalDateTime`); the ICS export converts them to UTC with `schedule.calendar.timezone` (default `Europe/Berlin`).
 
 ## Maintenance module
 
-Backend `schedule-api/.../maintenance/`, migrations `V3.2__maintenance.sql` and `V3.4__maintenance_workshop_schedule_inventory.sql`, frontend `pages/maintenance/`, `components/maintenance/`, `composables/useMaintenance.ts`, `types/maintenance.ts`. API under `/api/v1/maintenance`.
+Backend `schedule-api/.../maintenance/`, migrations `V3.2__maintenance.sql`, `V3.4__maintenance_workshop_schedule_inventory.sql` and `V3.5__maintenance_task_workshop_slot.sql`, frontend `pages/maintenance/`, `components/maintenance/`, `composables/useMaintenance.ts`, `types/maintenance.ts`. API under `/api/v1/maintenance`.
 
-Tables: `maintenance_aircraft` → `maintenance_task` (+ `_checklist_item`, `_note`, `_history`), `maintenance_defect` and `maintenance_workshop_slot`; `maintenance_template` (+ `_aircraft_type`, `_checklist_item`); `maintenance_inventory_item` (+ `_aircraft_type`) → `maintenance_inventory_history`. Deleting an aircraft cascades to its tasks, defects and workshop periods; deleting a template or defect only unlinks tasks; deleting a user keeps the records (`SET NULL`).
+Tables: `maintenance_aircraft` → `maintenance_task` (+ `_checklist_item`, `_note`, `_history`), `maintenance_defect` and `maintenance_workshop_slot`; `maintenance_template` (+ `_aircraft_type`, `_checklist_item`); `maintenance_inventory_item` (+ `_aircraft_type`) → `maintenance_inventory_history`. Deleting an aircraft cascades to its tasks, defects and workshop periods; deleting a template, defect or workshop period only unlinks tasks; deleting a user keeps the records (`SET NULL`).
 
 Rules (enforced in `MaintenanceTaskService` / `MaintenanceDefectService`):
 
 - Every signed in user (menu entry "Wartung"): sees all aircraft, works on tasks (start, back to open, report done, reopen), ticks checklist steps, adds notes, reports defects and marks them done/open.
-- Maintenance administrators: aircraft and templates (CRUD), create/edit/delete tasks, "Aus Vorlagen anlegen" (creates a task per applicable template not yet on the aircraft; templates with no aircraft types apply to all), sign off and withdraw sign-off, delete any note, edit/delete any defect.
-- Status: `OPEN → IN_PROGRESS → DONE`. The checklist drives it: the first tick starts the task, the last tick finishes it, unticking a done task reopens it. Signed off tasks are locked (`409`) for everything except withdrawing the sign-off and deleting.
+- Maintenance administrators: aircraft and templates (CRUD), create/edit/delete tasks, "Aus Vorlagen anlegen" (dialog `components/maintenance/template-import.vue`: the admin picks templates, nothing preselected; `POST /aircraft/{id}/import-templates` with `{ workshopId, templateIds }` creates a task per chosen template on that board, skips templates already on it, `400` for templates not applying to the aircraft type; templates with no aircraft types apply to all), sign off and withdraw sign-off, delete any note, edit/delete any defect.
+- Status: `OPEN → IN_PROGRESS → DONE`. The checklist drives it: the first tick starts the task, the last tick finishes it, unticking a done task reopens it. The other way round, finishing a task (button or drag to `DONE`) and signing it off tick all remaining steps (`completeChecklist`); reopening leaves them ticked. Signed off tasks are locked (`409`) for everything except withdrawing the sign-off and deleting.
 - Cards are moved between the board columns by drag and drop (native HTML5 DnD, `PUT /maintenance/tasks/{id}/status`). Jumps over a column are logged as the single steps (OPEN → DONE = `STARTED` + `FINISHED`).
 - History is append-only and stores an action enum (`TaskHistoryAction`); the UI translates it (`maintenance.task.actions.*`).
 - Editing a task's checklist keeps ticked steps whose text is unchanged; items are updated in place by position (unique `(task_id, position)`).
@@ -74,8 +79,10 @@ Rules (enforced in `MaintenanceTaskService` / `MaintenanceDefectService`):
 
 Workshop schedule (`/maintenance/workshop`, page `pages/maintenance/schedule.vue`, Gantt chart):
 
-- Aircraft have no workshop period of their own. Maintenance administrators plan periods (`maintenance_workshop_slot`, dates inclusive) – an aircraft any number of times, periods of different aircraft may overlap, periods of the same aircraft must not (`409`). Everybody sees the chart.
-- `AircraftResponse.workshop` is the period running today or else the next one; `stepCount`/`stepDoneCount` are the checklist steps of all tasks of the aircraft (a task without checklist counts as one step, done when the task is `DONE`). The chart shows this progress on that period and in the row header, because tasks belong to the aircraft, not to a period.
+- Every period is a **workshop visit with its own board**: `maintenance_task.workshop_slot_id` (nullable, same aircraft, `400` otherwise). `GET /aircraft/{id}/tasks?workshopId=` returns the board of a visit, without the parameter the board "Ohne Werkstattzeitraum" (tasks outside the workshop, e.g. defect fixes). The board page picks the visit via `?visit=<slotId|none>`, default: the visit running today or else the next one, else the board without period – finished visits open only when chosen (own group "Abgeschlossene Aufenthalte" in the select). The overview cards (`pages/maintenance/index.vue`) link every running/upcoming visit with its progress; finished ones appear after "… abgeschlossene Aufenthalte anzeigen". A visit with tasks cannot move to another aircraft (`409`).
+- Maintenance administrators plan periods (`maintenance_workshop_slot`, dates inclusive) – an aircraft any number of times, periods of different aircraft may overlap, periods of the same aircraft must not (`409`). Everybody sees the chart.
+- A click on a bar opens a dropdown below it (`components/maintenance/workshop-slot-panel.vue` in a `UPopover`): period, progress and a link to the board of that visit (`/maintenance/{aircraftId}?visit={slotId}`); maintenance administrators change dates/note or delete there. The modal `workshop-slot-form.vue` is only used for new periods and the edit button in the list.
+- `WorkshopSlotResponse` carries the progress of its board: `taskCount`/`doneCount`/`signedCount` and `stepCount`/`stepDoneCount` (checklist steps; a task without checklist counts as one step, done when the task is `DONE`). Every bar shows its own progress; the row header and the overview card show `AircraftResponse.workshop` (the period running today or else the next one). `AircraftResponse.unscheduledTaskCount` counts the tasks without period.
 
 Inventory (`/maintenance/inventory`, page `pages/maintenance/inventory.vue`), modelled on the "Inventur" of vereins-wartung:
 

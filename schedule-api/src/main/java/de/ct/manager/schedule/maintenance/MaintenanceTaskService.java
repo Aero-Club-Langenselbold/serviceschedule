@@ -41,22 +41,28 @@ public class MaintenanceTaskService {
     private final MaintenanceTaskRepository taskRepository;
     private final MaintenanceDefectRepository defectRepository;
     private final MaintenanceAircraftService aircraftService;
+    private final MaintenanceWorkshopService workshopService;
     private final MaintenanceAccess access;
 
     public MaintenanceTaskService(MaintenanceTaskRepository taskRepository, MaintenanceDefectRepository defectRepository,
-            MaintenanceAircraftService aircraftService, MaintenanceAccess access) {
+            MaintenanceAircraftService aircraftService, MaintenanceWorkshopService workshopService, MaintenanceAccess access) {
         this.taskRepository = taskRepository;
         this.defectRepository = defectRepository;
         this.aircraftService = aircraftService;
+        this.workshopService = workshopService;
         this.access = access;
     }
 
     // --- reading
 
+    /** The board of a workshop visit of the aircraft, or without workshopId the board without period. */
     @Transactional(readOnly = true)
-    public List<TaskSummary> getTasks(String aircraftId) {
+    public List<TaskSummary> getTasks(String aircraftId, String workshopId) {
         MaintenanceAircraft aircraft = aircraftService.find(aircraftId);
-        List<MaintenanceTask> tasks = taskRepository.findAllByAircraftOrderByLevelAscTitleAsc(aircraft);
+        MaintenanceWorkshopSlot slot = workshopService.resolve(aircraft, workshopId);
+        List<MaintenanceTask> tasks = slot == null
+                ? taskRepository.findAllByAircraftAndWorkshopSlotIsNullOrderByLevelAscTitleAsc(aircraft)
+                : taskRepository.findAllByWorkshopSlotOrderByLevelAscTitleAsc(slot);
         Map<String, ChecklistCounts> checklists = taskRepository.countChecklistByAircraft(aircraft).stream()
                 .collect(Collectors.toMap(ChecklistCounts::getTaskId, Function.identity()));
         Map<String, Long> notes = taskRepository.countNotesByAircraft(aircraft).stream()
@@ -65,7 +71,7 @@ public class MaintenanceTaskService {
 
         return tasks.stream().map(task -> {
             ChecklistCounts checklist = checklists.get(task.getId());
-            return new TaskSummary(task.getId(), aircraft.getId(), task.getTitle(), task.getDescription(), task.getLevel(),
+            return new TaskSummary(task.getId(), aircraft.getId(), slotId(task), task.getTemplate() == null ? null : task.getTemplate().getId(), task.getTitle(), task.getDescription(), task.getLevel(),
                     task.getStatus(), task.getDurationMinutes(), task.getDeadline(), task.getTemplate() != null, defectRef(task.getDefect()),
                     checklist == null ? 0 : checklist.getTotal(), checklist == null ? 0 : checklist.getDone(),
                     notes.getOrDefault(task.getId(), 0L),
@@ -183,6 +189,8 @@ public class MaintenanceTaskService {
         MaintenanceTask task = findUnlocked(id);
         requireStatus(task, TaskStatus.DONE);
         User actor = access.currentUser(currentUser);
+        // signing off confirms the whole task, so no step can stay open (e.g. of a task finished before this rule)
+        completeChecklist(task, actor);
         task.setSignedBy(actor);
         task.setSignedAt(Instant.now());
         task.log(TaskHistoryAction.SIGNED, actor);
@@ -260,9 +268,10 @@ public class MaintenanceTaskService {
 
     // --- helpers
 
-    static MaintenanceTask fromTemplate(MaintenanceTemplate template, MaintenanceAircraft aircraft, User actor) {
+    static MaintenanceTask fromTemplate(MaintenanceTemplate template, MaintenanceAircraft aircraft, MaintenanceWorkshopSlot slot, User actor) {
         MaintenanceTask task = new MaintenanceTask();
         task.setAircraft(aircraft);
+        task.setWorkshopSlot(slot);
         task.setTemplate(template);
         task.setTitle(template.getTitle());
         task.setDescription(template.getDescription());
@@ -287,6 +296,7 @@ public class MaintenanceTaskService {
         task.setLevel(request.level());
         task.setDurationMinutes(request.durationMinutes());
         task.setDeadline(request.deadline());
+        task.setWorkshopSlot(workshopService.resolve(task.getAircraft(), request.workshopId()));
         task.setDefect(resolveDefect(task, request.defectId()));
         replaceChecklist(task, cleanChecklist(request.checklist()));
     }
@@ -342,11 +352,24 @@ public class MaintenanceTaskService {
         }
     }
 
+    /** A finished task has no open steps: finishing it (button or drag and drop) ticks the remaining ones. */
     private static void markDone(MaintenanceTask task, User actor) {
+        completeChecklist(task, actor);
         task.setStatus(TaskStatus.DONE);
         task.setDoneBy(actor);
         task.setDoneAt(Instant.now());
         task.log(TaskHistoryAction.FINISHED, actor);
+    }
+
+    private static void completeChecklist(MaintenanceTask task, User actor) {
+        Instant now = Instant.now();
+        for (MaintenanceTaskChecklistItem item : task.getChecklist()) {
+            if (!item.isDone()) {
+                item.setDone(true);
+                item.setDoneBy(actor);
+                item.setDoneAt(now);
+            }
+        }
     }
 
     private static void markReopened(MaintenanceTask task, User actor) {
@@ -378,6 +401,10 @@ public class MaintenanceTaskService {
         return MaintenanceAccess.isSameUser(note.getAuthor(), currentUser) || access.canManage(currentUser);
     }
 
+    private static String slotId(MaintenanceTask task) {
+        return task.getWorkshopSlot() == null ? null : task.getWorkshopSlot().getId();
+    }
+
     private static DefectRef defectRef(MaintenanceDefect defect) {
         return defect == null ? null : new DefectRef(defect.getId(), defect.getTitle(), defect.getStatus());
     }
@@ -392,7 +419,7 @@ public class MaintenanceTaskService {
         boolean locked = task.isSigned();
         MaintenanceAircraft aircraft = task.getAircraft();
 
-        return new TaskDetail(task.getId(), aircraft.getId(), aircraft.getType() + " · " + aircraft.getRegistration(),
+        return new TaskDetail(task.getId(), aircraft.getId(), aircraft.getType() + " · " + aircraft.getRegistration(), slotId(task),
                 task.getTitle(), task.getDescription(), task.getLevel(), task.getStatus(), task.getDurationMinutes(), task.getDeadline(),
                 task.getTemplate() != null, defectRef(task.getDefect()),
                 names.of(task.getDoneBy()), task.getDoneAt(), names.of(task.getSignedBy()), task.getSignedAt(),

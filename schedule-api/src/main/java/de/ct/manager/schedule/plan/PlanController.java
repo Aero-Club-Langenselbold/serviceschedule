@@ -60,6 +60,12 @@ public class PlanController {
         return ResponseEntity.ok(planService.generatePlan(id));
     }
 
+    @GetMapping("/unfilled/{id}")
+    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
+    public ResponseEntity<List<UnfilledServiceDate>> getUnfilledServiceDates(@PathVariable String id) {
+        return ResponseEntity.ok(planService.getUnfilledServiceDates(id));
+    }
+
     @PostMapping("/updatePlanEntry/{id}")
     @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
     public ResponseEntity<List<PlanEntry>> updatePlanEntry(@PathVariable String id, @RequestBody List<PlanEntry> planEntry) {

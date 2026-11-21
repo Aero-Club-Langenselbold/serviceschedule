@@ -9,43 +9,62 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface MaintenanceTaskRepository extends JpaRepository<MaintenanceTask, String> {
 
-    @EntityGraph(attributePaths = { "doneBy", "signedBy", "defect" })
-    List<MaintenanceTask> findAllByAircraftOrderByLevelAscTitleAsc(MaintenanceAircraft aircraft);
+    /** The board of a workshop visit. */
+    @EntityGraph(attributePaths = { "doneBy", "signedBy", "defect", "template" })
+    List<MaintenanceTask> findAllByWorkshopSlotOrderByLevelAscTitleAsc(MaintenanceWorkshopSlot workshopSlot);
+
+    /** The board of an aircraft without workshop period. */
+    @EntityGraph(attributePaths = { "doneBy", "signedBy", "defect", "template" })
+    List<MaintenanceTask> findAllByAircraftAndWorkshopSlotIsNullOrderByLevelAscTitleAsc(MaintenanceAircraft aircraft);
 
     Optional<MaintenanceTask> findByDefect(MaintenanceDefect defect);
 
     List<MaintenanceTask> findAllByDefectIn(List<MaintenanceDefect> defects);
 
-    @Query("SELECT t.template.id FROM MaintenanceTask t WHERE t.aircraft = :aircraft AND t.template IS NOT NULL")
-    List<String> findTemplateIdsByAircraft(MaintenanceAircraft aircraft);
+    boolean existsByWorkshopSlot(MaintenanceWorkshopSlot workshopSlot);
 
-    /** Per aircraft: number of tasks, finished tasks and signed off tasks. */
-    @Query("SELECT t.aircraft.id AS aircraftId, COUNT(t) AS total, "
+    @Query("SELECT t.template.id FROM MaintenanceTask t WHERE t.workshopSlot = :workshopSlot AND t.template IS NOT NULL")
+    List<String> findTemplateIdsByWorkshopSlot(MaintenanceWorkshopSlot workshopSlot);
+
+    @Query("SELECT t.template.id FROM MaintenanceTask t WHERE t.aircraft = :aircraft AND t.workshopSlot IS NULL AND t.template IS NOT NULL")
+    List<String> findUnscheduledTemplateIdsByAircraft(MaintenanceAircraft aircraft);
+
+    /** Per aircraft: number of tasks without workshop period. */
+    @Query("SELECT t.aircraft.id AS aircraftId, COUNT(t) AS total FROM MaintenanceTask t WHERE t.workshopSlot IS NULL GROUP BY t.aircraft.id")
+    List<UnscheduledCounts> countUnscheduledByAircraft();
+
+    interface UnscheduledCounts {
+        String getAircraftId();
+        long getTotal();
+    }
+
+    /** Per workshop visit: number of tasks, finished tasks and signed off tasks. */
+    @Query("SELECT t.workshopSlot.id AS slotId, COUNT(t) AS total, "
             + "SUM(CASE WHEN t.status = de.ct.manager.schedule.maintenance.TaskStatus.DONE THEN 1 ELSE 0 END) AS done, "
             + "SUM(CASE WHEN t.signedAt IS NOT NULL THEN 1 ELSE 0 END) AS signed "
-            + "FROM MaintenanceTask t GROUP BY t.aircraft.id")
-    List<TaskCounts> countByAircraft();
+            + "FROM MaintenanceTask t WHERE t.workshopSlot IS NOT NULL GROUP BY t.workshopSlot.id")
+    List<TaskCounts> countBySlot();
 
     interface TaskCounts {
-        String getAircraftId();
+        String getSlotId();
         long getTotal();
         long getDone();
         long getSigned();
     }
 
-    /** Per aircraft: checklist steps of all its tasks and how many of them are ticked. */
-    @Query("SELECT c.task.aircraft.id AS aircraftId, COUNT(c) AS total, SUM(CASE WHEN c.done = true THEN 1 ELSE 0 END) AS done "
-            + "FROM MaintenanceTaskChecklistItem c GROUP BY c.task.aircraft.id")
-    List<StepCounts> countChecklistStepsByAircraft();
+    /** Per workshop visit: checklist steps of its tasks and how many of them are ticked. */
+    @Query("SELECT c.task.workshopSlot.id AS slotId, COUNT(c) AS total, SUM(CASE WHEN c.done = true THEN 1 ELSE 0 END) AS done "
+            + "FROM MaintenanceTaskChecklistItem c WHERE c.task.workshopSlot IS NOT NULL GROUP BY c.task.workshopSlot.id")
+    List<StepCounts> countChecklistStepsBySlot();
 
-    /** Per aircraft: tasks without a checklist and how many of them are done; each counts as a single step. */
-    @Query("SELECT t.aircraft.id AS aircraftId, COUNT(t) AS total, "
+    /** Per workshop visit: tasks without a checklist and how many of them are done; each counts as a single step. */
+    @Query("SELECT t.workshopSlot.id AS slotId, COUNT(t) AS total, "
             + "SUM(CASE WHEN t.status = de.ct.manager.schedule.maintenance.TaskStatus.DONE THEN 1 ELSE 0 END) AS done "
-            + "FROM MaintenanceTask t WHERE t.checklist IS EMPTY GROUP BY t.aircraft.id")
-    List<StepCounts> countTasksWithoutChecklistByAircraft();
+            + "FROM MaintenanceTask t WHERE t.workshopSlot IS NOT NULL AND t.checklist IS EMPTY GROUP BY t.workshopSlot.id")
+    List<StepCounts> countTasksWithoutChecklistBySlot();
 
     interface StepCounts {
-        String getAircraftId();
+        String getSlotId();
         long getTotal();
         long getDone();
     }
