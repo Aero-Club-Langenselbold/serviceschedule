@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { expect, expectPath, field, test } from './support/test'
+import { expect, expectPath, field, test, toast } from './support/test'
 
 const row = (page: Page, text: string) => page.locator('tr', { hasText: text })
 const card = (page: Page, text: string) => page.locator('article', { hasText: text })
@@ -197,7 +197,7 @@ test.describe('Dienstplan-Details', () => {
     await expect(page.getByText(/05\.12\.2026/)).toBeVisible()
 
     await page.getByRole('button', { name: 'Speichern' }).click()
-    await expect(page.getByText('Dienstplan erfolgreich gespeichert')).toBeVisible()
+    await expect(toast(page, 'Dienstplan erfolgreich gespeichert')).toBeVisible()
 
     const body = api.sent('POST', '/plan/serviceDates/save/plan-open')[0]!.body
     expect(body.map((e: any) => [e.date.slice(0, 10), e.service.id])).toEqual([
@@ -214,7 +214,7 @@ test.describe('Dienstplan-Details', () => {
     await expect(page.getByText(/05\.12\.2026/)).toHaveCount(0)
 
     await page.getByRole('button', { name: 'Speichern' }).click()
-    await expect(page.getByText('Dienstplan erfolgreich gespeichert')).toBeVisible()
+    await expect(toast(page, 'Dienstplan erfolgreich gespeichert')).toBeVisible()
     const body = api.sent('POST', '/plan/serviceDates/save/plan-open')[0]!.body
     expect(body).toHaveLength(1)
     expect(body[0].date).toContain('2026-12-06')

@@ -27,3 +27,6 @@ replay_pid*
 /schedule-api/logs
 
 /.env
+
+# local deploy script
+/deploy.sh

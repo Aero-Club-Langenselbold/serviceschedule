@@ -49,6 +49,34 @@ test.describe('Teilnehmerliste', () => {
     expect(api.sent('POST', '/participant/save')[0]!.body).toMatchObject({ id: 'p1', lastname: 'Ahrens' })
   })
 
+  test('wählt Dienste und automatische Zuordnung ab', async ({ page, api, loginAs }) => {
+    await loginAs('schedule')
+    await page.goto('/participants/list')
+
+    await row(page, 'Albers').getByRole('button', { name: 'Bearbeiten' }).click()
+    const editing = page.locator('tr').filter({ has: page.getByRole('button', { name: 'Speichern' }) })
+    const service = editing.getByRole('checkbox', { name: 'Frühdienst', exact: true })
+    const autoAssign = editing.getByRole('checkbox', { name: 'Spätdienst: Automatisch zuordnen' })
+
+    await expect(service).toBeChecked()
+    await service.click()
+    await expect(service).not.toBeChecked()
+    await expect(editing.getByRole('checkbox', { name: 'Frühdienst: Automatisch zuordnen' })).toBeDisabled()
+
+    await expect(autoAssign).toBeChecked()
+    await autoAssign.click()
+    await expect(autoAssign).not.toBeChecked()
+
+    await service.click()
+    await expect(service).toBeChecked()
+    await expect(editing.getByRole('checkbox', { name: 'Frühdienst: Automatisch zuordnen' })).toBeChecked()
+
+    await editing.getByRole('button', { name: 'Speichern' }).click()
+    await expect(page.getByText('Teilnehmer erfolgreich aktualisiert')).toBeVisible()
+    const saved = api.sent('POST', '/participant/save')[0]!.body.participantServices
+    expect(saved.map((ps: any) => [ps.service.id, ps.autoAssign])).toEqual([['s2', false], ['s1', true]])
+  })
+
   test('bricht die Bearbeitung ohne Speichern ab', async ({ page, api, loginAs }) => {
     await loginAs('schedule')
     await page.goto('/participants/list')

@@ -1,5 +1,5 @@
 <template>
-  <AppPage :title="$t('participants.list')" :error-message="errorMessage" :success-message="successMessage" width="full">
+  <AppPage :title="$t('participants.list')" :error-message="errorMessage" :success-message="successMessage" width="wide">
     <template #actions>
       <UButton to="/participants/import" icon="i-lucide-upload" color="neutral" variant="outline" :label="$t('participants.import')" />
       <UButton to="/participants/add" icon="i-lucide-user-plus" :label="$t('nav.participants.add')" />
@@ -59,6 +59,21 @@ function debounce(func: (...args: any[]) => void, wait: number) {
   }
 }
 
+/** Value for `<input type="date">`: the stored timestamp or an already picked `yyyy-mm-dd`. */
+const toDateInputValue = (value: Date | string | undefined) => {
+  if (!value) return ''
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value
+  return new Date(value).toLocaleDateString('en-CA')
+}
+
+const toggleService = (rowId: string, item: ParticipantService, checked: boolean) => {
+  const edited = editedRows[rowId]
+  if (!edited) return
+  const others = (edited.participantServices ?? []).filter((ps) => ps.service.id !== item.service.id)
+  // A new object per row, so the auto assign flag of one participant never changes another one.
+  edited.participantServices = checked ? [...others, { participant: null, service: item.service, autoAssign: true }] : others
+}
+
 const fetchDataDebounced = debounce(() => {
   fetchData()
 }, 500)
@@ -75,7 +90,8 @@ const columns = computed<TableColumn<Participant>[]>(() => {
 
         return isEditing.value ?
           h(UInput, {
-            modelValue: editedRows[rowId]?.lastname || row.original.lastname,
+            modelValue: editedRows[rowId]?.lastname,
+            class: 'min-w-32',
             'onUpdate:modelValue': (value: string) => {
               if (!editedRows[rowId]) {
                 editedRows[rowId] = { ...row.original }
@@ -95,7 +111,8 @@ const columns = computed<TableColumn<Participant>[]>(() => {
 
         return isEditing.value ?
           h(UInput, {
-            modelValue: editedRows[rowId]?.firstname || row.original.firstname,
+            modelValue: editedRows[rowId]?.firstname,
+            class: 'min-w-32',
             'onUpdate:modelValue': (value: string) => {
               if (!editedRows[rowId]) {
                 editedRows[rowId] = { ...row.original }
@@ -115,8 +132,9 @@ const columns = computed<TableColumn<Participant>[]>(() => {
 
         return isEditing.value ?
           h(UInput, {
-            modelValue: editedRows[rowId]?.email || row.original.email,
+            modelValue: editedRows[rowId]?.email,
             type: 'email',
+            class: 'min-w-48',
             'onUpdate:modelValue': (value: string) => {
               if (!editedRows[rowId]) {
                 editedRows[rowId] = { ...row.original }
@@ -136,8 +154,9 @@ const columns = computed<TableColumn<Participant>[]>(() => {
 
         return isEditing.value ?
           h(UInput, {
-            modelValue: editedRows[rowId]?.dateOfBirth || new Date(row.original.dateOfBirth ?? '').toLocaleDateString('en-CA'),
+            modelValue: toDateInputValue(editedRows[rowId]?.dateOfBirth),
             type: 'date',
+            class: 'min-w-36',
             'onUpdate:modelValue': (value: Date) => {
               if (!editedRows[rowId]) {
                 editedRows[rowId] = { ...row.original }
@@ -166,7 +185,7 @@ const columns = computed<TableColumn<Participant>[]>(() => {
 
         return isEditing.value ?
           h(UCheckbox, {
-            modelValue: editedRows[rowId]?.status === 'ACTIVE' || (!editedRows[rowId] && row.original.status === 'ACTIVE'),
+            modelValue: editedRows[rowId]?.status === 'ACTIVE',
             'onUpdate:modelValue': (value: boolean) => {
               if (!editedRows[rowId]) {
                 editedRows[rowId] = { ...row.original }
@@ -188,8 +207,9 @@ const columns = computed<TableColumn<Participant>[]>(() => {
 
         return isEditing.value ?
           h(UInput, {
-            modelValue: editedRows[rowId]?.minAssignments || row.original.minAssignments,
+            modelValue: editedRows[rowId]?.minAssignments,
             type: 'number',
+            class: 'w-20',
             'onUpdate:modelValue': (value: number) => {
               if (!editedRows[rowId]) {
                 editedRows[rowId] = { ...row.original }
@@ -209,8 +229,9 @@ const columns = computed<TableColumn<Participant>[]>(() => {
 
         return isEditing.value ?
           h(UInput, {
-            modelValue: editedRows[rowId]?.maxAssignments || row.original.maxAssignments,
+            modelValue: editedRows[rowId]?.maxAssignments,
             type: 'number',
+            class: 'w-20',
             'onUpdate:modelValue': (value: number) => {
               if (!editedRows[rowId]) {
                 editedRows[rowId] = { ...row.original }
@@ -223,51 +244,42 @@ const columns = computed<TableColumn<Participant>[]>(() => {
     }, {
       accessorKey: 'services',
       header: t('participants.services'),
+      // On the mobile cards the editor takes the whole width, it has its own headings.
+      meta: { class: { td: 'max-md:has-[.service-editor]:block max-md:has-[.service-editor]:before:hidden' } },
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
         const rowId = row.original.id
         const isEditing = ref(editingState[rowId] || false)
 
         return isEditing.value ?
-          h('div', { class: 'min-w-56' }, [
+          h('div', { class: 'service-editor md:min-w-56' }, [
             h('div', { class: 'flex items-center gap-4 mb-2 w-full' }, [
               h('span', { class: 'text-sm font-bold mr-auto' }, t('participants.services')),
               h('span', { class: 'text-sm font-bold ml-auto' }, t('participants.autoAssign'))
             ]),
-            h('div', {}, serviceItems.value?.map((item) =>
-              h('div', { key: item.service.id, class: 'flex items-center gap-2 mb-2 w-full' }, [
+            h('div', {}, serviceItems.value?.map((item) => {
+              const assigned = editedRows[rowId]?.participantServices?.find((ps) => ps.service.id === item.service.id)
+
+              return h('div', { key: item.service.id, class: 'flex items-center gap-2 mb-2 w-full' }, [
                 h(UCheckbox, {
-                  modelValue: editedRows[rowId]?.participantServices?.some((ps) => ps.service.id === item.service.id) || row.original.participantServices?.some((ps) => ps.service.id === item.service.id),
+                  modelValue: !!assigned,
                   'aria-label': item.service.servicename,
-                  onChange: () => {
-                    if (!editedRows[rowId]) {
-                      editedRows[rowId] = { ...row.original }
-                    }
-                    const serviceExists = editedRows[rowId].participantServices?.some((ps: ParticipantService) => ps.service.id === item.service.id)
-                    if (serviceExists) {
-                      editedRows[rowId].participantServices = editedRows[rowId].participantServices?.filter((ps: ParticipantService) => ps.service.id !== item.service.id)
-                    } else {
-                      editedRows[rowId].participantServices = [...(editedRows[rowId].participantServices || []), item]
-                    }
-                  },
+                  'onUpdate:modelValue': (value: boolean | 'indeterminate') => toggleService(rowId, item, value === true),
                   class: 'mr-2'
                 }),
                 h('span', { class: 'mr-4' }, item.service.servicename),
                 h(UCheckbox, {
                   'aria-label': `${item.service.servicename}: ${t('participants.autoAssign')}`,
-                  modelValue: editedRows[rowId]?.participantServices?.find((ps) => ps.service.id === item.service.id)?.autoAssign || row.original.participantServices?.find((ps) => ps.service.id === item.service.id)?.autoAssign,
-                  'onUpdate:modelValue': (value: boolean) => {
-                    if (!editedRows[rowId]) {
-                      editedRows[rowId] = { ...row.original }
-                    }
-                    const service = editedRows[rowId].participantServices?.find((ps) => ps.service.id === item.service.id)
-                    if (service) {
-                      service.autoAssign = value
+                  modelValue: assigned?.autoAssign ?? false,
+                  disabled: !assigned,
+                  'onUpdate:modelValue': (value: boolean | 'indeterminate') => {
+                    if (assigned) {
+                      assigned.autoAssign = value === true
                     }
                   },
                   class: 'ml-auto'
                 })
               ])
-            ))
+            }))
           ]):
           row.original.participantServices?.map((ps: ParticipantService) => ps.service.servicename).join(', ')
       }
@@ -308,22 +320,20 @@ const columns = computed<TableColumn<Participant>[]>(() => {
       cell: ({ row }: { row: { original: Participant; getValue: (key: string) => any } }) => {
         const rowId = row.original.id
         const isEditing = ref(editingState[rowId] || false)
-        const editedRow = ref({ ...row.original })
 
         const startEdit = () => {
-          editingState[rowId] = true
-          if (!editedRows[rowId]) {
-            editedRows[rowId] = {
-                ...row.original,
-                services: undefined
-            }
+          // Edit a copy of its own (incl. the assigned services), the row shows only that copy while editing.
+          editedRows[rowId] = {
+            ...row.original,
+            services: undefined,
+            participantServices: (row.original.participantServices ?? []).map((ps) => ({ ...ps }))
           }
+          editingState[rowId] = true
         }
 
         const abortEdit = () => {
           editingState[rowId] = false
-          isEditing.value = false
-          editedRow.value = { ...row.original }
+          delete editedRows[rowId]
         }
 
         const saveEdit = async () => {

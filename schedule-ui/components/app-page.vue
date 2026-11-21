@@ -31,13 +31,15 @@ const props = withDefaults(defineProps<{
   backLabel?: string
   errorMessage?: string | null
   successMessage?: string | null
-  width?: 'sm' | 'md' | 'lg' | 'full'
+  width?: 'sm' | 'md' | 'lg' | 'full' | 'wide'
 }>(), { width: 'lg' })
 
 const widthClass = computed(() => ({
   sm: 'max-w-lg',
   md: 'max-w-3xl',
   lg: 'max-w-6xl',
-  full: 'max-w-screen-2xl'
+  full: 'max-w-screen-2xl',
+  // whole window, for wide tables
+  wide: 'max-w-none'
 })[props.width])
 </script>

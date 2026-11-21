@@ -9,7 +9,6 @@
           <UCalendar v-model="selectedDate" @update:modelValue="addDate" :is-date-unavailable="isDateUnavailable" class="p-2" />
         </template>
       </UPopover>
-      <UButton icon="i-lucide-save" :loading="isSaving" @click="saveDetails">{{ $t('plan.save') }}</UButton>
     </template>
 
     <Spinner v-if="loading" />
@@ -18,7 +17,7 @@
       {{ $t('common.empty') }}
     </p>
 
-    <ul v-else class="space-y-4">
+    <ul v-else class="space-y-4 pb-20">
       <li v-for="(date, dateIndex) in dates" :key="date.originalDate.getTime()" class="rounded-xl border border-default bg-default p-4">
         <div class="mb-3 flex items-center justify-between gap-3">
           <h2 class="font-semibold text-highlighted">{{ date.localeString }}</h2>
@@ -42,6 +41,18 @@
         </div>
       </li>
     </ul>
+
+    <!-- Moves with the page, so saving never needs scrolling back up. -->
+    <UButton
+      icon="i-lucide-save"
+      size="xl"
+      :loading="isSaving"
+      :disabled="loading"
+      class="fixed right-4 bottom-4 z-40 shadow-lg sm:right-6 sm:bottom-6"
+      @click="saveDetails"
+    >
+      {{ $t('plan.save') }}
+    </UButton>
   </AppPage>
 </template>
 
@@ -64,6 +75,7 @@ const loading = ref(true)
 const errorMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
 const isSaving = ref<boolean>(false)
+const toast = useToast()
 const selectedDate = shallowRef<CalendarDate | DateValue | undefined>(undefined)
 
 const services = ref<any[]>([])
@@ -282,13 +294,14 @@ const saveDetails = async () => {
 
     const { error } = await useAPI(`/plan/serviceDates/save/` + plan.value.id, { method: 'POST', body: JSON.stringify(payload) })
 
+    // A toast, the messages at the top of the page are out of sight after scrolling down to the button.
     if (error.value) {
-      errorMessage.value = t('plan.saveError')
+      toast.add({ title: t('plan.saveError'), icon: 'i-lucide-circle-alert', color: 'error' })
       return
     }
-    successMessage.value = t('plan.saveSuccess')
+    toast.add({ title: t('plan.saveSuccess'), icon: 'i-lucide-circle-check', color: 'success' })
   } catch (err) {
-    errorMessage.value = t('plan.saveException')
+    toast.add({ title: t('plan.saveException'), icon: 'i-lucide-circle-alert', color: 'error' })
   } finally {
     isSaving.value = false
   }
