@@ -49,6 +49,7 @@ const tiles = computed(() => [
     { label: t('nav.plan.usermenu'), icon: 'i-lucide-calendar-days', to: '/plan/list' }
   ] : []),
   { label: t('nav.maintenance.overview'), icon: 'i-lucide-wrench', to: '/maintenance' },
+  { label: t('nav.operations.checklists'), icon: 'i-lucide-clipboard-check', to: '/operations' },
   ...(canManageAlarm.value ? [
     { label: t('nav.alarms.list'), icon: 'i-lucide-bell', to: '/alarm/list' }
   ] : []),

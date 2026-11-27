@@ -21,7 +21,7 @@ import jakarta.validation.Valid;
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/alarm")
-@PreAuthorize("hasAnyRole('ALARM_ADMIN', 'ADMIN')")
+@PreAuthorize("hasAuthority('PERMISSION_ALARM_MANAGE')")
 public class AlarmController {
 
     private final AlarmService alarmService;

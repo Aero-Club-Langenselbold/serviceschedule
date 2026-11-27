@@ -14,8 +14,7 @@ describe('maintenance-admin middleware', () => {
     })
 
     it.each([
-        ['testmaintenanceadmin', 'ROLE_MAINTENANCE_ADMIN'],
-        ['testadmin', 'ROLE_ADMIN'],
+                ['testadmin', 'ROLE_ADMIN'],
         ['testmaintenancedelegate', 'PERMISSION_MAINTENANCE_MANAGE'],
     ])('allows %s (%s) through', async (username) => {
         await userStore.login({ username, password: 'password' })
@@ -26,7 +25,8 @@ describe('maintenance-admin middleware', () => {
 
     it.each([
         ['testuser', 'ROLE_USER'],
-        ['testscheduleadmin', 'ROLE_SCHEDULE_ADMIN'],
+        ['testoperationsadmin', 'PERMISSION_OPERATIONS_MANAGE'],
+        ['testscheduleadmin', 'PERMISSION_SCHEDULE_MANAGE'],
         ['testdelegate', 'other rights only'],
     ])('redirects %s (%s) to /permission-denied', async (username) => {
         await userStore.login({ username, password: 'password' })

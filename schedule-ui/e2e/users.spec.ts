@@ -65,14 +65,16 @@ test.describe('Rechte', () => {
     expect(api.sent('PUT', '/user/u-user/permissions')[1]!.body).toEqual(['PERMISSION_SCHEDULE_MANAGE'])
   })
 
-  test('sperrt Rechte, die eine Rolle bereits enthält', async ({ page, loginAs }) => {
+  test('sperrt die Rechte von Administratoren, die sie ohnehin alle haben', async ({ page, loginAs }) => {
     await loginAs('admin')
     await page.goto('/users/list')
 
     await expect(right(page, 'admin@example.org', 'Dienstpläne verwalten')).toBeDisabled()
     await expect(right(page, 'admin@example.org', 'Alarmanlage verwalten')).toBeDisabled()
+    await expect(right(page, 'admin@example.org', 'Betriebsadmin')).toBeDisabled()
+    // members hold rights, no roles: they can be taken away
     await expect(right(page, 'schedule@example.org', 'Dienstpläne verwalten')).toBeChecked()
-    await expect(right(page, 'schedule@example.org', 'Dienstpläne verwalten')).toBeDisabled()
+    await expect(right(page, 'schedule@example.org', 'Dienstpläne verwalten')).toBeEnabled()
     await expect(right(page, 'schedule@example.org', 'Alarmanlage verwalten')).toBeEnabled()
   })
 
@@ -109,14 +111,14 @@ test.describe('Rollen', () => {
     expect(api.sent('PUT', '/user/u-ben/roles')[1]!.body).toEqual([])
   })
 
-  test('vergibt Modul-Rollen neben der Basisrolle', async ({ page, api, loginAs }) => {
+  test('kennt nur Administrator und Benutzer, alles Weitere sind Rechte', async ({ page, loginAs }) => {
     await loginAs('admin')
     await page.goto('/users/list')
 
-    await role(page, 'user@example.org', 'Wartungs-Administrator').click()
-    await expect(role(page, 'user@example.org', 'Wartungs-Administrator')).toBeChecked()
+    await expect(row(page, 'user@example.org').getByRole('checkbox', { name: 'Administrator', exact: true })).toBeVisible()
+    await expect(row(page, 'user@example.org').getByRole('checkbox', { name: 'Wartungs-Administrator' })).toHaveCount(0)
     await expect(row(page, 'user@example.org')).toContainText('Benutzer')
-    expect(api.sent('PUT', '/user/u-user/roles')[0]!.body).toEqual(['ROLE_MAINTENANCE_ADMIN'])
+    await expect(right(page, 'user@example.org', 'Betriebsadmin')).toBeVisible()
   })
 
   test('lässt Administratoren den eigenen Administrator-Status nicht entziehen', async ({ page, loginAs }) => {

@@ -40,19 +40,19 @@ public class MaintenanceWorkshopController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_MAINTENANCE_MANAGE')")
     public ResponseEntity<WorkshopSlotResponse> create(@Valid @RequestBody WorkshopSlotRequest request, @AuthenticationPrincipal UserDetailsImpl currentUser) {
         return ResponseEntity.status(HttpStatus.CREATED).body(workshopService.create(request, currentUser));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_MAINTENANCE_MANAGE')")
     public ResponseEntity<WorkshopSlotResponse> update(@PathVariable String id, @Valid @RequestBody WorkshopSlotRequest request, @AuthenticationPrincipal UserDetailsImpl currentUser) {
         return ResponseEntity.ok(workshopService.update(id, request, currentUser));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_MAINTENANCE_MANAGE')")
     public ResponseEntity<Void> delete(@PathVariable String id, @AuthenticationPrincipal UserDetailsImpl currentUser) {
         workshopService.delete(id, currentUser);
         return ResponseEntity.noContent().build();

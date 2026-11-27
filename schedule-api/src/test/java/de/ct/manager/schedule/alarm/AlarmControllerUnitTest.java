@@ -43,7 +43,7 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
     @BeforeEach
     void setup() {
         when(userRepository.findByUsername(TestUtils.TEST_ADMIN))
-                .thenReturn(Optional.of(createTestUser(UserRole.ROLE_ALARM_ADMIN)));
+                .thenReturn(Optional.of(createTestUser(UserRole.ROLE_ADMIN)));
         when(userRepository.findByUsername(TestUtils.TEST_USER))
                 .thenReturn(Optional.of(createTestUser(UserRole.ROLE_USER)));
     }
@@ -57,7 +57,7 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
         when(alarmRepository.save(any(Alarm.class))).thenReturn(alarm);
 
         mockMvc.perform(post("/alarm/save")
-                        .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ALARM_ADMIN))
+                        .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ADMIN))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(springObjectMapper.writeValueAsString(request)))
                 .andDo(print())
@@ -71,7 +71,7 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
         when(alarmRepository.existsBySystemTimestamp(any())).thenReturn(true);
 
         mockMvc.perform(post("/alarm/save")
-                        .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ALARM_ADMIN))
+                        .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ADMIN))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(springObjectMapper.writeValueAsString(request)))
                 .andDo(print())
@@ -88,7 +88,7 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
                 any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
 
         mockMvc.perform(get("/alarm/page")
-                        .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ALARM_ADMIN))
+                        .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ADMIN))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -150,7 +150,7 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
         when(alarmRepository.save(any(Alarm.class))).thenReturn(result);
 
         mockMvc.perform(post("/alarm/status/save")
-                        .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ALARM_ADMIN))
+                        .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ADMIN))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(springObjectMapper.writeValueAsString(request)))
                 .andDo(print())
@@ -165,7 +165,7 @@ class AlarmControllerUnitTest extends AbstractControllerUnitTest {
         when(alarmRepository.existsBySystemTimestamp(any())).thenReturn(true);
 
         mockMvc.perform(post("/alarm/status/save")
-                        .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ALARM_ADMIN))
+                        .header("Authorization", "Bearer " + generateValidJwtToken(UserRole.ROLE_ADMIN))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(springObjectMapper.writeValueAsString(request)))
                 .andDo(print())

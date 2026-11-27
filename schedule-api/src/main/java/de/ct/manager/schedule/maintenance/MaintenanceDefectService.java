@@ -96,9 +96,15 @@ public class MaintenanceDefectService {
 
     @Transactional
     public DefectDetail create(String aircraftId, DefectRequest request, UserDetailsImpl currentUser) {
+        return toDetail(report(aircraftService.find(aircraftId), request, currentUser), currentUser);
+    }
+
+    /** Reports a defect of the aircraft to the defect book, e.g. from an operations checklist. */
+    @Transactional
+    public MaintenanceDefect report(MaintenanceAircraft aircraft, DefectRequest request, UserDetailsImpl currentUser) {
         User actor = access.currentUser(currentUser);
         MaintenanceDefect defect = new MaintenanceDefect();
-        defect.setAircraft(aircraftService.find(aircraftId));
+        defect.setAircraft(aircraft);
         defect.setReportedBy(actor);
         apply(defect, request);
         MaintenanceDefect saved = defectRepository.save(defect);
@@ -108,7 +114,7 @@ public class MaintenanceDefectService {
             assign(saved, request.assigneeIds(), actor);
         }
         log.info("User {} reported defect {} on {}", currentUser.getUsername(), saved.getTitle(), saved.getAircraft().getRegistration());
-        return toDetail(saved, currentUser);
+        return saved;
     }
 
     @Transactional

@@ -25,7 +25,7 @@ import jakarta.validation.Valid;
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/maintenance/templates")
-@PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
+@PreAuthorize("hasAuthority('PERMISSION_MAINTENANCE_MANAGE')")
 public class MaintenanceTemplateController {
 
     private final MaintenanceTemplateService templateService;

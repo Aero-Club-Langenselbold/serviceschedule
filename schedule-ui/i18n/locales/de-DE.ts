@@ -77,6 +77,7 @@ export default defineI18nLocale(async locale => {
         users: 'Benutzer',
         stopImpersonation: 'Impersonierung beenden',
         language: 'Sprache wählen',
+        profile: 'Meine Einstellungen',
         account: 'Benutzerkonto',
         notifications: 'Benachrichtigungen',
         about: 'About',
@@ -104,12 +105,18 @@ export default defineI18nLocale(async locale => {
           inventory: 'Inventar',
           defects: 'Mängelbuch'
         },
+        operations: {
+          menu: 'Betrieb',
+          checklists: 'Checklisten',
+          archive: 'Checklisten-Archiv'
+        },
         alarms: {
           menu: 'Alarmanlage',
           list: 'Ereignisprotokoll'
         }
       },
       app: {
+        logoAlt: 'Aero-Club Langenselbold – zur Startseite',
         dateLocale: 'de-DE',
         name: 'Mitgliederbereich V1.0',
         shortName: 'Mitgliederbereich',
@@ -692,6 +699,119 @@ export default defineI18nLocale(async locale => {
           steps: 'Keine Schritte | 1 Schritt | {count} Schritte'
         }
       },
+      operations: {
+        loadError: 'Die Checklisten konnten nicht geladen werden.',
+        saveError: 'Speichern fehlgeschlagen.',
+        notFound: 'Checkliste nicht gefunden.',
+        forbidden: 'Checklisten vergangener Tage sehen nur Betriebsadmins.',
+        kind: {
+          START: 'Betriebsbeginn',
+          END: 'Betriebsende'
+        },
+        status: {
+          IN_PROGRESS: 'In Bearbeitung',
+          SUBMITTED: 'Freigabe offen',
+          APPROVED: 'Freigegeben'
+        },
+        result: {
+          OK: 'OK',
+          NOT_OK: 'Nicht OK'
+        },
+        overview: {
+          title: 'Checklisten',
+          description: 'Checklisten für Betriebsbeginn und Betriebsende je Flugzeug und Gerät. Pro Tag gibt es je eine.',
+          noAircraft: 'Noch keine Flugzeuge oder Geräte angelegt.',
+          noTemplate: 'Keine Checkliste hinterlegt',
+          notStarted: 'Heute noch nicht begonnen',
+          items: 'Keine Punkte | 1 Punkt | {count} Punkte',
+          open: 'Checkliste von heute'
+        },
+        template: {
+          create: 'Anlegen',
+          add: '{kind}-Checkliste für {registration} anlegen',
+          edit: '{kind}-Checkliste für {registration} bearbeiten',
+          editShort: 'Checkliste bearbeiten',
+          items: 'Prüfpunkte',
+          itemsHint: 'Ein Prüfpunkt pro Zeile. Bereits begonnene Checklisten behalten ihre Punkte.',
+          itemsPlaceholder: 'Haube reinigen und auf Risse prüfen',
+          delete: 'Checkliste löschen',
+          deleteConfirm: 'Checkliste wirklich löschen? Ausgefüllte Checklisten bleiben im Archiv. Wird sie neu angelegt, wird eine heute begonnene, noch nicht bestätigte Checkliste beim nächsten Aufruf verworfen.'
+        },
+        today: {
+          notStarted: 'Die Checkliste vom {date} wurde noch nicht begonnen.',
+          startHint: 'Wer sie beginnt, wird als Erfasser hinterlegt. Danach können alle mithelfen.',
+          start: 'Checkliste beginnen',
+          noTemplate: 'Für dieses Flugzeug bzw. Gerät ist keine solche Checkliste hinterlegt.'
+        },
+        checklist: {
+          createdBy: 'Erfasser',
+          submittedBy: 'Bestätigt von',
+          approvedBy: 'Freigegeben von',
+          unknownUser: 'Unbekannt',
+          progress: '{checked} von {total} geprüft',
+          notOkCount: 'keiner nicht OK | 1 nicht OK | {count} nicht OK',
+          checkedBy: 'Geprüft von {name}, {when}',
+          comment: 'Bemerkung',
+          commentPlaceholder: 'Bemerkung (optional)',
+          submit: 'Vollständig – bestätigen',
+          submitHint: 'Erst wenn alle Punkte geprüft sind, kann die Checkliste bestätigt werden.',
+          approve: 'Erledigung bestätigen',
+          reopen: 'Zurück in Bearbeitung',
+          submitSuccess: 'Checkliste bestätigt. Die Betriebsadmins wurden benachrichtigt.',
+          approveSuccess: 'Erledigung bestätigt.',
+          reopenSuccess: 'Checkliste ist wieder in Bearbeitung.'
+        },
+        defect: {
+          report: 'Mangel melden',
+          title: 'Mangel ins Mängelbuch eintragen',
+          hint: 'Der Mangel wird im Mängelbuch des Flugzeugs bzw. Geräts erfasst, der Prüfpunkt als nicht OK markiert.',
+          submit: 'Mangel melden',
+          reported: 'Mangel ins Mängelbuch eingetragen.',
+          linked: 'Mangel: {title}'
+        },
+        archive: {
+          title: 'Checklisten-Archiv',
+          description: 'Alle ausgefüllten Checklisten, durchsuchbar nach Flugzeug, Art, Status, Zeitraum und Text.',
+          search: 'Suchen (Kennzeichen, Erfasser, Bemerkung …)',
+          aircraft: 'Flugzeug / Gerät',
+          allAircraft: 'Alle Flugzeuge und Geräte',
+          kind: 'Art',
+          allKinds: 'Betriebsbeginn und -ende',
+          status: 'Status',
+          allStatuses: 'Alle Status',
+          from: 'Von',
+          to: 'Bis',
+          date: 'Datum',
+          result: 'Ergebnis',
+          open: 'Ansehen'
+        },
+        print: {
+          open: 'QR-Code drucken',
+          print: 'Drucken',
+          hint: 'Scannen öffnet immer die Checkliste des aktuellen Tages.'
+        }
+      },
+      profile: {
+        title: 'Meine Einstellungen',
+        loadError: 'Die Einstellungen konnten nicht geladen werden.',
+        kiosk: {
+          title: 'Kiosk-Code',
+          description: 'Persönliche 6-stellige PIN für die Anmeldung am Kiosk.',
+          set: 'Gesetzt',
+          notSet: 'Nicht gesetzt',
+          pin: 'PIN',
+          newPin: 'Neue PIN',
+          confirmPin: 'PIN wiederholen',
+          mismatch: 'Die PINs stimmen nicht überein.',
+          hint: 'Die PIN wird wie ein Passwort verschlüsselt gespeichert und kann nicht wieder angezeigt werden.',
+          save: 'PIN speichern',
+          saved: 'Kiosk-Code gespeichert.',
+          saveError: 'Der Kiosk-Code konnte nicht gespeichert werden.',
+          remove: 'PIN entfernen',
+          removeConfirm: 'Kiosk-Code wirklich entfernen?',
+          removed: 'Kiosk-Code entfernt.'
+        }
+      },
       notifications: {
         title: 'Benachrichtigungen',
         open: 'Benachrichtigungen öffnen',
@@ -699,7 +819,8 @@ export default defineI18nLocale(async locale => {
         empty: 'Keine Benachrichtigungen',
         markAllRead: 'Alle als gelesen markieren',
         someone: 'Jemand',
-        DEFECT_ASSIGNED: '{actor} hat dir einen Mangel zugewiesen'
+        DEFECT_ASSIGNED: '{actor} hat dir einen Mangel zugewiesen',
+        CHECKLIST_SUBMITTED: '{actor} hat eine Checkliste zur Freigabe bestätigt'
       },
       users: {
         title: 'Benutzer',
@@ -716,21 +837,19 @@ export default defineI18nLocale(async locale => {
         permissionSuccess: 'Rechte aktualisiert',
         permissionError: 'Rechte konnten nicht geändert werden',
         loadError: 'Benutzer konnten nicht geladen werden',
-        impliedByRole: 'Durch die Rolle bereits enthalten',
+        impliedByRole: 'Administratoren haben alle Rechte',
         roleSuccess: 'Rollen aktualisiert',
         roleError: 'Rollen konnten nicht geändert werden',
         ownAdminRole: 'Den eigenen Administrator-Status kannst du nicht entziehen',
         roleNames: {
           ROLE_USER: 'Benutzer',
-          ROLE_ADMIN: 'Administrator',
-          ROLE_SCHEDULE_ADMIN: 'Dienstplan-Administrator',
-          ROLE_ALARM_ADMIN: 'Alarm-Administrator',
-          ROLE_MAINTENANCE_ADMIN: 'Wartungs-Administrator'
+          ROLE_ADMIN: 'Administrator'
         },
         permissionNames: {
           PERMISSION_SCHEDULE_MANAGE: 'Dienstpläne verwalten',
           PERMISSION_ALARM_MANAGE: 'Alarmanlage verwalten',
-          PERMISSION_MAINTENANCE_MANAGE: 'Wartung verwalten'
+          PERMISSION_MAINTENANCE_MANAGE: 'Wartung verwalten',
+          PERMISSION_OPERATIONS_MANAGE: 'Betriebsadmin'
         }
       },
       error: {

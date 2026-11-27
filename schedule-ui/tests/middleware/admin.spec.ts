@@ -30,7 +30,7 @@ describe('admin middleware', () => {
         expect(mockNavigateTo).not.toHaveBeenCalledWith('/permission-denied')
     })
 
-    it('redirects ROLE_SCHEDULE_ADMIN (not a full admin) to /permission-denied', async () => {
+    it('redirects a holder of a right (not a full admin) to /permission-denied', async () => {
         await userStore.login({ username: 'testscheduleadmin', password: 'password' })
         const { default: middleware } = await import('~/middleware/admin')
         await middleware({} as any, {} as any)

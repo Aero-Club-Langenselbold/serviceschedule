@@ -31,35 +31,68 @@ const defectEvents = (defect: { id: string, reportedBy: unknown, reportedAt: str
         { id: 'd1-e3', action: 'COMMENTED', content: 'Bitte vor dem Wochenende anschauen', actor: { id: 'u2', name: 'testadmin' }, subject: null, createdAt: '2026-11-10T12:00:00Z', deletable: false }
     ] : [])
 ]
+
+// Operations checklists: D-1234 has both checklists, the start of today is in progress; D-5678 has none.
+const checklistDetail = (overrides: Record<string, unknown> = {}, items?: unknown[]) => {
+    const baseItems = [
+        { id: 'ci1', position: 0, text: 'Haube reinigen', result: 'OK', comment: null, checkedBy: { id: 'u1', name: 'Albers, Anna' }, checkedAt: '2026-11-27T08:00:00Z', defect: null },
+        { id: 'ci2', position: 1, text: 'Reifendruck prüfen', result: null, comment: null, checkedBy: null, checkedAt: null, defect: null }
+    ]
+    const list = (items ?? baseItems) as { result: string | null }[]
+    return {
+        checklist: {
+            id: 'c1', aircraftId: 'a1', registration: 'D-1234', aircraftType: 'ASK 21', kind: 'START', date: dayFromToday(0), status: 'IN_PROGRESS',
+            createdBy: { id: 'u1', name: 'Albers, Anna' }, createdAt: '2026-11-27T07:55:00Z', submittedBy: null, submittedAt: null, approvedBy: null, approvedAt: null,
+            itemCount: list.length, checkedCount: list.filter(item => item.result).length, notOkCount: list.filter(item => item.result === 'NOT_OK').length,
+            ...overrides
+        },
+        items: list,
+        editable: true,
+        submittable: list.every(item => item.result),
+        approvable: false,
+        reopenable: false
+    }
+}
+const checklistTemplate = (aircraftId: string, kind: string, items: string[]) => ({ id: `tpl-${aircraftId}-${kind}`, aircraftId, kind, items, updatedAt: '2026-11-01T10:00:00Z' })
+const operationsOverview = () => ({
+    today: dayFromToday(0),
+    aircraft: [
+        { aircraftId: 'a1', registration: 'D-1234', aircraftType: 'ASK 21', startTemplate: checklistTemplate('a1', 'START', ['Haube reinigen', 'Reifendruck prüfen']),
+          endTemplate: checklistTemplate('a1', 'END', ['Abdeckung drauf']), todayStart: checklistDetail().checklist, todayEnd: null },
+        { aircraftId: 'a2', registration: 'D-5678', aircraftType: 'LS 8', startTemplate: null, endTemplate: null, todayStart: null, todayEnd: null }
+    ]
+})
+const recordedCalls = (): { url: string, options: any }[] => ((globalThis as any).__apiCalls ??= [])
 const notifications = () => ({
     unreadCount: 1,
     items: [
         { id: 'n1', type: 'DEFECT_ASSIGNED', createdAt: '2026-11-10T11:00:00Z', read: false, actor: { id: 'u2', name: 'testadmin' }, defect: { id: 'd1', title: 'Riss in der Haube', aircraftId: 'a1', aircraftLabel: 'D-1234', status: 'OPEN' } },
-        { id: 'n0', type: 'DEFECT_ASSIGNED', createdAt: '2026-11-01T11:00:00Z', read: true, actor: null, defect: { id: 'd2', title: 'Seil ausgefranst', aircraftId: 'w1', aircraftLabel: 'Winde 1', status: 'IN_PROGRESS' } }
+        { id: 'n0', type: 'DEFECT_ASSIGNED', createdAt: '2026-11-01T11:00:00Z', read: true, actor: null, defect: { id: 'd2', title: 'Seil ausgefranst', aircraftId: 'w1', aircraftLabel: 'Winde 1', status: 'IN_PROGRESS' } },
+        { id: 'n2', type: 'CHECKLIST_SUBMITTED', createdAt: '2026-10-30T11:00:00Z', read: true, actor: { id: 'u1', name: 'Albers, Anna' }, defect: null, checklist: { id: 'c1', aircraftId: 'a1', registration: 'D-1234', kind: 'START', date: '2026-10-30', status: 'SUBMITTED' } }
     ]
 })
 
 mockNuxtImport('useAPI', () => {
     return async (url: string, options: any) => {
+        recordedCalls().push({ url, options })
         if (url === '/auth/signin') {
             return {
                 data: {
                     value: {
                         id: '1',
                         username: options.body.username,
-                        roles: options.body.username === 'testadmin'
-                            ? ['ROLE_ADMIN']
-                            : options.body.username === 'testscheduleadmin'
-                            ? ['ROLE_SCHEDULE_ADMIN']
-                            : options.body.username === 'testalarmadmin'
-                            ? ['ROLE_ALARM_ADMIN']
-                            : options.body.username === 'testmaintenanceadmin'
-                            ? ['ROLE_MAINTENANCE_ADMIN']
-                            : ['ROLE_USER'],
+                        // only two roles exist; everything a member may administer is a right
+                        roles: options.body.username === 'testadmin' ? ['ROLE_ADMIN'] : ['ROLE_USER'],
                         permissions: options.body.username === 'testdelegate'
                             ? ['PERMISSION_SCHEDULE_MANAGE', 'PERMISSION_ALARM_MANAGE']
-                            : options.body.username === 'testmaintenancedelegate'
+                            : options.body.username === 'testscheduleadmin'
+                            ? ['PERMISSION_SCHEDULE_MANAGE']
+                            : options.body.username === 'testalarmadmin'
+                            ? ['PERMISSION_ALARM_MANAGE']
+                            : options.body.username === 'testmaintenanceadmin' || options.body.username === 'testmaintenancedelegate'
                             ? ['PERMISSION_MAINTENANCE_MANAGE']
+                            : options.body.username === 'testoperationsadmin'
+                            ? ['PERMISSION_OPERATIONS_MANAGE']
                             : [],
                         token: 'testtoken',
                         type: 'Bearer'
@@ -88,7 +121,7 @@ mockNuxtImport('useAPI', () => {
                 error: {}
             }
         } else if (url === '/user/roles') {
-            return { data: { value: ['ROLE_ADMIN', 'ROLE_ALARM_ADMIN', 'ROLE_SCHEDULE_ADMIN', 'ROLE_MAINTENANCE_ADMIN'] }, error: {} }
+            return { data: { value: ['ROLE_ADMIN'] }, error: {} }
         } else if (/^\/user\/[^/]+\/roles$/.test(url)) {
             // the base role stays, as in the backend
             return { data: { value: { roles: ['ROLE_USER', ...options.body] } }, error: {} }
@@ -97,7 +130,7 @@ mockNuxtImport('useAPI', () => {
         } else if (/^\/notifications\/(read-all|[^/]+\/read)$/.test(url)) {
             return { data: { value: null }, error: {} }
         } else if (url === '/user/permissions') {
-            return { data: { value: ['PERMISSION_SCHEDULE_MANAGE', 'PERMISSION_ALARM_MANAGE'] }, error: {} }
+            return { data: { value: ['PERMISSION_SCHEDULE_MANAGE', 'PERMISSION_ALARM_MANAGE', 'PERMISSION_MAINTENANCE_MANAGE', 'PERMISSION_OPERATIONS_MANAGE'] }, error: {} }
         } else if (/^\/user\/[^/]+\/permissions$/.test(url)) {
             return { data: { value: { permissions: options.body } }, error: {} }
         } else if (/^\/request\/[^/]+\/comments$/.test(url)) {
@@ -215,6 +248,57 @@ mockNuxtImport('useAPI', () => {
             ] }, error: {} }
         } else if (/^\/maintenance\/inventory\/[^/]+\/quantity$/.test(url)) {
             return { data: { value: { id: url.split('/')[3], name: 'Mehrzweckfett', kind: 'CONSUMABLE', counting: 'LEVEL', quantity: options.body.quantity, location: null, minQuantity: null, unit: null, comment: null, aircraftTypes: [], status: options.body.quantity === 0 ? 'EMPTY' : options.body.quantity === 1 ? 'LOW' : 'OK' } }, error: {} }
+        } else if (url === '/user/me/settings') {
+            return { data: { value: { username: 'testuser', kioskPinSet: false } }, error: {} }
+        } else if (url === '/user/me/kiosk-pin') {
+            return { data: { value: { username: 'testuser', kioskPinSet: options.method === 'PUT' } }, error: {} }
+        } else if (url === '/operations/overview') {
+            return { data: { value: operationsOverview() }, error: {} }
+        } else if (/^\/operations\/aircraft\/[^/]+\/templates\/(START|END)$/.test(url)) {
+            const [, , , aircraftId, , kind] = url.split('/')
+            return { data: { value: options.method === 'PUT' ? checklistTemplate(aircraftId!, kind!, options.body.items) : null }, error: {} }
+        } else if (/^\/operations\/aircraft\/[^/]+\/checklists\/(START|END)\/today$/.test(url)) {
+            const [, , , aircraftId, , kind] = url.split('/')
+            if (aircraftId === 'missing') {
+                return { data: { value: null }, error: { value: Object.assign(new Error('not found'), { statusCode: 404 }) } }
+            }
+            if (options.method === 'POST') {
+                return { data: { value: checklistDetail({ id: 'c2', kind, createdBy: { id: '1', name: 'testuser' } }, [
+                    { id: 'ci3', position: 0, text: 'Abdeckung drauf', result: null, comment: null, checkedBy: null, checkedAt: null, defect: null }]) }, error: {} }
+            }
+            const base = { aircraftId, registration: aircraftId === 'a1' ? 'D-1234' : 'D-5678', aircraftType: aircraftId === 'a1' ? 'ASK 21' : 'LS 8', kind, date: dayFromToday(0) }
+            if (aircraftId !== 'a1') {
+                return { data: { value: { ...base, templateItems: null, checklist: null } }, error: {} }
+            }
+            return { data: { value: kind === 'START'
+                ? { ...base, templateItems: ['Haube reinigen', 'Reifendruck prüfen'], checklist: checklistDetail() }
+                : { ...base, templateItems: ['Abdeckung drauf'], checklist: null } }, error: {} }
+        } else if (/^\/operations\/checklists\/[^/]+\/items\/[^/]+\/defect$/.test(url)) {
+            const detail = checklistDetail()
+            detail.items = (detail.items as any[]).map(item => item.id === url.split('/')[5]
+                ? { ...item, result: 'NOT_OK', checkedBy: { id: '1', name: 'testuser' }, defect: { id: 'd9', title: options.body.title, status: 'OPEN' } } : item)
+            return { data: { value: checklistDetail({}, detail.items) }, error: {} }
+        } else if (/^\/operations\/checklists\/[^/]+\/items\/[^/]+$/.test(url)) {
+            const items = (checklistDetail().items as any[]).map(item => item.id === url.split('/')[5]
+                ? { ...item, result: options.body.result, comment: options.body.comment, checkedBy: options.body.result ? { id: '1', name: 'testuser' } : null } : item)
+            return { data: { value: checklistDetail({}, items) }, error: {} }
+        } else if (/^\/operations\/checklists\/[^/]+\/(submit|approve|reopen)$/.test(url)) {
+            const action = url.split('/')[4]
+            const done = checklistDetail().items.map((item: any) => ({ ...item, result: item.result ?? 'OK' }))
+            const status = { submit: 'SUBMITTED', approve: 'APPROVED', reopen: 'IN_PROGRESS' }[action!]
+            return { data: { value: { ...checklistDetail({ status, submittedBy: status === 'IN_PROGRESS' ? null : { id: '1', name: 'testuser' }, submittedAt: status === 'IN_PROGRESS' ? null : '2026-11-27T09:00:00Z' }, done),
+                editable: status === 'IN_PROGRESS', submittable: status === 'IN_PROGRESS', approvable: status === 'SUBMITTED', reopenable: status !== 'IN_PROGRESS' } }, error: {} }
+        } else if (url === '/operations/checklists/c-old') {
+            return { data: { value: null }, error: { value: Object.assign(new Error('forbidden'), { statusCode: 403 }) } }
+        } else if (url === '/operations/checklists/c-submitted') {
+            const done = checklistDetail().items.map((item: any) => ({ ...item, result: 'OK' }))
+            return { data: { value: { ...checklistDetail({ id: 'c-submitted', status: 'SUBMITTED', submittedBy: { id: 'u1', name: 'Albers, Anna' }, submittedAt: '2026-11-27T09:00:00Z' }, done),
+                editable: false, submittable: false, approvable: true, reopenable: true } }, error: {} }
+        } else if (/^\/operations\/checklists\/[^/?]+$/.test(url)) {
+            return { data: { value: checklistDetail({ id: url.split('/')[3] }) }, error: {} }
+        } else if (url.startsWith('/operations/checklists?')) {
+            const past = { ...checklistDetail().checklist, id: 'c0', date: '2026-11-20', status: 'APPROVED', checkedCount: 2, notOkCount: 1 }
+            return { data: { value: { content: [checklistDetail().checklist, past], totalElements: 2 } }, error: {} }
         } else if (url === '/maintenance/aircraft/types') {
             return { data: { value: ['ASK 21', 'LS 8'] }, error: {} }
         }

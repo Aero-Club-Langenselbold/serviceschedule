@@ -20,7 +20,7 @@ class AlarmIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-alarms.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM alarm", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testGetAlarms_returnsSeededData() {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ALARM_ADMIN));
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<String> response = restTemplate.exchange(
                 createURLWithPort("alarm/page"),
@@ -35,7 +35,7 @@ class AlarmIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-alarms.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM alarm", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testGetAlarms_filterByRfidId() {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ALARM_ADMIN));
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<String> response = restTemplate.exchange(
                 createURLWithPort("alarm/page") + "?rfidId=rfid001",
@@ -50,7 +50,7 @@ class AlarmIntegrationTest extends AbstractIntegrationTest {
     @Sql(scripts = "classpath:scripts/test-alarms.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM alarm", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void testGetAlarms_filterByStatus() {
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ALARM_ADMIN));
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<String> response = restTemplate.exchange(
                 createURLWithPort("alarm/page") + "?status=0",
@@ -71,7 +71,7 @@ class AlarmIntegrationTest extends AbstractIntegrationTest {
         request.setRawData("test raw");
         request.setStatus(AlarmStatus.AUTHORIZED_KEY);
 
-        HttpEntity<AlarmRequest> entity = new HttpEntity<>(request, createHeadersWithToken(UserRole.ROLE_ALARM_ADMIN));
+        HttpEntity<AlarmRequest> entity = new HttpEntity<>(request, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<Alarm> response = restTemplate.exchange(
                 createURLWithPort("alarm/save"),
@@ -92,7 +92,7 @@ class AlarmIntegrationTest extends AbstractIntegrationTest {
         request.setRfidId("rfid-dup");
         request.setStatus(AlarmStatus.UNAUTHORIZED_KEY);
 
-        HttpEntity<AlarmRequest> entity = new HttpEntity<>(request, createHeadersWithToken(UserRole.ROLE_ALARM_ADMIN));
+        HttpEntity<AlarmRequest> entity = new HttpEntity<>(request, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<Alarm> first = restTemplate.exchange(
                 createURLWithPort("alarm/save"), HttpMethod.POST, entity, Alarm.class);
@@ -136,7 +136,7 @@ class AlarmIntegrationTest extends AbstractIntegrationTest {
     void testAddDeviceStatus_success() {
         AlarmDeviceStatusRequest request = buildDeviceStatusRequest(LocalDateTime.of(2026, 5, 7, 22, 38, 45));
 
-        HttpEntity<AlarmDeviceStatusRequest> entity = new HttpEntity<>(request, createHeadersWithToken(UserRole.ROLE_ALARM_ADMIN));
+        HttpEntity<AlarmDeviceStatusRequest> entity = new HttpEntity<>(request, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<Alarm> response = restTemplate.exchange(
                 createURLWithPort("alarm/status/save"),
@@ -155,7 +155,7 @@ class AlarmIntegrationTest extends AbstractIntegrationTest {
     void testAddDeviceStatus_duplicate_returnsConflict() {
         AlarmDeviceStatusRequest request = buildDeviceStatusRequest(LocalDateTime.of(2026, 5, 8, 10, 0, 0));
 
-        HttpEntity<AlarmDeviceStatusRequest> entity = new HttpEntity<>(request, createHeadersWithToken(UserRole.ROLE_ALARM_ADMIN));
+        HttpEntity<AlarmDeviceStatusRequest> entity = new HttpEntity<>(request, createHeadersWithToken(UserRole.ROLE_ADMIN));
 
         ResponseEntity<Alarm> first = restTemplate.exchange(
                 createURLWithPort("alarm/status/save"), HttpMethod.POST, entity, Alarm.class);
@@ -176,10 +176,10 @@ class AlarmIntegrationTest extends AbstractIntegrationTest {
         restTemplate.exchange(
                 createURLWithPort("alarm/save"),
                 HttpMethod.POST,
-                new HttpEntity<>(request, createHeadersWithToken(UserRole.ROLE_ALARM_ADMIN)),
+                new HttpEntity<>(request, createHeadersWithToken(UserRole.ROLE_ADMIN)),
                 Alarm.class);
 
-        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ALARM_ADMIN));
+        HttpEntity<String> entity = new HttpEntity<>(null, createHeadersWithToken(UserRole.ROLE_ADMIN));
         String maskedRfid = "XXXXXXXXXXXBCDEF";
 
         for (int i = 0; i < 2; i++) {

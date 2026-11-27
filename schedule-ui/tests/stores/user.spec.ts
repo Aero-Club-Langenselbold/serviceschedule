@@ -49,9 +49,36 @@ describe('User Store', () => {
         expect(userStore.user?.roles).toContain('ROLE_ADMIN')
     })
 
-    it('schedule admin user has ROLE_SCHEDULE_ADMIN', async () => {
+    it('a member with a right keeps the user role and gets no further role', async () => {
         await userStore.login({ username: 'testscheduleadmin', password: 'password' })
-        expect(userStore.user?.roles).toContain('ROLE_SCHEDULE_ADMIN')
+        expect(userStore.user?.roles).toEqual(['ROLE_USER'])
+        expect(userStore.canManageSchedule).toBe(true)
+        expect(userStore.canManageMaintenance).toBe(false)
+    })
+
+    it('administrators hold every right', async () => {
+        await userStore.login({ username: 'testadmin', password: 'password' })
+        expect(userStore.isAdmin).toBe(true)
+        expect(userStore.canManageSchedule).toBe(true)
+        expect(userStore.canManageAlarm).toBe(true)
+        expect(userStore.canManageMaintenance).toBe(true)
+        expect(userStore.canManageOperations).toBe(true)
+        expect(userStore.canManageChecklists).toBe(true)
+    })
+
+    it('operations admins approve checklists, maintenance admins only maintain them', async () => {
+        await userStore.login({ username: 'testoperationsadmin', password: 'password' })
+        expect(userStore.canManageOperations).toBe(true)
+        expect(userStore.canManageChecklists).toBe(true)
+        expect(userStore.canManageMaintenance).toBe(false)
+
+        await userStore.login({ username: 'testmaintenanceadmin', password: 'password' })
+        expect(userStore.canManageOperations).toBe(false)
+        expect(userStore.canManageChecklists).toBe(true)
+
+        await userStore.login({ username: 'testuser', password: 'password' })
+        expect(userStore.canManageOperations).toBe(false)
+        expect(userStore.canManageChecklists).toBe(false)
     })
 
     it('logout clears user state', async () => {

@@ -13,6 +13,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import de.ct.manager.schedule.settings.CommonSettingsRepository;
 import de.ct.manager.schedule.settings.SettingConstants;
+import de.ct.manager.schedule.user.UserPermission;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -52,7 +53,7 @@ public class AlarmPassphraseFilter extends OncePerRequestFilter {
                             UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                                     "alarm-passphrase",
                                     null,
-                                    List.of(new SimpleGrantedAuthority("ROLE_ALARM_ADMIN")));
+                                    List.of(new SimpleGrantedAuthority(UserPermission.PERMISSION_ALARM_MANAGE.name())));
                             SecurityContextHolder.getContext().setAuthentication(auth);
                             log.debug("Alarm passphrase authentication successful");
                         } else {

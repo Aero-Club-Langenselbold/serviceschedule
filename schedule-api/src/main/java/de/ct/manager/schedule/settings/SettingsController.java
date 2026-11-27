@@ -31,13 +31,13 @@ public class SettingsController {
     }
 
     @GetMapping("/selected-state")
-    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_SCHEDULE_MANAGE')")
     public ResponseEntity<SelectedState> getSelectedState() {
         return ResponseEntity.ok(settingsService.getSelectedState());
     }
 
     @GetMapping("/common-settings")
-    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_SCHEDULE_MANAGE')")
     public ResponseEntity<List<CommonSettings>> getAllCommonSettings() {
         return ResponseEntity.ok(settingsService.getAllCommonSettings());
     }
@@ -48,31 +48,31 @@ public class SettingsController {
     }
 
     @PostMapping("/common-settings")
-    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_SCHEDULE_MANAGE')")
     public ResponseEntity<List<CommonSettings>> saveCommonSettings(@RequestBody List<CommonSettings> commonSettings) {
         return ResponseEntity.ok(settingsService.saveCommonSettings(commonSettings));
     }
 
     @PostMapping("/selected-state")
-    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_SCHEDULE_MANAGE')")
     public ResponseEntity<SelectedState> saveSelectedState(@RequestBody SelectedState selectedState) {
         return ResponseEntity.ok(settingsService.saveSelectedState(selectedState));
     }
 
     @GetMapping("/countries")
-    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_SCHEDULE_MANAGE')")
     public ResponseEntity<Iterable<Country>> findAllCountries() {
         return ResponseEntity.ok(settingsService.findAllCountries());
     }
 
     @GetMapping("/states/{countryId}")
-    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_SCHEDULE_MANAGE')")
     public ResponseEntity<Iterable<State>> findAllStatesByCountry(@PathVariable String countryId) {
         return ResponseEntity.ok(settingsService.findAllStatesByCountry(countryId));
     }
 
     @GetMapping("/holidays/{planId}")
-    @PreAuthorize("hasAnyRole('SCHEDULE_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_SCHEDULE_MANAGE')")
     public ResponseEntity<Iterable<LocalDate>> calculateHolidayDates(@PathVariable String planId) {
         Plan plan = planService.getPlan(planId);
         if (plan == null) {

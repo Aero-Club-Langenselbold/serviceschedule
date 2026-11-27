@@ -24,9 +24,15 @@ export const useUserStore = defineStore('user', () => {
     const hasRole = (...roles: string[]) => roles.some(role => user.value?.roles?.includes(role))
     const hasPermission = (permission: string) => !!user.value?.permissions?.includes(permission)
 
-    const canManageSchedule = computed(() => hasRole('ROLE_ADMIN', 'ROLE_SCHEDULE_ADMIN') || hasPermission('PERMISSION_SCHEDULE_MANAGE'))
-    const canManageAlarm = computed(() => hasRole('ROLE_ADMIN', 'ROLE_ALARM_ADMIN') || hasPermission('PERMISSION_ALARM_MANAGE'))
-    const canManageMaintenance = computed(() => hasRole('ROLE_ADMIN', 'ROLE_MAINTENANCE_ADMIN') || hasPermission('PERMISSION_MAINTENANCE_MANAGE'))
+    // Users are administrators or members; administrators hold every right, members the ones granted to them.
+    const isAdmin = computed(() => hasRole('ROLE_ADMIN'))
+    const canManageSchedule = computed(() => isAdmin.value || hasPermission('PERMISSION_SCHEDULE_MANAGE'))
+    const canManageAlarm = computed(() => isAdmin.value || hasPermission('PERMISSION_ALARM_MANAGE'))
+    const canManageMaintenance = computed(() => isAdmin.value || hasPermission('PERMISSION_MAINTENANCE_MANAGE'))
+    // "Betriebsadmin": approves operations checklists and reads their archive
+    const canManageOperations = computed(() => isAdmin.value || hasPermission('PERMISSION_OPERATIONS_MANAGE'))
+    // the checklists themselves are maintained by maintenance and operations administrators
+    const canManageChecklists = computed(() => canManageMaintenance.value || canManageOperations.value)
 
     function storeAuthentication(data: User & Session) {
         user.value = {
@@ -98,5 +104,5 @@ export const useUserStore = defineStore('user', () => {
         session.value = null
     }
 
-    return { user, session, isLoggedIn, isImpersonating, canManageSchedule, canManageAlarm, canManageMaintenance, hasRole, hasPermission, login, impersonate, stopImpersonation, logout, validate }
+    return { user, session, isLoggedIn, isImpersonating, isAdmin, canManageSchedule, canManageAlarm, canManageMaintenance, canManageOperations, canManageChecklists, hasRole, hasPermission, login, impersonate, stopImpersonation, logout, validate }
 })

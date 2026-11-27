@@ -23,6 +23,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Entity
 @Audited
@@ -57,6 +58,11 @@ public class User extends AbstractPersistentEntity {
     @Column(length = 128)
     @NotBlank
     private String password;
+
+    @Column(name = "kiosk_pin", length = 128)
+    @NotAudited
+    @ToString.Exclude
+    private String kioskPin;
 
     public User() {
     }

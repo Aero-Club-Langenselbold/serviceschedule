@@ -108,9 +108,11 @@ it ('Shows bug list and settings as icons only in the header bar', async () => {
   }
 })
 
-it ('Hides the service plans entry without any schedule page', async () => {
+it ('Shows the service plans to a member holding another right, who is a user as well', async () => {
   await login({username: "testalarmadmin", password: "howwouldiknow"})
-  expect((await mountSuspended(NavMenu)).html()).not.toContain('Service Plans')
+  const html = (await mountSuspended(NavMenu)).html()
+  expect(html).toContain('Service Plans')
+  expect(html).not.toContain('/participants/list')
 })
 
 it ('Shows the maintenance menu to every signed in user', async () => {
@@ -128,4 +130,40 @@ it ('Offers the defect book in the maintenance menu and the notifications to eve
   expect(navMenu.find('[data-notification-bell]').exists()).toBe(true)
   const maintenance = navMenu.findAll('button').find(button => button.text().includes('Maintenance'))
   expect(maintenance).toBeDefined()
+})
+
+it ('Shows the club logo instead of the app name and leads home', async () => {
+  await login({ username: 'testuser', password: 'howwouldiknow' })
+  const navMenu = await mountSuspended(NavMenu)
+  const logo = navMenu.find('[data-club-logo]')
+  expect(logo.exists()).toBe(true)
+  expect(logo.attributes('src')).toContain('logo')
+  expect(logo.attributes('alt')).toContain('Aero-Club Langenselbold')
+  expect(navMenu.find('a[href="/"] [data-club-logo]').exists()).toBe(true)
+})
+
+it ('Shows the operations menu with the checklists to every signed in user', async () => {
+  await login({ username: 'testuser', password: 'howwouldiknow' })
+  const navMenu = await mountSuspended(NavMenu)
+  expect(navMenu.findAll('button').some(button => button.text().includes('Operations'))).toBe(true)
+})
+
+it ('Shows only the icon of the user administration in the bar', async () => {
+  await login({ username: 'testadmin', password: 'howwouldiknow' })
+  const navMenu = await mountSuspended(NavMenu)
+  const users = navMenu.find('a[href="/users/list"]')
+  expect(users.exists()).toBe(true)
+  expect(users.attributes('title')).toBe('Users')
+  expect(users.find('.sr-only').text()).toBe('Users')
+})
+
+it ('Opens the personal settings from the username', async () => {
+  await login({ username: 'testuser', password: 'howwouldiknow' })
+  const navMenu = await mountSuspended(NavMenu)
+  await navMenu.find('button[aria-label="Account"]').trigger('click')
+  await vi.waitFor(() => expect(document.body.querySelector('[data-profile-link]')).not.toBeNull())
+  const link = document.body.querySelector('[data-profile-link]')!
+  expect(link.getAttribute('href')).toBe('/profile')
+  expect(link.textContent).toContain('testuser')
+  expect(link.textContent).toContain('My settings')
 })

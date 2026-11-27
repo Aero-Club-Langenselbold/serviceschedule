@@ -44,7 +44,7 @@ public class MaintenanceTaskController {
     }
 
     @PostMapping("/aircraft/{aircraftId}/tasks")
-    @PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_MAINTENANCE_MANAGE')")
     public ResponseEntity<TaskDetail> create(@PathVariable String aircraftId, @Valid @RequestBody TaskRequest request, @AuthenticationPrincipal UserDetailsImpl currentUser) {
         return ResponseEntity.status(HttpStatus.CREATED).body(taskService.create(aircraftId, request, currentUser));
     }
@@ -56,13 +56,13 @@ public class MaintenanceTaskController {
     }
 
     @PutMapping("/tasks/{id}")
-    @PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_MAINTENANCE_MANAGE')")
     public ResponseEntity<TaskDetail> update(@PathVariable String id, @Valid @RequestBody TaskRequest request, @AuthenticationPrincipal UserDetailsImpl currentUser) {
         return ResponseEntity.ok(taskService.update(id, request, currentUser));
     }
 
     @DeleteMapping("/tasks/{id}")
-    @PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_MAINTENANCE_MANAGE')")
     public ResponseEntity<Void> delete(@PathVariable String id, @AuthenticationPrincipal UserDetailsImpl currentUser) {
         taskService.delete(id, currentUser);
         return ResponseEntity.noContent().build();
@@ -99,13 +99,13 @@ public class MaintenanceTaskController {
     }
 
     @PostMapping("/tasks/{id}/sign")
-    @PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_MAINTENANCE_MANAGE')")
     public ResponseEntity<TaskDetail> sign(@PathVariable String id, @AuthenticationPrincipal UserDetailsImpl currentUser) {
         return ResponseEntity.ok(taskService.sign(id, currentUser));
     }
 
     @DeleteMapping("/tasks/{id}/sign")
-    @PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_MAINTENANCE_MANAGE')")
     public ResponseEntity<TaskDetail> unsign(@PathVariable String id, @AuthenticationPrincipal UserDetailsImpl currentUser) {
         return ResponseEntity.ok(taskService.unsign(id, currentUser));
     }

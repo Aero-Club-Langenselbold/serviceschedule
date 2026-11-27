@@ -28,13 +28,13 @@ public class RequestCommentController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('USER', 'SCHEDULE_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'PERMISSION_SCHEDULE_MANAGE')")
     public ResponseEntity<List<RequestCommentResponse>> getComments(@PathVariable String requestId, @AuthenticationPrincipal UserDetailsImpl currentUser) {
         return ResponseEntity.ok(commentService.getComments(requestId, currentUser));
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('USER', 'SCHEDULE_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'PERMISSION_SCHEDULE_MANAGE')")
     public ResponseEntity<RequestCommentResponse> addComment(@PathVariable String requestId, @Valid @RequestBody RequestCommentRequest comment, @AuthenticationPrincipal UserDetailsImpl currentUser) {
         return ResponseEntity.ok(commentService.addComment(requestId, comment.getContent(), comment.getStatus(), currentUser));
     }

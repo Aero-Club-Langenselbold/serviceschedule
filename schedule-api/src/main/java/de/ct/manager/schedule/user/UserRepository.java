@@ -1,5 +1,6 @@
 package de.ct.manager.schedule.user;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -10,6 +11,10 @@ import org.springframework.data.jpa.repository.Query;
 public interface UserRepository extends JpaRepository<User, String> {
 
     Optional<User> findByUsername(String username);
+
+    /** Users granted the right explicitly; administrators hold every right through the hierarchy and are not included. */
+    @Query("SELECT u FROM User u WHERE :permission MEMBER OF u.permissions")
+    List<User> findAllWithPermission(UserPermission permission);
 
     boolean existsByUsername(String username);
 

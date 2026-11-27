@@ -1,13 +1,8 @@
 <template>
   <UHeader to="/" mode="slideover" :ui="{ root: 'bg-default/95', center: 'lg:hidden xl:flex', toggle: 'lg:inline-flex xl:hidden' }">
     <template #title>
-      <span class="flex items-center gap-2.5">
-        <span class="flex size-8 items-center justify-center rounded-lg bg-primary text-inverted">
-          <UIcon name="i-lucide-calendar-check" class="size-5" />
-        </span>
-        <!-- signed in, phones need the room for notifications, account and menu: the logo alone leads home -->
-        <span class="text-base font-semibold text-highlighted" :class="{ 'max-sm:sr-only': isLoggedIn }">{{ $t('app.shortName') }}</span>
-      </span>
+      <!-- club logo, leads home -->
+      <img :src="logo" :alt="$t('app.logoAlt')" class="h-10 w-auto sm:h-12" data-club-logo>
     </template>
 
     <UNavigationMenu v-if="menu.length" :items="barMenu" orientation="horizontal" content-orientation="vertical" :ui="{ linkLeadingIcon: 'size-4' }" />
@@ -41,6 +36,8 @@
 </template>
 
 <script lang="ts" setup>
+import logo from '~/assets/logo.png'
+
 const route = useRoute()
 const { t, setLocale, locale } = useI18n()
 const localeStore = useLocaleStore()
@@ -48,7 +45,7 @@ const switchLocalePath = useSwitchLocalePath()
 const { setUserLocale } = localeStore
 const userStore = useUserStore()
 const { logout, hasRole, stopImpersonation } = userStore
-const { isLoggedIn, isImpersonating, canManageSchedule, canManageAlarm, canManageMaintenance, user } = storeToRefs(userStore)
+const { isLoggedIn, isImpersonating, canManageSchedule, canManageAlarm, canManageMaintenance, canManageOperations, user } = storeToRefs(userStore)
 const toast = useToast()
 
 const leaveImpersonation = async () => {
@@ -110,6 +107,16 @@ const menu = computed(() => {
       ...(canManageMaintenance.value ? [{ label: t('nav.maintenance.templates'), icon: 'i-lucide-copy', to: '/maintenance/templates' }] : [])
     ]
   })
+  // Every signed in user fills in the start/end of operations checklists, operations administrators search the archive.
+  items.push({
+    label: t('nav.operations.menu'),
+    icon: 'i-lucide-clipboard-check',
+    defaultOpen: true,
+    children: [
+      { label: t('nav.operations.checklists'), icon: 'i-lucide-clipboard-list', to: '/operations' },
+      ...(canManageOperations.value ? [{ label: t('nav.operations.archive'), icon: 'i-lucide-archive', to: '/operations/archive' }] : [])
+    ]
+  })
   if (canManageAlarm.value) {
     items.push({
       label: t('nav.alarms.menu'),
@@ -121,7 +128,7 @@ const menu = computed(() => {
     })
   }
   if (hasRole('ROLE_ADMIN')) {
-    items.push({ label: t('nav.users'), icon: 'i-lucide-user-cog', to: '/users/list' })
+    items.push({ label: t('nav.users'), icon: 'i-lucide-user-cog', to: '/users/list', iconOnly: true })
   }
   items.push({ label: t('nav.requests'), icon: 'i-lucide-bug', to: '/request/list', iconOnly: true })
   if (hasRole('ROLE_ADMIN')) {
@@ -136,8 +143,9 @@ const barMenu = computed(() => menu.value.map(({ iconOnly, ...item }) => iconOnl
   ? { ...item, title: item.label, ui: { linkLabel: 'sr-only' } }
   : item))
 
+// The username opens the personal settings (kiosk PIN).
 const account = computed(() => [
-  [{ label: user.value?.username, type: 'label' as const }],
+  [{ label: user.value?.username, description: t('nav.profile'), icon: 'i-lucide-user-cog', to: '/profile', 'data-profile-link': true }],
   [{
     label: t('nav.logout'),
     icon: 'i-lucide-log-out',

@@ -59,3 +59,15 @@ it ('Marks all notifications read at once', async () => {
   expect(wrapper.find('[data-notification-bell]').attributes('aria-label')).toContain('No unread')
   wrapper.unmount()
 })
+
+it ('Lists a submitted checklist and opens it', async () => {
+  const wrapper = await mountBell()
+  await openList(wrapper)
+  const list = document.body.querySelector('[data-notification-list]')!
+  expect(list.textContent).toContain('Albers, Anna confirmed a checklist for approval')
+  expect(list.textContent).toContain('D-1234 · Start of operations')
+
+  document.body.querySelector<HTMLButtonElement>('[data-notification="n2"]')!.click()
+  await vi.waitFor(() => expect(mockNavigateTo).toHaveBeenCalledWith('/operations/checklists/c1'))
+  wrapper.unmount()
+})

@@ -10,18 +10,23 @@ export type RecordedRequest = { method: string, path: string, query: URLSearchPa
 
 const ROLES: Record<string, string[]> = {
   'admin@example.org': ['ROLE_ADMIN'],
-  'schedule@example.org': ['ROLE_SCHEDULE_ADMIN'],
-  'alarm@example.org': ['ROLE_ALARM_ADMIN'],
+  'schedule@example.org': ['ROLE_USER'],
+  'alarm@example.org': ['ROLE_USER'],
   'user@example.org': ['ROLE_USER'],
   'nobody@example.org': ['ROLE_USER'],
   'delegate@example.org': ['ROLE_USER'],
+  'operations@example.org': ['ROLE_USER'],
 }
 
+// Only administrators and users exist; whatever a member administers is a right.
 const PERMISSIONS: Record<string, string[]> = {
+  'schedule@example.org': ['PERMISSION_SCHEDULE_MANAGE'],
+  'alarm@example.org': ['PERMISSION_ALARM_MANAGE'],
   'delegate@example.org': ['PERMISSION_SCHEDULE_MANAGE'],
+  'operations@example.org': ['PERMISSION_OPERATIONS_MANAGE'],
 }
 
-export type Role = 'admin' | 'schedule' | 'alarm' | 'user' | 'nobody' | 'delegate'
+export type Role = 'admin' | 'schedule' | 'alarm' | 'user' | 'nobody' | 'delegate' | 'operations'
 
 export const sessionFor = (role: Role) => {
   const username = `${role}@example.org`
@@ -117,7 +122,7 @@ function createState() {
     selectedState: { country: { id: 'de' }, state: { id: 'be' } },
     users: [
       { id: 'u-admin', username: 'admin@example.org', fullname: null, roles: ['ROLE_ADMIN'], permissions: [] },
-      { id: 'u-schedule', username: 'schedule@example.org', fullname: null, roles: ['ROLE_SCHEDULE_ADMIN'], permissions: [] },
+      { id: 'u-schedule', username: 'schedule@example.org', fullname: null, roles: ['ROLE_USER'], permissions: ['PERMISSION_SCHEDULE_MANAGE'] },
       { id: 'u-user', username: 'user@example.org', fullname: 'User, Uta', roles: ['ROLE_USER'], permissions: ['PERMISSION_ALARM_MANAGE'] },
       { id: 'u-ben', username: 'ben@example.org', fullname: 'Becker, Ben', roles: ['ROLE_USER'], permissions: [] },
     ] as any[],
@@ -135,6 +140,12 @@ function createState() {
     notifications: [
       { id: 'n1', type: 'DEFECT_ASSIGNED', createdAt: time('2026-11-10', '11:00'), read: false, actor: { id: 'u-admin', name: 'admin@example.org' }, defect: { id: 'd1', title: 'Riss in der Haube', aircraftId: 'a1', aircraftLabel: 'D-1234', status: 'OPEN' } },
     ] as any[],
+    // operations checklists: D-1234 has a start of operations checklist, nothing is started today
+    checklistTemplates: [
+      { id: 'ct1', aircraftId: 'a1', kind: 'START', items: ['Haube reinigen', 'Reifendruck prüfen'], updatedAt: time('2026-11-01', '10:00') },
+    ] as any[],
+    checklists: [] as any[],
+    kioskPinSet: false,
     comments: {
       r1: [{ id: 'c1', content: 'Tritt bei mir auch auf.', createdAt: time('2026-11-03', '09:30'), author: 'Becker, Ben' }],
     } as Record<string, any[]>,
@@ -147,6 +158,30 @@ const defect = (values: Record<string, any>) => ({
   editable: true, deletable: false, ...values,
 })
 
+
+const today = () => {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+}
+
+const person = (username: string) => ({ id: `u-${username.split('@')[0]}`, name: username })
+
+/** A checklist as the API answers it, with the flags for the given user. */
+const checklistDetail = (checklist: any, username: string) => {
+  const operations = !!PERMISSIONS[username]?.includes('PERMISSION_OPERATIONS_MANAGE') || !!ROLES[username]?.includes('ROLE_ADMIN')
+  const checked = checklist.items.filter((item: any) => item.result).length
+  const editable = checklist.status === 'IN_PROGRESS' && checklist.date === today()
+  return {
+    checklist: { ...checklist, items: undefined, itemCount: checklist.items.length, checkedCount: checked,
+      notOkCount: checklist.items.filter((item: any) => item.result === 'NOT_OK').length },
+    items: checklist.items,
+    editable,
+    submittable: editable && checked === checklist.items.length,
+    approvable: checklist.status === 'SUBMITTED' && operations,
+    reopenable: checklist.status !== 'IN_PROGRESS' && operations,
+  }
+}
+
 const page_ = <T>(items: T[], query: URLSearchParams) => {
   const page = Number(query.get('page') ?? 0)
   const size = Number(query.get('size') ?? 20)
@@ -157,6 +192,7 @@ export class MockApi {
   state = createState()
   requests: RecordedRequest[] = []
   private failures: { method: string, path: RegExp, status: number, body: any }[] = []
+  private caller = ''
 
   /** Makes matching requests answer with the given error until the test ends. */
   fail(method: string, path: RegExp, status = 500, body: any = { message: 'Serverfehler' }) {
@@ -198,6 +234,9 @@ export class MockApi {
       return route.fulfill({ status: failure.status, headers, json: failure.body })
     }
 
+    // who is calling, from the token of sessionFor (token-<role>)
+    const token = (request.headers()['authorization'] ?? '').replace(/^Bearer token-/, '')
+    this.caller = token ? `${token}@example.org` : ''
     const answer = this.respond(request.method(), path, url.searchParams, body)
     if (answer === undefined) {
       return route.fulfill({ status: 404, headers, json: { message: `Kein Mock für ${request.method()} ${path}` } })
@@ -338,7 +377,7 @@ export class MockApi {
     }
 
     // users
-    if (key === 'GET /user/permissions') return ['PERMISSION_SCHEDULE_MANAGE', 'PERMISSION_ALARM_MANAGE']
+    if (key === 'GET /user/permissions') return ['PERMISSION_SCHEDULE_MANAGE', 'PERMISSION_ALARM_MANAGE', 'PERMISSION_MAINTENANCE_MANAGE', 'PERMISSION_OPERATIONS_MANAGE']
     if (key === 'GET /user/page') {
       const search = (query.get('search') ?? '').toLowerCase()
       return page_(s.users.filter(u => `${u.username} ${u.fullname}`.toLowerCase().includes(search)), query)
@@ -358,13 +397,104 @@ export class MockApi {
       return { id: 'u-admin', username: 'admin@example.org', roles: ['ROLE_ADMIN'], permissions: [], impersonator: null, token: 'token-admin', type: 'Bearer' }
     }
 
-    if (key === 'GET /user/roles') return ['ROLE_ADMIN', 'ROLE_ALARM_ADMIN', 'ROLE_SCHEDULE_ADMIN', 'ROLE_MAINTENANCE_ADMIN']
+    if (key === 'GET /user/roles') return ['ROLE_ADMIN']
     if ((m = path.match(/^\/user\/([^/]+)\/roles$/)) && method === 'PUT') {
       const target = s.users.find(u => u.id === m![1])
       if (!target) return new HttpError(404)
       if (target.id === 'u-admin' && !body.includes('ROLE_ADMIN')) return new HttpError(400)
       target.roles = [...target.roles.filter((role: string) => role === 'ROLE_USER'), ...body]
       return target
+    }
+
+    // operations checklists
+    const findAircraft = (id: string) => s.aircraft.find(a => a.id === id)
+    if (key === 'GET /operations/overview') {
+      const template = (id: string, kind: string) => s.checklistTemplates.find(t => t.aircraftId === id && t.kind === kind) ?? null
+      const todays = (id: string, kind: string) => {
+        const found = s.checklists.find(c => c.aircraftId === id && c.kind === kind && c.date === today())
+        return found ? checklistDetail(found, this.caller).checklist : null
+      }
+      return { today: today(), aircraft: s.aircraft.map(a => ({ aircraftId: a.id, registration: a.registration, aircraftType: a.type,
+        startTemplate: template(a.id, 'START'), endTemplate: template(a.id, 'END'), todayStart: todays(a.id, 'START'), todayEnd: todays(a.id, 'END') })) }
+    }
+    if ((m = path.match(/^\/operations\/aircraft\/([^/]+)\/templates\/(START|END)$/))) {
+      if (!findAircraft(m[1]!)) return new HttpError(404)
+      const index = s.checklistTemplates.findIndex(t => t.aircraftId === m![1] && t.kind === m![2])
+      if (method === 'PUT') {
+        const saved = { id: `ct-${m[1]}-${m[2]}`, aircraftId: m[1], kind: m[2], items: body.items, updatedAt: time('2026-11-20', '10:00') }
+        if (index >= 0) s.checklistTemplates[index] = saved
+        else s.checklistTemplates.push(saved)
+        return saved
+      }
+      if (method === 'DELETE') {
+        s.checklistTemplates.splice(index, 1)
+        return null
+      }
+      return s.checklistTemplates[index] ?? new HttpError(404)
+    }
+    if ((m = path.match(/^\/operations\/aircraft\/([^/]+)\/checklists\/(START|END)\/today$/))) {
+      const aircraft = findAircraft(m[1]!)
+      if (!aircraft) return new HttpError(404)
+      const template = s.checklistTemplates.find(t => t.aircraftId === aircraft.id && t.kind === m![2])
+      let checklist = s.checklists.find(c => c.aircraftId === aircraft.id && c.kind === m![2] && c.date === today())
+      if (method === 'POST') {
+        if (!template) return new HttpError(404)
+        if (checklist) return new HttpError(409)
+        checklist = { id: `cl${s.checklists.length + 1}`, aircraftId: aircraft.id, registration: aircraft.registration, aircraftType: aircraft.type,
+          kind: m[2], date: today(), status: 'IN_PROGRESS', createdBy: person(this.caller), createdAt: time(today(), '08:00'),
+          submittedBy: null, submittedAt: null, approvedBy: null, approvedAt: null,
+          items: template.items.map((text: string, position: number) => ({ id: `item${position}`, position, text, result: null, comment: null, checkedBy: null, checkedAt: null, defect: null })) }
+        s.checklists.push(checklist)
+        return checklistDetail(checklist, this.caller)
+      }
+      return { aircraftId: aircraft.id, registration: aircraft.registration, aircraftType: aircraft.type, kind: m[2], date: today(),
+        templateItems: template?.items ?? null, checklist: checklist ? checklistDetail(checklist, this.caller) : null }
+    }
+    if (key === 'GET /operations/checklists') {
+      return page_(s.checklists.map(c => checklistDetail(c, this.caller).checklist), query)
+    }
+    if ((m = path.match(/^\/operations\/checklists\/([^/]+)(\/.*)?$/))) {
+      const checklist = s.checklists.find(c => c.id === m![1])
+      if (!checklist) return new HttpError(404)
+      const action = `${method} ${m[2] ?? ''}`
+      const item = (id: string) => checklist.items.find((i: any) => i.id === id)
+      let n: RegExpMatchArray | null
+      if (action === 'GET ') return checklistDetail(checklist, this.caller)
+      if ((n = action.match(/^PUT \/items\/([^/]+)$/))) {
+        Object.assign(item(n[1]!), { result: body.result, comment: body.comment, checkedBy: body.result ? person(this.caller) : null, checkedAt: body.result ? time(today(), '08:30') : null })
+        return checklistDetail(checklist, this.caller)
+      }
+      if ((n = action.match(/^POST \/items\/([^/]+)\/defect$/))) {
+        const aircraft = findAircraft(checklist.aircraftId)
+        const created = defect({ id: `d${s.defects.length + 1}`, aircraftId: aircraft.id, aircraftLabel: `${aircraft.registration} · ${aircraft.type}`,
+          title: body.title, description: body.description || null, priority: body.priority, reportedBy: person(this.caller), deletable: true })
+        s.defects.unshift(created)
+        Object.assign(item(n[1]!), { result: 'NOT_OK', checkedBy: person(this.caller), checkedAt: time(today(), '08:30'), defect: { id: created.id, title: created.title, status: 'OPEN' } })
+        return checklistDetail(checklist, this.caller)
+      }
+      if (action === 'POST /submit') {
+        Object.assign(checklist, { status: 'SUBMITTED', submittedBy: person(this.caller), submittedAt: time(today(), '09:00') })
+        return checklistDetail(checklist, this.caller)
+      }
+      if (action === 'POST /approve') {
+        Object.assign(checklist, { status: 'APPROVED', approvedBy: person(this.caller), approvedAt: time(today(), '10:00') })
+        return checklistDetail(checklist, this.caller)
+      }
+      if (action === 'POST /reopen') {
+        Object.assign(checklist, { status: 'IN_PROGRESS', submittedBy: null, submittedAt: null, approvedBy: null, approvedAt: null })
+        return checklistDetail(checklist, this.caller)
+      }
+    }
+    // personal settings
+    if (key === 'GET /user/me/settings') return { username: this.caller, kioskPinSet: s.kioskPinSet }
+    if (key === 'PUT /user/me/kiosk-pin') {
+      if (!/^\d{6}$/.test(body?.pin ?? '')) return new HttpError(400)
+      s.kioskPinSet = true
+      return { username: this.caller, kioskPinSet: true }
+    }
+    if (key === 'DELETE /user/me/kiosk-pin') {
+      s.kioskPinSet = false
+      return { username: this.caller, kioskPinSet: false }
     }
 
     // notifications of the signed in user

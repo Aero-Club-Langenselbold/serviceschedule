@@ -14,7 +14,7 @@ describe('alarm-admin middleware', () => {
     })
 
     it.each([
-        ['testalarmadmin', 'ROLE_ALARM_ADMIN'],
+        ['testalarmadmin', 'PERMISSION_ALARM_MANAGE'],
         ['testadmin', 'ROLE_ADMIN'],
     ])('allows %s (%s) through', async (username) => {
         await userStore.login({ username, password: 'password' })
@@ -25,7 +25,7 @@ describe('alarm-admin middleware', () => {
 
     it.each([
         ['testuser', 'ROLE_USER'],
-        ['testscheduleadmin', 'ROLE_SCHEDULE_ADMIN'],
+        ['testscheduleadmin', 'PERMISSION_SCHEDULE_MANAGE'],
     ])('redirects %s (%s) to /permission-denied', async (username) => {
         await userStore.login({ username, password: 'password' })
         const { default: middleware } = await import('~/middleware/alarm-admin')

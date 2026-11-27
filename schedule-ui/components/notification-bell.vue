@@ -29,6 +29,9 @@
                   {{ $t(`notifications.${item.type}`, { actor: item.actor?.name ?? $t('notifications.someone') }) }}
                 </span>
                 <span v-if="item.defect" class="block truncate text-sm text-default">{{ item.defect.aircraftLabel }} · {{ item.defect.title }}</span>
+                <span v-if="item.checklist" class="block truncate text-sm text-default">
+                  {{ item.checklist.registration }} · {{ kindLabel(item.checklist.kind) }} · {{ formatDay(item.checklist.date) }}
+                </span>
                 <span class="block text-xs text-muted">{{ formatWhen(item.createdAt) }}</span>
               </span>
             </button>
@@ -46,7 +49,8 @@ import type { Notifications, UserNotification } from '~/types/notification'
 const REFRESH_MS = 60_000
 
 const route = useRoute()
-const { formatWhen } = useMaintenance()
+const { formatWhen, formatDay } = useMaintenance()
+const { kindLabel } = useOperations()
 
 const open = ref(false)
 const unreadCount = ref(0)
@@ -73,6 +77,8 @@ const select = async (item: UserNotification) => {
   await markRead(item)
   if (item.defect) {
     await navigateTo({ path: '/maintenance/defects', query: { defect: item.defect.id } })
+  } else if (item.checklist) {
+    await navigateTo(`/operations/checklists/${item.checklist.id}`)
   }
 }
 

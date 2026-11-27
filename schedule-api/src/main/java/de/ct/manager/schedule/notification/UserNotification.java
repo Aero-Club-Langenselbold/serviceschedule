@@ -6,6 +6,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import de.ct.manager.schedule.maintenance.MaintenanceDefect;
+import de.ct.manager.schedule.operations.OperationsChecklist;
 import de.ct.manager.schedule.user.User;
 import de.ct.manager.schedule.util.AbstractPersistentEntity;
 import jakarta.persistence.Column;
@@ -44,6 +45,13 @@ public class UserNotification extends AbstractPersistentEntity {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private MaintenanceDefect defect;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "checklist_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private OperationsChecklist checklist;
 
     /** Who caused the notification, e.g. the administrator who assigned the defect. */
     @ManyToOne(fetch = FetchType.LAZY)

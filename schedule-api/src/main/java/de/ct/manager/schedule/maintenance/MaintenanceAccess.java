@@ -17,7 +17,7 @@ import de.ct.manager.schedule.participant.ParticipantRepository;
 import de.ct.manager.schedule.user.User;
 import de.ct.manager.schedule.user.UserDetailsImpl;
 import de.ct.manager.schedule.user.UserRepository;
-import de.ct.manager.schedule.user.UserRole;
+import de.ct.manager.schedule.user.UserPermission;
 
 /** Who is calling, what they may do in the maintenance module and how people are named in responses. */
 @Component
@@ -33,10 +33,20 @@ public class MaintenanceAccess {
         this.participantRepository = participantRepository;
     }
 
-    /** Administrators, maintenance administrators and users holding the maintenance right. */
+    /** Administrators and users holding the maintenance right. */
     public boolean canManage(UserDetailsImpl currentUser) {
+        return holds(currentUser, UserPermission.PERMISSION_MAINTENANCE_MANAGE);
+    }
+
+    /** Administrators and users holding the operations right ("Betriebsadmin"). */
+    public boolean canManageOperations(UserDetailsImpl currentUser) {
+        return holds(currentUser, UserPermission.PERMISSION_OPERATIONS_MANAGE);
+    }
+
+    /** Whether the user holds the right, directly or through the role hierarchy (administrators hold all rights). */
+    public boolean holds(UserDetailsImpl currentUser, UserPermission permission) {
         return currentUser != null && roleHierarchy.getReachableGrantedAuthorities(currentUser.getAuthorities()).stream()
-                .anyMatch(authority -> UserRole.ROLE_MAINTENANCE_ADMIN.name().equals(authority.getAuthority()));
+                .anyMatch(authority -> permission.name().equals(authority.getAuthority()));
     }
 
     public void requireManage(UserDetailsImpl currentUser) {

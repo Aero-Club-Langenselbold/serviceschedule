@@ -77,6 +77,7 @@ export default defineI18nLocale(async locale => {
         users: 'Users',
         stopImpersonation: 'Stop impersonating',
         language: 'Choose language',
+        profile: 'My settings',
         account: 'Account',
         notifications: 'Notifications',
         about: 'About',
@@ -104,12 +105,18 @@ export default defineI18nLocale(async locale => {
           inventory: 'Inventory',
           defects: 'Defect book'
         },
+        operations: {
+          menu: 'Operations',
+          checklists: 'Checklists',
+          archive: 'Checklist archive'
+        },
         alarms: {
           menu: 'Alarm system',
           list: 'Event log'
         }
       },
       app: {
+        logoAlt: 'Aero-Club Langenselbold – home',
         dateLocale: 'en-US',
         name: 'Member Area V1.0',
         shortName: 'Member Area',
@@ -692,6 +699,119 @@ export default defineI18nLocale(async locale => {
           steps: 'No steps | 1 step | {count} steps'
         }
       },
+      operations: {
+        loadError: 'The checklists could not be loaded.',
+        saveError: 'Saving failed.',
+        notFound: 'Checklist not found.',
+        forbidden: 'Checklists of past days are for operations admins only.',
+        kind: {
+          START: 'Start of operations',
+          END: 'End of operations'
+        },
+        status: {
+          IN_PROGRESS: 'In progress',
+          SUBMITTED: 'Awaiting approval',
+          APPROVED: 'Approved'
+        },
+        result: {
+          OK: 'OK',
+          NOT_OK: 'Not OK'
+        },
+        overview: {
+          title: 'Checklists',
+          description: 'Start and end of operations checklists per aircraft and equipment, one of each per day.',
+          noAircraft: 'No aircraft or equipment yet.',
+          noTemplate: 'No checklist set up',
+          notStarted: 'Not started today',
+          items: 'No items | 1 item | {count} items',
+          open: "Today's checklist"
+        },
+        template: {
+          create: 'Create',
+          add: 'Create {kind} checklist for {registration}',
+          edit: 'Edit {kind} checklist for {registration}',
+          editShort: 'Edit checklist',
+          items: 'Items',
+          itemsHint: 'One item per line. Checklists already started keep their items.',
+          itemsPlaceholder: 'Clean the canopy and check it for cracks',
+          delete: 'Delete checklist',
+          deleteConfirm: 'Really delete the checklist? Checklists filled in stay in the archive. If it is created anew, a checklist started today and not yet confirmed is discarded the next time it is opened.'
+        },
+        today: {
+          notStarted: 'The checklist of {date} has not been started yet.',
+          startHint: 'Whoever starts it is recorded as the recorder. After that everybody can help.',
+          start: 'Start checklist',
+          noTemplate: 'This aircraft or equipment has no such checklist.'
+        },
+        checklist: {
+          createdBy: 'Recorder',
+          submittedBy: 'Confirmed by',
+          approvedBy: 'Approved by',
+          unknownUser: 'Unknown',
+          progress: '{checked} of {total} checked',
+          notOkCount: 'none not OK | 1 not OK | {count} not OK',
+          checkedBy: 'Checked by {name}, {when}',
+          comment: 'Remark',
+          commentPlaceholder: 'Remark (optional)',
+          submit: 'Complete – confirm',
+          submitHint: 'The checklist can be confirmed once every item is checked.',
+          approve: 'Approve',
+          reopen: 'Back to in progress',
+          submitSuccess: 'Checklist confirmed. The operations admins have been notified.',
+          approveSuccess: 'Checklist approved.',
+          reopenSuccess: 'The checklist is in progress again.'
+        },
+        defect: {
+          report: 'Report defect',
+          title: 'Report a defect to the defect book',
+          hint: 'The defect is added to the defect book of the aircraft or equipment and the item is marked not OK.',
+          submit: 'Report defect',
+          reported: 'Defect added to the defect book.',
+          linked: 'Defect: {title}'
+        },
+        archive: {
+          title: 'Checklist archive',
+          description: 'Every checklist filled in, searchable by aircraft, kind, status, period and text.',
+          search: 'Search (registration, recorder, remark …)',
+          aircraft: 'Aircraft / equipment',
+          allAircraft: 'All aircraft and equipment',
+          kind: 'Kind',
+          allKinds: 'Start and end of operations',
+          status: 'Status',
+          allStatuses: 'All statuses',
+          from: 'From',
+          to: 'To',
+          date: 'Date',
+          result: 'Result',
+          open: 'View'
+        },
+        print: {
+          open: 'Print QR code',
+          print: 'Print',
+          hint: "Scanning always opens the checklist of the current day."
+        }
+      },
+      profile: {
+        title: 'My settings',
+        loadError: 'The settings could not be loaded.',
+        kiosk: {
+          title: 'Kiosk code',
+          description: 'Personal 6-digit PIN for signing in at the kiosk.',
+          set: 'Set',
+          notSet: 'Not set',
+          pin: 'PIN',
+          newPin: 'New PIN',
+          confirmPin: 'Repeat PIN',
+          mismatch: 'The PINs do not match.',
+          hint: 'The PIN is stored encrypted like a password and cannot be shown again.',
+          save: 'Save PIN',
+          saved: 'Kiosk code saved.',
+          saveError: 'The kiosk code could not be saved.',
+          remove: 'Remove PIN',
+          removeConfirm: 'Really remove the kiosk code?',
+          removed: 'Kiosk code removed.'
+        }
+      },
       notifications: {
         title: 'Notifications',
         open: 'Open notifications',
@@ -699,7 +819,8 @@ export default defineI18nLocale(async locale => {
         empty: 'No notifications',
         markAllRead: 'Mark all as read',
         someone: 'Someone',
-        DEFECT_ASSIGNED: '{actor} assigned a defect to you'
+        DEFECT_ASSIGNED: '{actor} assigned a defect to you',
+        CHECKLIST_SUBMITTED: '{actor} confirmed a checklist for approval'
       },
       users: {
         title: 'Users',
@@ -716,21 +837,19 @@ export default defineI18nLocale(async locale => {
         permissionSuccess: 'Rights updated',
         permissionError: 'Could not change the rights',
         loadError: 'Could not load the users',
-        impliedByRole: 'Already included in the role',
+        impliedByRole: 'Administrators hold every right',
         roleSuccess: 'Roles updated',
         roleError: 'Roles could not be changed',
         ownAdminRole: 'You cannot revoke your own administrator role',
         roleNames: {
           ROLE_USER: 'User',
-          ROLE_ADMIN: 'Administrator',
-          ROLE_SCHEDULE_ADMIN: 'Schedule administrator',
-          ROLE_ALARM_ADMIN: 'Alarm administrator',
-          ROLE_MAINTENANCE_ADMIN: 'Maintenance administrator'
+          ROLE_ADMIN: 'Administrator'
         },
         permissionNames: {
           PERMISSION_SCHEDULE_MANAGE: 'Manage service plans',
           PERMISSION_ALARM_MANAGE: 'Manage alarm system',
-          PERMISSION_MAINTENANCE_MANAGE: 'Manage maintenance'
+          PERMISSION_MAINTENANCE_MANAGE: 'Manage maintenance',
+          PERMISSION_OPERATIONS_MANAGE: 'Operations admin'
         }
       },
       error: {

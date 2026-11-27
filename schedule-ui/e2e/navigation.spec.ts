@@ -8,8 +8,9 @@ test.describe('Rollen und Menü', () => {
   const visibility: [Role, string[], string[]][] = [
     ['admin', ['Dienstpläne', 'Alarmanlage', 'Bugs & Wünsche', 'Einstellungen', 'Benutzer'], []],
     ['schedule', ['Dienstpläne', 'Bugs & Wünsche'], ['Alarmanlage', 'Einstellungen', 'Benutzer']],
-    ['alarm', ['Alarmanlage', 'Bugs & Wünsche'], ['Dienstpläne', 'Einstellungen', 'Benutzer']],
-    ['user', ['Dienstpläne', 'Bugs & Wünsche'], ['Alarmanlage', 'Einstellungen', 'Benutzer']],
+    // a right comes on top of the user role, so everybody sees the service plans and the operations checklists
+    ['alarm', ['Alarmanlage', 'Dienstpläne', 'Betrieb', 'Bugs & Wünsche'], ['Einstellungen', 'Benutzer']],
+    ['user', ['Dienstpläne', 'Betrieb', 'Bugs & Wünsche'], ['Alarmanlage', 'Einstellungen', 'Benutzer']],
   ]
 
   for (const [role, shown, hidden] of visibility) {
@@ -77,7 +78,9 @@ test.describe('Benutzermenü', () => {
     await page.goto('/')
     await openAccountMenu(page)
     await expect(page.getByRole('menuitem', { name: 'Abmelden' })).toBeVisible()
-    await expect(page.getByRole('menuitem', { name: 'Einstellungen' })).toHaveCount(0)
+    // the personal settings ("Meine Einstellungen") are there, the settings of the application are not
+    await expect(page.getByRole('menuitem', { name: 'Einstellungen', exact: true })).toHaveCount(0)
+    await expect(page.getByRole('menuitem', { name: /Meine Einstellungen/ })).toBeVisible()
     await expect(page.getByRole('menuitem', { name: 'Bugs & Wünsche' })).toHaveCount(0)
   })
 })

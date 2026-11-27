@@ -53,26 +53,26 @@ public class MaintenanceAircraftController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_MAINTENANCE_MANAGE')")
     public ResponseEntity<AircraftResponse> create(@Valid @RequestBody AircraftRequest request, @AuthenticationPrincipal UserDetailsImpl currentUser) {
         return ResponseEntity.status(HttpStatus.CREATED).body(aircraftService.create(request, currentUser));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_MAINTENANCE_MANAGE')")
     public ResponseEntity<AircraftResponse> update(@PathVariable String id, @Valid @RequestBody AircraftRequest request, @AuthenticationPrincipal UserDetailsImpl currentUser) {
         return ResponseEntity.ok(aircraftService.update(id, request, currentUser));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_MAINTENANCE_MANAGE')")
     public ResponseEntity<Void> delete(@PathVariable String id, @AuthenticationPrincipal UserDetailsImpl currentUser) {
         aircraftService.delete(id, currentUser);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/import-templates")
-    @PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_MAINTENANCE_MANAGE')")
     public ResponseEntity<ImportResponse> importTemplates(@PathVariable String id, @Valid @RequestBody TemplateImportRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         return ResponseEntity.ok(aircraftService.importTemplates(id, request, currentUser));

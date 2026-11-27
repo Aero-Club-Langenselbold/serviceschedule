@@ -55,20 +55,20 @@ public class MaintenanceInventoryController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_MAINTENANCE_MANAGE')")
     public ResponseEntity<InventoryItemResponse> create(@Valid @RequestBody InventoryItemRequest request, @AuthenticationPrincipal UserDetailsImpl currentUser) {
         return ResponseEntity.status(HttpStatus.CREATED).body(inventoryService.create(request, currentUser));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_MAINTENANCE_MANAGE')")
     public ResponseEntity<InventoryItemResponse> update(@PathVariable String id, @Valid @RequestBody InventoryItemRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         return ResponseEntity.ok(inventoryService.update(id, request, currentUser));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('MAINTENANCE_ADMIN')")
+    @PreAuthorize("hasAuthority('PERMISSION_MAINTENANCE_MANAGE')")
     public ResponseEntity<Void> delete(@PathVariable String id, @AuthenticationPrincipal UserDetailsImpl currentUser) {
         inventoryService.delete(id, currentUser);
         return ResponseEntity.noContent().build();

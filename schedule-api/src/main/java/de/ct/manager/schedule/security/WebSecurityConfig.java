@@ -76,16 +76,15 @@ public class WebSecurityConfig {
         return new CorsFilter(corsConfigurationSource());
     }
 
-    // A right unlocks everything the role of that module may do, administrators hold all rights.
+    // Users are either administrators or members (ROLE_USER); what a member may administer is decided by rights.
+    // Administrators hold all rights.
     @Bean
     static RoleHierarchy roleHierarchy() {
         return RoleHierarchyImpl.fromHierarchy("""
             ROLE_ADMIN > PERMISSION_SCHEDULE_MANAGE
             ROLE_ADMIN > PERMISSION_ALARM_MANAGE
             ROLE_ADMIN > PERMISSION_MAINTENANCE_MANAGE
-            PERMISSION_SCHEDULE_MANAGE > ROLE_SCHEDULE_ADMIN
-            PERMISSION_ALARM_MANAGE > ROLE_ALARM_ADMIN
-            PERMISSION_MAINTENANCE_MANAGE > ROLE_MAINTENANCE_ADMIN
+            ROLE_ADMIN > PERMISSION_OPERATIONS_MANAGE
             """);
     }
 

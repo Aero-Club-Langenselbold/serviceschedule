@@ -18,7 +18,7 @@ docker compose -f docker-compose-local-db.yml up -d
 
 cd schedule-api
 ./mvnw spring-boot:run          # http://localhost:8080/api/v1, Swagger UI under /api/v1/swagger-ui/index.html
-./mvnw test                     # H2 in memory, ~220 tests (unit + @SpringBootTest integration)
+./mvnw test                     # H2 in memory, ~290 tests (unit + @SpringBootTest integration)
 ./mvnw -Dtest=MaintenanceIntegrationTest test
 
 cd schedule-ui
@@ -44,10 +44,10 @@ Run the backend tests when `schedule-api` changed and `pnpm test` when `schedule
 
 ## Roles and rights
 
-- Roles (`UserRole`, table `auth_role`): `ROLE_USER`, `ROLE_ADMIN`, `ROLE_SCHEDULE_ADMIN`, `ROLE_ALARM_ADMIN`, `ROLE_MAINTENANCE_ADMIN`. Administrators assign them on the users page (`GET /user/roles` = `UserRole.assignable()`, `PUT /user/{id}/roles`): everything except `ROLE_USER`, which stays as it is (a user left without roles gets it); administrators cannot revoke their own `ROLE_ADMIN` (`400`). Missing `auth_role` rows are created on demand (the test data seeds only three). Authorities are read from the database on every request, so changes apply at once.
-- Rights (`UserPermission`, table `auth_user_permissions`) are granted by administrators at runtime on the users page: `PERMISSION_SCHEDULE_MANAGE`, `PERMISSION_ALARM_MANAGE`, `PERMISSION_MAINTENANCE_MANAGE`.
-- `WebSecurityConfig#roleHierarchy`: `ROLE_ADMIN > PERMISSION_* > ROLE_<MODULE>_ADMIN`. So `@PreAuthorize("hasRole('MAINTENANCE_ADMIN')")` admits administrators, maintenance admins and holders of the right. Checks inside services use the hierarchy too (`MaintenanceAccess#canManage`), never compare role names directly.
-- Frontend mirrors this in `stores/user.ts` (`canManageSchedule`, `canManageAlarm`, `canManageMaintenance`) and in route middlewares (`middleware/*-admin.ts`). A new right also needs: i18n names under `users.permissionNames` / `users.roleNames`, and `permissionsOfRole` in `pages/users/list.vue`.
+- Only two roles (`UserRole`, table `auth_role`, check constraint): `ROLE_USER` and `ROLE_ADMIN`. Everything a member may administer is a right. `V3.7__roles_admin_and_user_only.sql` turned the former module roles (`ROLE_SCHEDULE_ADMIN`, `ROLE_ALARM_ADMIN`, `ROLE_MAINTENANCE_ADMIN`) into the matching rights. Administrators assign `ROLE_ADMIN` on the users page (`GET /user/roles` = `UserRole.assignable()`, `PUT /user/{id}/roles`); `ROLE_USER` stays as it is (a user left without roles gets it); administrators cannot revoke their own `ROLE_ADMIN` (`400`); unknown role names are `400`. Authorities are read from the database on every request, so changes apply at once.
+- Rights (`UserPermission`, table `auth_user_permissions`, check constraint) are granted by administrators at runtime on the users page: `PERMISSION_SCHEDULE_MANAGE`, `PERMISSION_ALARM_MANAGE`, `PERMISSION_MAINTENANCE_MANAGE`, `PERMISSION_OPERATIONS_MANAGE` ("Betriebsadmin").
+- `WebSecurityConfig#roleHierarchy`: `ROLE_ADMIN > PERMISSION_*`. Controllers check rights, e.g. `@PreAuthorize("hasAuthority('PERMISSION_MAINTENANCE_MANAGE')")` admits administrators and holders of the right; pages for every member use `hasAnyAuthority('ROLE_USER', 'PERMISSION_SCHEDULE_MANAGE')`. Checks inside services use the hierarchy too (`MaintenanceAccess#canManage`, `#canManageOperations`, `#holds`), never compare role names directly. The alarm passphrase filter grants `PERMISSION_ALARM_MANAGE`.
+- Frontend mirrors this in `stores/user.ts` (`isAdmin`, `canManageSchedule`, `canManageAlarm`, `canManageMaintenance`, `canManageOperations`, `canManageChecklists`) and in route middlewares (`middleware/*-admin.ts`). A new right also needs: i18n names under `users.permissionNames`.
 - The frontend only hides controls; the backend enforces every rule.
 
 ## Plan generation and requests
@@ -102,9 +102,25 @@ Inventory (`/maintenance/inventory`, page `pages/maintenance/inventory.vue`), mo
 
 Not ported from vereins-wartung (possible follow-ups): seasons/archive, leads per workshop day, documents and file/photo uploads, deadlines and the Vereinsflieger sync, the order list of the inventory, FAQ, offline sync.
 
+## Operations checklists
+
+Backend package `operations` (`OperationsChecklistService`, API under `/api/v1/operations`), migrations `V3.8__operations_checklists.sql` and `V3.10__operations_checklist_template_link.sql`, frontend `pages/operations/`, `components/operations/`, `composables/useOperations.ts`, `types/operations.ts`, menu "Betrieb".
+
+- Every aircraft/equipment (`maintenance_aircraft`) has at most one template per kind (`START` = Betriebsbeginn, `END` = Betriebsende): `operations_checklist_template` (+ `_item`, element collection). Maintenance and operations administrators create/replace (`PUT /aircraft/{id}/templates/{kind}`, blank lines dropped, at least one item) and delete them.
+- `operations_checklist` is the checklist of one day, unique `(aircraft_id, kind, checklist_date)`; "today" is `LocalDate.now(schedule.calendar.timezone)`. `POST /aircraft/{id}/checklists/{kind}/today` starts it (copies the template items, `409` if it exists, `404` without template); the starter is `created_by` (initial recorder, never changed). `GET …/today` returns `{ templateItems, checklist }` and is the target of the QR code (`/operations/checklist/{aircraftId}/{start|end}`, print view `/operations/print/{aircraftId}/{kind}` with `layout: false`, library `qrcode`).
+- A checklist remembers its template (`template_id`, `V3.10__operations_checklist_template_link.sql`, `SET NULL`). If the template is deleted and created anew, today's checklist still `IN_PROGRESS` is outdated (`OperationsChecklistService#isOutdated`): opening it (`GET …/today`) or starting (`POST …/today`) discards it, the overview shows it as not started; until then it stays in the archive. Submitted/approved checklists, a changed template (`PUT`) or a template only deleted keep it.
+- Everybody checks items (`PUT /checklists/{id}/items/{itemId}` with `result` `OK`/`NOT_OK`/`null` and `comment`; checker recorded) and reports defects from an item (`POST …/items/{itemId}/defect`, uses `MaintenanceDefectService#report`, item becomes `NOT_OK` and stays so). Only today's `IN_PROGRESS` checklist is editable (`409`).
+- `POST /checklists/{id}/submit` (all items checked, else `409`) sets `SUBMITTED` and notifies users holding `PERMISSION_OPERATIONS_MANAGE` explicitly (not administrators, not the submitter; `NotificationType.CHECKLIST_SUBMITTED`). Operations admins `approve` (`SUBMITTED → APPROVED`, marks the others' notifications read) and `reopen` today's checklist (deletes unread notifications).
+- Archive `GET /operations/checklists` (operations admins, paged, filters `aircraftId`, `kind`, `status`, `from`, `to`, `search`). Members read checklists of today only (`403` otherwise). Responses carry `editable`/`submittable`/`approvable`/`reopenable`.
+
+## Personal settings
+
+`pages/profile.vue`, opened from the username in the account menu. `GET /user/me/settings`, `PUT /user/me/kiosk-pin` (`{ pin }`, exactly 6 digits, else `400`), `DELETE /user/me/kiosk-pin`. The PIN is BCrypt hashed (`auth_user.kiosk_pin`, `V3.9__kiosk_pin.sql`, `@NotAudited`) and never returned, only `kioskPinSet`. `UserService#matchesKioskPin` is for the coming kiosk mode (name + PIN).
+
 ## Frontend conventions
 
 - Pages use `AppPage` (title, description, `#actions`, error/success messages, width). Tables use `DataTable` (turns into cards below `md`). Delete confirmation via `ConfirmationDialog`. Lists of cards: `rounded-xl border border-default bg-default p-4`, like the home page tiles.
+- The club logo (`assets/logo.png`) replaces the app name at the top left of the header (`components/nav-menu.vue`).
 - Light theme only; colors via Nuxt UI semantic colors (`primary` teal, `neutral` stone …, see `app.config.ts`) and tokens (`text-muted`, `bg-elevated` …), no hex values. Touch-friendly sizes below `lg` come from `app.config.ts`.
 - API calls through `useAPI` (returns `{ data, error }`, never throws; `error.value.statusCode` for status specific handling). The plugin `plugins/api.ts` adds the JWT and redirects to `/login` on 401.
 - All user facing text through i18n in **both** `i18n/locales/de-DE.ts` and `en-US.ts`. Tests run in English.

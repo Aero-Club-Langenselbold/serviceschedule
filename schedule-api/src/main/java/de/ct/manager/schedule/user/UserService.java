@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -29,12 +30,50 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final ParticipantRepository participantRepository;
     private final JwtUtils jwtUtils;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, ParticipantRepository participantRepository, JwtUtils jwtUtils) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, ParticipantRepository participantRepository, JwtUtils jwtUtils,
+            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.participantRepository = participantRepository;
         this.jwtUtils = jwtUtils;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    public UserSettings getSettings(String username) {
+        return toSettings(findByUsername(username));
+    }
+
+    /** Stores the kiosk PIN hashed like a password; it cannot be read back, not even by its owner. */
+    @Transactional
+    public UserSettings setKioskPin(String username, String pin) {
+        User user = findByUsername(username);
+        user.setKioskPin(passwordEncoder.encode(pin));
+        log.info("User {} set their kiosk PIN", username);
+        return toSettings(userRepository.save(user));
+    }
+
+    @Transactional
+    public UserSettings deleteKioskPin(String username) {
+        User user = findByUsername(username);
+        user.setKioskPin(null);
+        log.info("User {} removed their kiosk PIN", username);
+        return toSettings(userRepository.save(user));
+    }
+
+    /** For the kiosk mode: whether the PIN is the one the user set. */
+    public boolean matchesKioskPin(User user, String pin) {
+        return user.getKioskPin() != null && pin != null && passwordEncoder.matches(pin, user.getKioskPin());
+    }
+
+    private User findByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    }
+
+    private static UserSettings toSettings(User user) {
+        return new UserSettings(user.getUsername(), user.getKioskPin() != null);
     }
 
     public Page<UserOverview> getUsers(Pageable pageable, String search) {

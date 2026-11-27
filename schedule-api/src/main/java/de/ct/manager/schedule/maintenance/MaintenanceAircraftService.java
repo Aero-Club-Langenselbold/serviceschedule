@@ -141,7 +141,7 @@ public class MaintenanceAircraftService {
         return new ImportResponse(tasks.size());
     }
 
-    MaintenanceAircraft find(String id) {
+    public MaintenanceAircraft find(String id) {
         return aircraftRepository.findById(id).orElseThrow(() -> MaintenanceAccess.notFound("Aircraft"));
     }
 

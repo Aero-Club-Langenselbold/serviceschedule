@@ -32,15 +32,8 @@ const assignableRoles = ref<string[]>([])
 const filterValue = ref('')
 const savingUsers = reactive<Record<string, boolean>>({})
 
-// Rights that a role grants anyway, so they cannot be granted or revoked on their own.
-const permissionsOfRole: Record<string, string[]> = {
-  ROLE_SCHEDULE_ADMIN: ['PERMISSION_SCHEDULE_MANAGE'],
-  ROLE_ALARM_ADMIN: ['PERMISSION_ALARM_MANAGE'],
-  ROLE_MAINTENANCE_ADMIN: ['PERMISSION_MAINTENANCE_MANAGE']
-}
-
-const isImpliedByRole = (row: UserOverview, permission: string) =>
-  row.roles.some(role => role === 'ROLE_ADMIN' || permissionsOfRole[role]?.includes(permission))
+// Administrators hold every right anyway, so for them the rights cannot be granted or revoked on their own.
+const isImpliedByRole = (row: UserOverview, _permission: string) => row.roles.includes('ROLE_ADMIN')
 
 const isImpersonable = (row: UserOverview) => !row.roles.includes('ROLE_ADMIN') && row.username !== user.value?.username
 

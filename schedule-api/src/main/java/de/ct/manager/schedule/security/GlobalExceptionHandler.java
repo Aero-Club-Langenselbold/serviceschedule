@@ -7,6 +7,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.ct.manager.schedule.alarm.AlarmDuplicateException;
@@ -60,6 +62,14 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
+    /** Unreadable bodies (e.g. an unknown enum value) and parameters of the wrong type are mistakes of the client. */
+    @ExceptionHandler({ HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class })
+    public ResponseEntity<Map<String, String>> handleBadRequest(Exception ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", "Malformed request");
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Map<String, String>> handleResponseStatusException(ResponseStatusException ex) {
         Map<String, String> errors = new HashMap<>();
@@ -76,7 +86,6 @@ public class GlobalExceptionHandler {
             throw authEx;
         }
         log.error("General exception", ex);
-        ex.printStackTrace();
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

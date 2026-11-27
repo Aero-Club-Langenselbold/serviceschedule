@@ -32,13 +32,13 @@ describe('Users Page', () => {
         expect(wrapper.html()).toContain('Manage alarm system')
     })
 
-    it('marks rights already included in a role and keeps them unchangeable', async () => {
+    it('marks the rights of administrators as included and keeps them unchangeable', async () => {
         const wrapper = await mountPage()
-        expect(wrapper.html()).toContain('Already included in the role')
+        expect(wrapper.html()).toContain('Administrators hold every right')
 
         const adminRow = wrapper.findAll('tr').find(row => row.text().includes('testadmin'))!
         const checkboxes = adminRow.findAll('button[data-permission]')
-        expect(checkboxes).toHaveLength(2)
+        expect(checkboxes).toHaveLength(4)
         checkboxes.forEach(checkbox => expect(checkbox.attributes('disabled')).toBeDefined())
     })
 
@@ -67,13 +67,23 @@ describe('Users Page', () => {
         expect(alarmRight.attributes('data-state')).toBe('unchecked')
     })
 
-    it('offers the assignable roles as checkboxes and keeps the base role as a badge', async () => {
+    it('offers only the administrator role as checkbox and keeps the base role as a badge', async () => {
         const wrapper = await mountPage()
         const annaRow = wrapper.findAll('tr').find(row => row.text().includes('anna@example.org'))!
         expect(annaRow.text()).toContain('User')
         const roles = annaRow.findAll('button[data-role]')
-        expect(roles).toHaveLength(4)
-        roles.forEach(role => expect(role.attributes('data-state')).toBe('unchecked'))
+        expect(roles).toHaveLength(1)
+        expect(roles[0]!.attributes('data-role')).toBe('ROLE_ADMIN')
+        expect(roles[0]!.attributes('data-state')).toBe('unchecked')
+    })
+
+    it('offers the operations admin right', async () => {
+        const wrapper = await mountPage()
+        const annaRow = wrapper.findAll('tr').find(row => row.text().includes('anna@example.org'))!
+        const operations = annaRow.find('button[data-permission="PERMISSION_OPERATIONS_MANAGE"]')
+        expect(operations.exists()).toBe(true)
+        expect(annaRow.text()).toContain('Operations admin')
+        expect(operations.attributes('disabled')).toBeUndefined()
     })
 
     it('makes a user an administrator, which includes every right', async () => {
@@ -108,8 +118,8 @@ describe('Users Page', () => {
         expect(ownAdmin.attributes('data-state')).toBe('checked')
         expect(ownAdmin.attributes('disabled')).toBeDefined()
         expect(adminRow.text()).toContain('You cannot revoke your own administrator role')
-        // further roles of their own they may change
-        expect(adminRow.find('button[data-role="ROLE_ALARM_ADMIN"]').attributes('disabled')).toBeUndefined()
+        // administrators hold every right anyway
+        adminRow.findAll('button[data-permission]').forEach(right => expect(right.attributes('data-state')).toBe('checked'))
     })
 
     it('does not offer to impersonate administrators', async () => {
