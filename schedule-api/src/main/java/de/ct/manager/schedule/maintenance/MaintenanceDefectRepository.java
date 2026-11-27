@@ -8,11 +8,16 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface MaintenanceDefectRepository extends JpaRepository<MaintenanceDefect, String> {
 
-    @EntityGraph(attributePaths = { "reportedBy", "doneBy" })
+    @EntityGraph(attributePaths = { "aircraft", "reportedBy", "doneBy", "signedBy", "assignees" })
     List<MaintenanceDefect> findAllByAircraftOrderByReportedAtDesc(MaintenanceAircraft aircraft);
 
+    @EntityGraph(attributePaths = { "aircraft", "reportedBy", "doneBy", "signedBy", "assignees" })
+    List<MaintenanceDefect> findAllByOrderByReportedAtDesc();
+
+    /** Open defects are those still to be worked on: OPEN and IN_PROGRESS. */
     @Query("SELECT d.aircraft.id AS aircraftId, COUNT(d) AS total FROM MaintenanceDefect d "
-            + "WHERE d.status = de.ct.manager.schedule.maintenance.DefectStatus.OPEN GROUP BY d.aircraft.id")
+            + "WHERE d.status IN (de.ct.manager.schedule.maintenance.DefectStatus.OPEN, de.ct.manager.schedule.maintenance.DefectStatus.IN_PROGRESS) "
+            + "GROUP BY d.aircraft.id")
     List<OpenDefectCounts> countOpenByAircraft();
 
     interface OpenDefectCounts {

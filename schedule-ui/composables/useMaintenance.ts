@@ -1,4 +1,4 @@
-import type { DefectPriority, InventoryItem, InventoryStockStatus, SkillLevel, TaskStatus } from '~/types/maintenance'
+import type { Defect, DefectPriority, DefectStatus, InventoryItem, InventoryStockStatus, SkillLevel, TaskStatus } from '~/types/maintenance'
 
 type BadgeColor = 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
 
@@ -22,6 +22,7 @@ export const splitLines = (text: string) => text.split('\n').map(line => line.tr
 const LEVEL_COLORS: Record<SkillLevel, BadgeColor> = { BEGINNER: 'success', EXPERIENCED: 'info', WORKSHOP_LEAD: 'secondary' }
 const STATUS_COLORS: Record<TaskStatus, BadgeColor> = { OPEN: 'neutral', IN_PROGRESS: 'warning', DONE: 'success' }
 const PRIORITY_COLORS: Record<DefectPriority, BadgeColor> = { HIGH: 'error', NORMAL: 'warning', LOW: 'info', VERY_LOW: 'neutral' }
+const DEFECT_STATUS_COLORS: Record<DefectStatus | 'SIGNED', BadgeColor> = { OPEN: 'error', IN_PROGRESS: 'warning', DONE: 'success', REJECTED: 'neutral', SIGNED: 'primary' }
 const STOCK_COLORS: Record<InventoryStockStatus, BadgeColor> = { OK: 'success', LOW: 'warning', EMPTY: 'error' }
 
 /** Labels, colors and formatting shared by the maintenance pages. */
@@ -31,6 +32,12 @@ export function useMaintenance() {
     const levelLabel = (level: SkillLevel) => t(`maintenance.level.${level}`)
     const statusLabel = (status: TaskStatus) => t(`maintenance.status.${status}`)
     const priorityLabel = (priority: DefectPriority) => t(`maintenance.priority.${priority}`)
+
+    /** A signed off defect shows as such, whatever it was closed with. */
+    const defectState = (defect: Pick<Defect, 'status' | 'signedAt'>): DefectStatus | 'SIGNED' => defect.signedAt ? 'SIGNED' : defect.status
+    const defectStatusLabel = (defect: Pick<Defect, 'status' | 'signedAt'>) => t(`maintenance.defect.status.${defectState(defect)}`)
+    const defectStatusColor = (defect: Pick<Defect, 'status' | 'signedAt'>) => DEFECT_STATUS_COLORS[defectState(defect)]
+    const isDefectOpen = (defect: Pick<Defect, 'status'>) => defect.status === 'OPEN' || defect.status === 'IN_PROGRESS'
 
     const levelColor = (level: SkillLevel) => LEVEL_COLORS[level]
     const statusColor = (status: TaskStatus) => STATUS_COLORS[status]
@@ -81,6 +88,7 @@ export function useMaintenance() {
     const priorityItems = computed(() => DEFECT_PRIORITIES.map(priority => ({ label: priorityLabel(priority), value: priority })))
 
     return {
+        defectStatusLabel, defectStatusColor, isDefectOpen,
         levelLabel, statusLabel, priorityLabel, levelColor, statusColor, priorityColor,
         stockColor, levelName, formatStock, formatDuration, formatDay, formatPeriod, formatWhen, progressPercent, durationItems, levelItems, priorityItems
     }

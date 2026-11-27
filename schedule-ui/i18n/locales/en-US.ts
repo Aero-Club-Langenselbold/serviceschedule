@@ -78,6 +78,7 @@ export default defineI18nLocale(async locale => {
         stopImpersonation: 'Stop impersonating',
         language: 'Choose language',
         account: 'Account',
+        notifications: 'Notifications',
         about: 'About',
         contact: 'Contact',
         participants: {
@@ -100,7 +101,8 @@ export default defineI18nLocale(async locale => {
           overview: 'Aircraft & tasks',
           templates: 'Task templates',
           schedule: 'Workshop schedule',
-          inventory: 'Inventory'
+          inventory: 'Inventory',
+          defects: 'Defect book'
         },
         alarms: {
           menu: 'Alarm system',
@@ -451,10 +453,6 @@ export default defineI18nLocale(async locale => {
           exists: 'This registration already exists',
           scheduleHint: 'When the aircraft is in the workshop is planned in the workshop schedule.'
         },
-        tabs: {
-          tasks: 'Tasks',
-          defects: 'Defects & findings'
-        },
         visits: {
           running: 'Running',
           past: 'Finished visits',
@@ -531,23 +529,80 @@ export default defineI18nLocale(async locale => {
           }
         },
         defect: {
-          add: 'Report defect/finding',
-          edit: 'Edit defect/finding',
-          delete: 'Delete defect/finding',
-          deleteConfirm: 'Delete the defect/finding? A linked task is kept.',
-          empty: 'No defects or findings reported.',
+          add: 'Report defect',
+          edit: 'Edit defect',
+          delete: 'Delete defect',
+          deleteConfirm: 'Delete the defect? A linked task is kept.',
+          empty: 'No defects reported.',
           title: 'Title',
           titlePlaceholder: 'e.g. Crack in the canopy',
           description: 'Description',
           descriptionPlaceholder: 'Where exactly? How big?',
+          aircraft: 'Aircraft/equipment',
+          aircraftPlaceholder: 'Choose aircraft or equipment',
+          assignees: 'Assigned to',
+          assigneesPlaceholder: 'Not assigned',
+          assigneesHint: 'Assigned users are notified.',
+          unassigned: 'Not assigned',
+          assignedToMe: 'Assigned to me',
           reportedBy: 'Reported by {name} · {date}',
           doneBy: 'Done by {name} · {date}',
-          markDone: 'Mark as done',
-          markOpen: 'Reopen',
+          rejectedBy: 'Rejected by {name} · {date}',
+          signedBy: 'Signed off by {name} · {date}',
+          start: 'Start working',
+          markDone: 'Report as done',
+          reject: 'Reject',
+          rejectTitle: 'Reject defect',
+          rejectReason: 'Reason',
+          rejectHint: 'Why is this not a defect or why will it not be fixed?',
+          reopen: 'Reopen',
+          sign: 'Sign off',
+          unsign: 'Withdraw sign-off',
+          awaitingSignOff: 'Sign-off pending',
+          locked: 'Signed off defects are locked until the sign-off is withdrawn.',
           createTask: 'Create task',
           task: 'Task',
-          statusOpen: 'Open',
-          statusDone: 'Done'
+          openBoard: 'Go to aircraft',
+          activity: 'Comments & history',
+          comments: 'No comments | 1 comment | {count} comments',
+          commentPlaceholder: 'Write a comment …',
+          addComment: 'Comment',
+          deleteComment: 'Delete comment',
+          notFound: 'The defect was not found – maybe it has been deleted.',
+          status: {
+            OPEN: 'Open',
+            IN_PROGRESS: 'In progress',
+            DONE: 'Done',
+            REJECTED: 'Rejected',
+            SIGNED: 'Signed off'
+          },
+          actions: {
+            REPORTED: 'reported the defect',
+            UPDATED: 'edited the defect',
+            COMMENTED: 'commented',
+            STARTED: 'started working on it',
+            DONE: 'reported the defect as done',
+            REJECTED: 'rejected the defect',
+            REOPENED: 'reopened the defect',
+            ASSIGNED: 'assigned {name}',
+            UNASSIGNED: 'removed {name}',
+            SIGNED: 'signed off the defect',
+            UNSIGNED: 'withdrew the sign-off'
+          }
+        },
+        defects: {
+          title: 'Defect book',
+          description: 'Defects and findings on aircraft and equipment such as the winch: report, assign, work on and sign off.',
+          allAircraft: 'All aircraft & equipment',
+          onlyMine: 'Only assigned to me',
+          filter: {
+            OPEN: 'Open',
+            CLOSED: 'Sign-off pending',
+            SIGNED: 'Signed off',
+            ALL: 'All'
+          },
+          emptyFilter: 'No defects for this selection.',
+          open: 'Defect book'
         },
         schedule: {
           title: 'Workshop schedule',
@@ -637,9 +692,18 @@ export default defineI18nLocale(async locale => {
           steps: 'No steps | 1 step | {count} steps'
         }
       },
+      notifications: {
+        title: 'Notifications',
+        open: 'Open notifications',
+        unread: 'No unread | 1 unread | {count} unread',
+        empty: 'No notifications',
+        markAllRead: 'Mark all as read',
+        someone: 'Someone',
+        DEFECT_ASSIGNED: '{actor} assigned a defect to you'
+      },
       users: {
         title: 'Users',
-        description: 'Registered users with their roles and rights. Roles are assigned in the database.',
+        description: 'Registered users with their roles and rights.',
         filter: 'Search users',
         username: 'Username',
         fullname: 'Participant',
@@ -653,6 +717,9 @@ export default defineI18nLocale(async locale => {
         permissionError: 'Could not change the rights',
         loadError: 'Could not load the users',
         impliedByRole: 'Already included in the role',
+        roleSuccess: 'Roles updated',
+        roleError: 'Roles could not be changed',
+        ownAdminRole: 'You cannot revoke your own administrator role',
         roleNames: {
           ROLE_USER: 'User',
           ROLE_ADMIN: 'Administrator',

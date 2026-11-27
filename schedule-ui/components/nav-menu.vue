@@ -5,7 +5,8 @@
         <span class="flex size-8 items-center justify-center rounded-lg bg-primary text-inverted">
           <UIcon name="i-lucide-calendar-check" class="size-5" />
         </span>
-        <span class="text-base font-semibold text-highlighted">{{ $t('app.shortName') }}</span>
+        <!-- signed in, phones need the room for notifications, account and menu: the logo alone leads home -->
+        <span class="text-base font-semibold text-highlighted" :class="{ 'max-sm:sr-only': isLoggedIn }">{{ $t('app.shortName') }}</span>
       </span>
     </template>
 
@@ -20,6 +21,7 @@
         <UButton color="neutral" variant="ghost" :aria-label="$t('nav.language')" :icon="locale === 'en' ? 'circle-flags:us' : 'circle-flags:de'" />
       </UDropdownMenu>
 
+      <NotificationBell v-if="isLoggedIn" />
       <UDropdownMenu v-if="isLoggedIn" :items="account" :content="{ align: 'end' }">
         <UButton color="neutral" variant="ghost" icon="i-lucide-circle-user" :aria-label="$t('nav.account')">
           <span class="hidden max-w-44 truncate 2xl:inline">{{ user?.username }}</span>
@@ -95,13 +97,14 @@ const menu = computed(() => {
       children: schedules
     })
   }
-  // Every signed in user works on maintenance tasks and counts the inventory, the templates are for administrators.
+  // Every signed in user works on maintenance tasks and defects and counts the inventory, the templates are for administrators.
   items.push({
     label: t('nav.maintenance.menu'),
     icon: 'i-lucide-wrench',
     defaultOpen: true,
     children: [
       { label: t('nav.maintenance.overview'), icon: 'i-lucide-plane', to: '/maintenance' },
+      { label: t('nav.maintenance.defects'), icon: 'i-lucide-triangle-alert', to: '/maintenance/defects' },
       { label: t('nav.maintenance.schedule'), icon: 'i-lucide-chart-gantt', to: '/maintenance/schedule' },
       { label: t('nav.maintenance.inventory'), icon: 'i-lucide-package', to: '/maintenance/inventory' },
       ...(canManageMaintenance.value ? [{ label: t('nav.maintenance.templates'), icon: 'i-lucide-copy', to: '/maintenance/templates' }] : [])

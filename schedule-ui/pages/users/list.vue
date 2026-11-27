@@ -28,10 +28,11 @@ const page = ref(1)
 const pageSize = ref(20)
 const listData = ref<Page<UserOverview> | null>(null)
 const availablePermissions = ref<string[]>([])
+const assignableRoles = ref<string[]>([])
 const filterValue = ref('')
 const savingUsers = reactive<Record<string, boolean>>({})
 
-// Rights that a role grants anyway. Roles are managed in the database, so these cannot be changed here.
+// Rights that a role grants anyway, so they cannot be granted or revoked on their own.
 const permissionsOfRole: Record<string, string[]> = {
   ROLE_SCHEDULE_ADMIN: ['PERMISSION_SCHEDULE_MANAGE'],
   ROLE_ALARM_ADMIN: ['PERMISSION_ALARM_MANAGE'],
@@ -60,6 +61,25 @@ const togglePermission = async (row: UserOverview, permission: string, granted: 
   toast.add({ title: t('users.permissionSuccess'), icon: 'i-lucide-circle-check', color: 'primary' })
 }
 
+// Administrators cannot revoke their own administrator role (the backend refuses it as well).
+const isOwnAdminRole = (row: UserOverview, role: string) => role === 'ROLE_ADMIN' && row.username === user.value?.username && row.roles.includes('ROLE_ADMIN')
+
+const toggleRole = async (row: UserOverview, role: string, granted: boolean) => {
+  const roles = (granted ? [...row.roles, role] : row.roles.filter(existing => existing !== role))
+    .filter(existing => assignableRoles.value.includes(existing))
+
+  savingUsers[row.id] = true
+  const { data, error } = await useAPI<UserOverview>(`/user/${row.id}/roles`, { method: 'PUT', body: roles })
+  savingUsers[row.id] = false
+
+  if (error.value) {
+    toast.add({ title: t('users.roleError'), icon: 'i-lucide-bomb', color: 'error' })
+    return
+  }
+  row.roles = (data.value as UserOverview).roles
+  toast.add({ title: t('users.roleSuccess'), icon: 'i-lucide-circle-check', color: 'primary' })
+}
+
 const startImpersonation = async (row: UserOverview) => {
   try {
     await impersonate(row.id)
@@ -81,8 +101,23 @@ const columns = computed<TableColumn<UserOverview>[]>(() => [
   }, {
     accessorKey: 'roles',
     header: t('users.roles'),
-    cell: ({ row }) => h('div', { class: 'flex flex-wrap gap-1' }, row.original.roles.map(role =>
-      h(UBadge, { key: role, variant: 'subtle', color: 'neutral' }, () => t(`users.roleNames.${role}`))))
+    // the base role (ROLE_USER) only as a badge, everything an administrator assigns as a checkbox
+    cell: ({ row }) => h('div', { class: 'flex flex-col gap-2' }, [
+      ...row.original.roles.filter(role => !assignableRoles.value.includes(role)).map(role =>
+        h(UBadge, { key: role, variant: 'subtle', color: 'neutral', class: 'self-start' }, () => t(`users.roleNames.${role}`))),
+      ...assignableRoles.value.map((role) => {
+        const own = isOwnAdminRole(row.original, role)
+        return h(UCheckbox, {
+          key: role,
+          label: t(`users.roleNames.${role}`),
+          description: own ? t('users.ownAdminRole') : undefined,
+          modelValue: row.original.roles.includes(role),
+          disabled: own || savingUsers[row.original.id],
+          'data-role': role,
+          'onUpdate:modelValue': (value: boolean | 'indeterminate') => toggleRole(row.original, role, value === true)
+        })
+      })
+    ])
   }, {
     accessorKey: 'permissions',
     header: t('users.permissions'),
@@ -94,6 +129,7 @@ const columns = computed<TableColumn<UserOverview>[]>(() => [
         description: implied ? t('users.impliedByRole') : undefined,
         modelValue: implied || row.original.permissions.includes(permission),
         disabled: implied || savingUsers[row.original.id],
+        'data-permission': permission,
         'onUpdate:modelValue': (value: boolean | 'indeterminate') => togglePermission(row.original, permission, value === true)
       })
     }))
@@ -133,8 +169,12 @@ const fetchDataDebounced = () => {
 }
 
 const fetchPermissions = async () => {
-  const { data } = await useAPI<string[]>('/user/permissions', { method: 'GET' })
-  availablePermissions.value = data.value ?? []
+  const [permissions, roles] = await Promise.all([
+    useAPI<string[]>('/user/permissions', { method: 'GET' }),
+    useAPI<string[]>('/user/roles', { method: 'GET' })
+  ])
+  availablePermissions.value = permissions.data.value ?? []
+  assignableRoles.value = roles.data.value ?? []
 }
 
 onMounted(() => {

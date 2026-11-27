@@ -36,7 +36,10 @@
 
         <p v-if="task.description" class="whitespace-pre-line text-default">{{ task.description }}</p>
 
-        <div v-if="task.defect" class="flex items-center gap-3 rounded-lg border border-default bg-muted p-3">
+        <NuxtLink
+          v-if="task.defect" :to="`/maintenance/defects?defect=${task.defect.id}`"
+          class="flex items-center gap-3 rounded-lg border border-default bg-muted p-3 transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-primary"
+        >
           <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <UIcon name="i-lucide-triangle-alert" class="size-5" />
           </span>
@@ -44,10 +47,10 @@
             <span class="block text-xs text-muted">{{ $t('maintenance.task.fromDefect') }}</span>
             <span class="block truncate font-medium text-highlighted">{{ task.defect.title }}</span>
           </span>
-          <UBadge :color="task.defect.status === 'OPEN' ? 'neutral' : 'success'" variant="subtle">
-            {{ task.defect.status === 'OPEN' ? $t('maintenance.defect.statusOpen') : $t('maintenance.defect.statusDone') }}
+          <UBadge :color="defectStatusColor({ status: task.defect.status, signedAt: null })" variant="subtle">
+            {{ defectStatusLabel({ status: task.defect.status, signedAt: null }) }}
           </UBadge>
-        </div>
+        </NuxtLink>
 
         <ul v-if="task.checklist.length" class="divide-y divide-default rounded-lg border border-default" :aria-label="$t('maintenance.task.checklist')">
           <li v-for="item in task.checklist" :key="item.id" class="px-3 py-2.5">
@@ -133,7 +136,7 @@ const open = defineModel<boolean>('open', { default: false })
 const { t } = useI18n()
 const toast = useToast()
 const { canManageMaintenance: canManage } = storeToRefs(useUserStore())
-const { levelLabel, statusLabel, levelColor, statusColor, formatDuration, formatDay, formatWhen } = useMaintenance()
+const { levelLabel, statusLabel, levelColor, statusColor, defectStatusLabel, defectStatusColor, formatDuration, formatDay, formatWhen } = useMaintenance()
 
 const task = ref<TaskDetail | null>(null)
 const busy = ref(false)

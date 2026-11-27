@@ -1,9 +1,12 @@
 <template>
   <AppPage :title="$t('maintenance.title')" :description="$t('maintenance.description')" :error-message="errorMessage">
-    <template v-if="canManageMaintenance" #actions>
-      <UButton color="neutral" variant="outline" icon="i-lucide-chart-gantt" to="/maintenance/schedule" :label="$t('nav.maintenance.schedule')" />
-      <UButton color="neutral" variant="outline" icon="i-lucide-copy" to="/maintenance/templates" :label="$t('nav.maintenance.templates')" />
-      <UButton icon="i-lucide-plus" :label="$t('maintenance.aircraft.add')" @click="formOpen = true" />
+    <template #actions>
+      <UButton color="neutral" variant="outline" icon="i-lucide-triangle-alert" to="/maintenance/defects" :label="$t('nav.maintenance.defects')" />
+      <template v-if="canManageMaintenance">
+        <UButton color="neutral" variant="outline" icon="i-lucide-chart-gantt" to="/maintenance/schedule" :label="$t('nav.maintenance.schedule')" />
+        <UButton color="neutral" variant="outline" icon="i-lucide-copy" to="/maintenance/templates" :label="$t('nav.maintenance.templates')" />
+        <UButton icon="i-lucide-plus" :label="$t('maintenance.aircraft.add')" @click="formOpen = true" />
+      </template>
     </template>
 
     <div v-if="loaded && !aircraft.length" class="rounded-xl border border-dashed border-default bg-default p-8 text-center">
@@ -66,9 +69,10 @@
             v-if="item.unscheduledTaskCount" :to="`/maintenance/${item.id}?visit=${NO_SELECTION}`" color="neutral" variant="outline" size="sm"
             icon="i-lucide-square-kanban" :label="$t('maintenance.unscheduledTasks', item.unscheduledTaskCount)"
           />
-          <UBadge v-if="item.openDefectCount" color="warning" variant="subtle" icon="i-lucide-triangle-alert">
-            {{ $t('maintenance.openDefects', item.openDefectCount) }}
-          </UBadge>
+          <UButton
+            v-if="item.openDefectCount" :to="`/maintenance/defects?aircraft=${item.id}`" color="warning" variant="subtle" size="sm"
+            icon="i-lucide-triangle-alert" :label="$t('maintenance.openDefects', item.openDefectCount)"
+          />
         </div>
       </li>
     </ul>

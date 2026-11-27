@@ -97,6 +97,74 @@ class UserIntegrationTest extends AbstractIntegrationTest {
         Assertions.assertThat(objectMapper.readTree(response.getBody()).get("roles")).hasSize(2);
     }
 
+    private static final String RESTORE_ROLES_1 = "DELETE FROM auth_user_roles";
+    private static final String RESTORE_ROLES_2 = "INSERT INTO auth_user_roles (user_id, role_id) VALUES "
+            + "('1234', '00000000-0000-0000-0000-000000000001'), ('5678', '00000000-0000-0000-0000-000000000002'), ('5678', '00000000-0000-0000-0000-000000000003')";
+
+    @Test
+    void testAdministratorsSeeTheAssignableRoles() throws Exception {
+        ResponseEntity<String> response = call(HttpMethod.GET, "user/roles", createHeadersWithToken(UserRole.ROLE_ADMIN), null);
+
+        Assertions.assertThat(objectMapper.readValue(response.getBody(), String[].class))
+                .containsExactly("ROLE_ADMIN", "ROLE_ALARM_ADMIN", "ROLE_SCHEDULE_ADMIN", "ROLE_MAINTENANCE_ADMIN");
+        Assertions.assertThat(call(HttpMethod.GET, "user/roles", createHeadersWithToken(UserRole.ROLE_USER), null).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @Sql(statements = { RESTORE_ROLES_1, RESTORE_ROLES_2 }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void testAdministratorsGrantAndRevokeTheAdministratorRole() throws Exception {
+        HttpHeaders admin = createHeadersWithToken(UserRole.ROLE_ADMIN);
+        HttpHeaders user = createHeadersWithToken(UserRole.ROLE_USER);
+        Assertions.assertThat(call(HttpMethod.GET, "user/page", user, null).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
+        ResponseEntity<String> granted = call(HttpMethod.PUT, "user/" + TEST_USER_ID + "/roles", admin, "[\"ROLE_ADMIN\"]");
+        Assertions.assertThat(granted.getStatusCode()).isEqualTo(HttpStatus.OK);
+        // the base role stays
+        Assertions.assertThat(objectMapper.readValue(objectMapper.readTree(granted.getBody()).get("roles").toString(), String[].class))
+                .containsExactly("ROLE_ADMIN", "ROLE_USER");
+        // effective right away, the roles are read from the database on every request
+        Assertions.assertThat(call(HttpMethod.GET, "user/page", user, null).getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        ResponseEntity<String> revoked = call(HttpMethod.PUT, "user/" + TEST_USER_ID + "/roles", admin, "[]");
+        Assertions.assertThat(objectMapper.readValue(objectMapper.readTree(revoked.getBody()).get("roles").toString(), String[].class))
+                .containsExactly("ROLE_USER");
+        Assertions.assertThat(call(HttpMethod.GET, "user/page", user, null).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @Sql(statements = { RESTORE_ROLES_1, RESTORE_ROLES_2 }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void testModuleRolesAreAssignedEvenIfNotSeeded() throws Exception {
+        HttpHeaders admin = createHeadersWithToken(UserRole.ROLE_ADMIN);
+        HttpHeaders user = createHeadersWithToken(UserRole.ROLE_USER);
+        // the test data seeds only some roles, ROLE_MAINTENANCE_ADMIN is created on demand
+        Assertions.assertThat(call(HttpMethod.GET, "maintenance/defects/assignable-users", user, null).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
+        ResponseEntity<String> granted = call(HttpMethod.PUT, "user/" + TEST_USER_ID + "/roles", admin, "[\"ROLE_MAINTENANCE_ADMIN\",\"ROLE_SCHEDULE_ADMIN\"]");
+        Assertions.assertThat(objectMapper.readTree(granted.getBody()).get("roles")).hasSize(3);
+        Assertions.assertThat(call(HttpMethod.GET, "maintenance/defects/assignable-users", user, null).getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(call(HttpMethod.GET, "service/list", user, null).getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    @Sql(statements = { RESTORE_ROLES_1, RESTORE_ROLES_2 }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void testAdministratorsCannotRevokeTheirOwnAdministratorRole() throws Exception {
+        HttpHeaders admin = createHeadersWithToken(UserRole.ROLE_ADMIN);
+
+        Assertions.assertThat(call(HttpMethod.PUT, "user/" + ADMIN_ID + "/roles", admin, "[\"ROLE_ALARM_ADMIN\"]").getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+        // other roles of their own they change; a user without any role keeps the base role
+        ResponseEntity<String> changed = call(HttpMethod.PUT, "user/" + ADMIN_ID + "/roles", admin, "[\"ROLE_ADMIN\"]");
+        Assertions.assertThat(objectMapper.readValue(objectMapper.readTree(changed.getBody()).get("roles").toString(), String[].class))
+                .containsExactly("ROLE_ADMIN");
+    }
+
+    @Test
+    void testOnlyAdministratorsChangeRoles() {
+        ResponseEntity<String> response = call(HttpMethod.PUT, "user/" + TEST_USER_ID + "/roles", createHeadersWithToken(UserRole.ROLE_USER), "[\"ROLE_ADMIN\"]");
+
+        Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
     @Test
     void testImpersonationActsWithTheRightsOfTheTargetAndCanBeLeft() throws Exception {
         JsonNode impersonation = impersonateTestUser();

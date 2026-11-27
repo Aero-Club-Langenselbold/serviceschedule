@@ -26,11 +26,13 @@ import lombok.extern.slf4j.Slf4j;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final ParticipantRepository participantRepository;
     private final JwtUtils jwtUtils;
 
-    public UserService(UserRepository userRepository, ParticipantRepository participantRepository, JwtUtils jwtUtils) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, ParticipantRepository participantRepository, JwtUtils jwtUtils) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.participantRepository = participantRepository;
         this.jwtUtils = jwtUtils;
     }
@@ -55,6 +57,36 @@ public class UserService {
         log.info("User {} set permissions of {} to {}", changedBy, saved.getUsername(), permissions);
 
         return toOverview(saved, participantRepository.findByEmail(saved.getUsername()).orElse(null));
+    }
+
+    /**
+     * Sets the assignable roles of a user (see {@link UserRole#assignable()}); ROLE_USER stays as it is, and a user left
+     * without any role gets ROLE_USER. Administrators cannot take away their own administrator role, so there is always one left.
+     */
+    @Transactional
+    public UserOverview updateRoles(String id, Set<UserRole> roles, String changedBy) {
+        User user = findUser(id);
+        if (user.getUsername().equals(changedBy) && isAdmin(user) && !roles.contains(UserRole.ROLE_ADMIN)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot revoke your own administrator role");
+        }
+        Set<UserRole> wanted = roles.stream().filter(UserRole.assignable()::contains).collect(Collectors.toCollection(HashSet::new));
+        if (user.getRoles().stream().anyMatch(role -> role.getName() == UserRole.ROLE_USER) || wanted.isEmpty()) {
+            wanted.add(UserRole.ROLE_USER);
+        }
+        user.setRoles(wanted.stream().map(this::findOrCreateRole).collect(Collectors.toCollection(HashSet::new)));
+        User saved = userRepository.save(user);
+        log.info("User {} set roles of {} to {}", changedBy, saved.getUsername(), wanted);
+
+        return toOverview(saved, participantRepository.findByEmail(saved.getUsername()).orElse(null));
+    }
+
+    /** Roles are reference data seeded by migrations; a missing one is created rather than failing. */
+    private Role findOrCreateRole(UserRole name) {
+        return roleRepository.findByName(name).orElseGet(() -> {
+            Role role = new Role();
+            role.setName(name);
+            return roleRepository.save(role);
+        });
     }
 
     public JwtResponse impersonate(String id, String impersonator) {

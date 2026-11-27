@@ -78,6 +78,7 @@ export default defineI18nLocale(async locale => {
         stopImpersonation: 'Impersonierung beenden',
         language: 'Sprache wählen',
         account: 'Benutzerkonto',
+        notifications: 'Benachrichtigungen',
         about: 'About',
         contact: 'Kontakt',
         participants: {
@@ -100,7 +101,8 @@ export default defineI18nLocale(async locale => {
           overview: 'Flugzeuge & Aufgaben',
           templates: 'Aufgaben-Vorlagen',
           schedule: 'Werkstattplan',
-          inventory: 'Inventar'
+          inventory: 'Inventar',
+          defects: 'Mängelbuch'
         },
         alarms: {
           menu: 'Alarmanlage',
@@ -451,10 +453,6 @@ export default defineI18nLocale(async locale => {
           exists: 'Dieses Kennzeichen gibt es bereits',
           scheduleHint: 'Wann das Flugzeug in der Werkstatt ist, wird im Werkstattplan festgelegt.'
         },
-        tabs: {
-          tasks: 'Aufgaben',
-          defects: 'Mängel & Befunde'
-        },
         visits: {
           running: 'Läuft',
           past: 'Abgeschlossene Aufenthalte',
@@ -531,23 +529,80 @@ export default defineI18nLocale(async locale => {
           }
         },
         defect: {
-          add: 'Mangel/Befund melden',
-          edit: 'Mangel/Befund bearbeiten',
-          delete: 'Mangel/Befund löschen',
-          deleteConfirm: 'Mangel/Befund löschen? Eine verknüpfte Aufgabe bleibt erhalten.',
-          empty: 'Keine Mängel oder Befunde gemeldet.',
+          add: 'Mangel melden',
+          edit: 'Mangel bearbeiten',
+          delete: 'Mangel löschen',
+          deleteConfirm: 'Mangel löschen? Eine verknüpfte Aufgabe bleibt erhalten.',
+          empty: 'Keine Mängel gemeldet.',
           title: 'Titel',
           titlePlaceholder: 'z. B. Riss in der Haube',
           description: 'Beschreibung',
           descriptionPlaceholder: 'Wo genau? Wie groß?',
+          aircraft: 'Flugzeug/Gerät',
+          aircraftPlaceholder: 'Flugzeug oder Gerät wählen',
+          assignees: 'Zugewiesen an',
+          assigneesPlaceholder: 'Niemandem zugewiesen',
+          assigneesHint: 'Zugewiesene Benutzer werden benachrichtigt.',
+          unassigned: 'Niemandem zugewiesen',
+          assignedToMe: 'Mir zugewiesen',
           reportedBy: 'Gemeldet von {name} · {date}',
           doneBy: 'Erledigt von {name} · {date}',
-          markDone: 'Als erledigt markieren',
-          markOpen: 'Wieder öffnen',
+          rejectedBy: 'Abgewiesen von {name} · {date}',
+          signedBy: 'Abgenommen von {name} · {date}',
+          start: 'In Bearbeitung nehmen',
+          markDone: 'Als erledigt melden',
+          reject: 'Abweisen',
+          rejectTitle: 'Mangel abweisen',
+          rejectReason: 'Begründung',
+          rejectHint: 'Warum ist das kein Mangel oder warum wird er nicht behoben?',
+          reopen: 'Wieder öffnen',
+          sign: 'Abnehmen',
+          unsign: 'Abnahme zurücknehmen',
+          awaitingSignOff: 'Abnahme offen',
+          locked: 'Abgenommene Mängel sind gesperrt, bis die Abnahme zurückgenommen wird.',
           createTask: 'Aufgabe erstellen',
           task: 'Aufgabe',
-          statusOpen: 'Offen',
-          statusDone: 'Erledigt'
+          openBoard: 'Zum Flugzeug',
+          activity: 'Kommentare & Verlauf',
+          comments: 'Keine Kommentare | 1 Kommentar | {count} Kommentare',
+          commentPlaceholder: 'Kommentar schreiben …',
+          addComment: 'Kommentieren',
+          deleteComment: 'Kommentar löschen',
+          notFound: 'Der Mangel wurde nicht gefunden – vielleicht wurde er inzwischen gelöscht.',
+          status: {
+            OPEN: 'Offen',
+            IN_PROGRESS: 'In Bearbeitung',
+            DONE: 'Erledigt',
+            REJECTED: 'Abgewiesen',
+            SIGNED: 'Abgenommen'
+          },
+          actions: {
+            REPORTED: 'hat den Mangel gemeldet',
+            UPDATED: 'hat den Mangel bearbeitet',
+            COMMENTED: 'hat kommentiert',
+            STARTED: 'hat die Bearbeitung begonnen',
+            DONE: 'hat den Mangel als erledigt gemeldet',
+            REJECTED: 'hat den Mangel abgewiesen',
+            REOPENED: 'hat den Mangel wieder geöffnet',
+            ASSIGNED: 'hat {name} zugewiesen',
+            UNASSIGNED: 'hat die Zuweisung an {name} entfernt',
+            SIGNED: 'hat den Mangel abgenommen',
+            UNSIGNED: 'hat die Abnahme zurückgenommen'
+          }
+        },
+        defects: {
+          title: 'Mängelbuch',
+          description: 'Mängel und Befunde an Flugzeugen und Geräten wie der Winde: melden, zuweisen, abarbeiten und abnehmen.',
+          allAircraft: 'Alle Flugzeuge & Geräte',
+          onlyMine: 'Nur mir zugewiesene',
+          filter: {
+            OPEN: 'Offen',
+            CLOSED: 'Abnahme offen',
+            SIGNED: 'Abgenommen',
+            ALL: 'Alle'
+          },
+          emptyFilter: 'Keine Mängel für diese Auswahl.',
+          open: 'Mängelbuch'
         },
         schedule: {
           title: 'Werkstattplan',
@@ -637,9 +692,18 @@ export default defineI18nLocale(async locale => {
           steps: 'Keine Schritte | 1 Schritt | {count} Schritte'
         }
       },
+      notifications: {
+        title: 'Benachrichtigungen',
+        open: 'Benachrichtigungen öffnen',
+        unread: 'Keine ungelesenen | 1 ungelesene | {count} ungelesene',
+        empty: 'Keine Benachrichtigungen',
+        markAllRead: 'Alle als gelesen markieren',
+        someone: 'Jemand',
+        DEFECT_ASSIGNED: '{actor} hat dir einen Mangel zugewiesen'
+      },
       users: {
         title: 'Benutzer',
-        description: 'Registrierte Benutzer, ihre Rollen und Rechte. Rollen werden in der Datenbank vergeben.',
+        description: 'Registrierte Benutzer, ihre Rollen und Rechte.',
         filter: 'Benutzer suchen',
         username: 'Benutzername',
         fullname: 'Teilnehmer',
@@ -653,6 +717,9 @@ export default defineI18nLocale(async locale => {
         permissionError: 'Rechte konnten nicht geändert werden',
         loadError: 'Benutzer konnten nicht geladen werden',
         impliedByRole: 'Durch die Rolle bereits enthalten',
+        roleSuccess: 'Rollen aktualisiert',
+        roleError: 'Rollen konnten nicht geändert werden',
+        ownAdminRole: 'Den eigenen Administrator-Status kannst du nicht entziehen',
         roleNames: {
           ROLE_USER: 'Benutzer',
           ROLE_ADMIN: 'Administrator',

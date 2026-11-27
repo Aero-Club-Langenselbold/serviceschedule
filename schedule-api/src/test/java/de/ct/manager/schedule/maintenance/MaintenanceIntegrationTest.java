@@ -25,7 +25,8 @@ import de.ct.manager.schedule.util.AbstractIntegrationTest;
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 @Sql(statements = {
     "DELETE FROM maintenance_task_history", "DELETE FROM maintenance_task_note", "DELETE FROM maintenance_task_checklist_item",
-    "DELETE FROM maintenance_task", "DELETE FROM maintenance_defect", "DELETE FROM maintenance_template_checklist_item",
+    "DELETE FROM maintenance_task", "DELETE FROM user_notification", "DELETE FROM maintenance_defect_event",
+    "DELETE FROM maintenance_defect_assignee", "DELETE FROM maintenance_defect", "DELETE FROM maintenance_template_checklist_item",
     "DELETE FROM maintenance_template_aircraft_type", "DELETE FROM maintenance_template", "DELETE FROM maintenance_workshop_slot",
     "DELETE FROM maintenance_aircraft",
     "DELETE FROM auth_user_permissions"
@@ -368,8 +369,8 @@ class MaintenanceIntegrationTest extends AbstractIntegrationTest {
         ResponseEntity<String> reported = call(HttpMethod.POST, "aircraft/" + aircraft + "/defects", USER,
                 Map.of("title", "Riss in der Haube", "priority", "HIGH"));
         Assertions.assertThat(reported.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        String defect = json(reported).get("id").asText();
-        Assertions.assertThat(json(reported).get("editable").asBoolean()).isTrue();
+        String defect = json(reported).at("/defect/id").asText();
+        Assertions.assertThat(json(reported).at("/defect/editable").asBoolean()).isTrue();
         Assertions.assertThat(json(call(HttpMethod.GET, "aircraft/" + aircraft, USER, null)).get("openDefectCount").asInt()).isEqualTo(1);
 
         Map<String, Object> fix = new HashMap<>(task("Haube reparieren", List.of()));
@@ -383,7 +384,7 @@ class MaintenanceIntegrationTest extends AbstractIntegrationTest {
         Assertions.assertThat(defects.get(0).get("reportedBy").get("name").asText()).isEqualTo("test@test.com");
 
         JsonNode done = json(call(HttpMethod.PUT, "defects/" + defect + "/status", USER, Map.of("status", "DONE")));
-        Assertions.assertThat(done.get("status").asText()).isEqualTo("DONE");
+        Assertions.assertThat(done.at("/defect/status").asText()).isEqualTo("DONE");
         Assertions.assertThat(json(call(HttpMethod.GET, "aircraft/" + aircraft, USER, null)).get("openDefectCount").asInt()).isZero();
 
         Assertions.assertThat(call(HttpMethod.DELETE, "defects/" + defect, USER, null).getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
@@ -394,7 +395,7 @@ class MaintenanceIntegrationTest extends AbstractIntegrationTest {
     @Test
     void testOthersCannotEditADefectTheyDidNotReport() throws Exception {
         String aircraft = createAircraft("ASK 21", "D-1234");
-        String defect = json(call(HttpMethod.POST, "aircraft/" + aircraft + "/defects", ADMIN, Map.of("title", "Kratzer", "priority", "LOW"))).get("id").asText();
+        String defect = json(call(HttpMethod.POST, "aircraft/" + aircraft + "/defects", ADMIN, Map.of("title", "Kratzer", "priority", "LOW"))).at("/defect/id").asText();
 
         Assertions.assertThat(json(call(HttpMethod.GET, "aircraft/" + aircraft + "/defects", USER, null)).get(0).get("editable").asBoolean()).isFalse();
         Assertions.assertThat(call(HttpMethod.PUT, "defects/" + defect, USER, Map.of("title", "Delle", "priority", "LOW")).getStatusCode())
@@ -406,7 +407,7 @@ class MaintenanceIntegrationTest extends AbstractIntegrationTest {
     void testATaskCannotFixADefectOfAnotherAircraft() throws Exception {
         String ask21 = createAircraft("ASK 21", "D-1234");
         String ls8 = createAircraft("LS 8", "D-5678");
-        String defect = json(call(HttpMethod.POST, "aircraft/" + ls8 + "/defects", USER, Map.of("title", "Kratzer", "priority", "LOW"))).get("id").asText();
+        String defect = json(call(HttpMethod.POST, "aircraft/" + ls8 + "/defects", USER, Map.of("title", "Kratzer", "priority", "LOW"))).at("/defect/id").asText();
 
         Map<String, Object> fix = new HashMap<>(task("Kratzer", List.of()));
         fix.put("defectId", defect);

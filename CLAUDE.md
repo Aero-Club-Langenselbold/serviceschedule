@@ -44,7 +44,7 @@ Run the backend tests when `schedule-api` changed and `pnpm test` when `schedule
 
 ## Roles and rights
 
-- Roles (`UserRole`, table `auth_role`) are assigned in the database only: `ROLE_USER`, `ROLE_ADMIN`, `ROLE_SCHEDULE_ADMIN`, `ROLE_ALARM_ADMIN`, `ROLE_MAINTENANCE_ADMIN`.
+- Roles (`UserRole`, table `auth_role`): `ROLE_USER`, `ROLE_ADMIN`, `ROLE_SCHEDULE_ADMIN`, `ROLE_ALARM_ADMIN`, `ROLE_MAINTENANCE_ADMIN`. Administrators assign them on the users page (`GET /user/roles` = `UserRole.assignable()`, `PUT /user/{id}/roles`): everything except `ROLE_USER`, which stays as it is (a user left without roles gets it); administrators cannot revoke their own `ROLE_ADMIN` (`400`). Missing `auth_role` rows are created on demand (the test data seeds only three). Authorities are read from the database on every request, so changes apply at once.
 - Rights (`UserPermission`, table `auth_user_permissions`) are granted by administrators at runtime on the users page: `PERMISSION_SCHEDULE_MANAGE`, `PERMISSION_ALARM_MANAGE`, `PERMISSION_MAINTENANCE_MANAGE`.
 - `WebSecurityConfig#roleHierarchy`: `ROLE_ADMIN > PERMISSION_* > ROLE_<MODULE>_ADMIN`. So `@PreAuthorize("hasRole('MAINTENANCE_ADMIN')")` admits administrators, maintenance admins and holders of the right. Checks inside services use the hierarchy too (`MaintenanceAccess#canManage`), never compare role names directly.
 - Frontend mirrors this in `stores/user.ts` (`canManageSchedule`, `canManageAlarm`, `canManageMaintenance`) and in route middlewares (`middleware/*-admin.ts`). A new right also needs: i18n names under `users.permissionNames` / `users.roleNames`, and `permissionsOfRole` in `pages/users/list.vue`.
@@ -61,19 +61,19 @@ Run the backend tests when `schedule-api` changed and `pnpm test` when `schedule
 
 ## Maintenance module
 
-Backend `schedule-api/.../maintenance/`, migrations `V3.2__maintenance.sql`, `V3.4__maintenance_workshop_schedule_inventory.sql` and `V3.5__maintenance_task_workshop_slot.sql`, frontend `pages/maintenance/`, `components/maintenance/`, `composables/useMaintenance.ts`, `types/maintenance.ts`. API under `/api/v1/maintenance`.
+Backend `schedule-api/.../maintenance/`, migrations `V3.2__maintenance.sql`, `V3.4__maintenance_workshop_schedule_inventory.sql`, `V3.5__maintenance_task_workshop_slot.sql` and `V3.6__defect_book_and_notifications.sql`, frontend `pages/maintenance/`, `components/maintenance/`, `composables/useMaintenance.ts`, `types/maintenance.ts`. API under `/api/v1/maintenance`.
 
-Tables: `maintenance_aircraft` → `maintenance_task` (+ `_checklist_item`, `_note`, `_history`), `maintenance_defect` and `maintenance_workshop_slot`; `maintenance_template` (+ `_aircraft_type`, `_checklist_item`); `maintenance_inventory_item` (+ `_aircraft_type`) → `maintenance_inventory_history`. Deleting an aircraft cascades to its tasks, defects and workshop periods; deleting a template, defect or workshop period only unlinks tasks; deleting a user keeps the records (`SET NULL`).
+Tables: `maintenance_aircraft` → `maintenance_task` (+ `_checklist_item`, `_note`, `_history`), `maintenance_defect` (+ `_assignee`, `_event`) and `maintenance_workshop_slot`; `maintenance_template` (+ `_aircraft_type`, `_checklist_item`); `maintenance_inventory_item` (+ `_aircraft_type`) → `maintenance_inventory_history`. Deleting an aircraft cascades to its tasks, defects and workshop periods; deleting a template, defect or workshop period only unlinks tasks; deleting a user keeps the records (`SET NULL`).
 
 Rules (enforced in `MaintenanceTaskService` / `MaintenanceDefectService`):
 
-- Every signed in user (menu entry "Wartung"): sees all aircraft, works on tasks (start, back to open, report done, reopen), ticks checklist steps, adds notes, reports defects and marks them done/open.
-- Maintenance administrators: aircraft and templates (CRUD), create/edit/delete tasks, "Aus Vorlagen anlegen" (dialog `components/maintenance/template-import.vue`: the admin picks templates, nothing preselected; `POST /aircraft/{id}/import-templates` with `{ workshopId, templateIds }` creates a task per chosen template on that board, skips templates already on it, `400` for templates not applying to the aircraft type; templates with no aircraft types apply to all), sign off and withdraw sign-off, delete any note, edit/delete any defect.
+- Every signed in user (menu entry "Wartung"): sees all aircraft, works on tasks (start, back to open, report done, reopen), ticks checklist steps, adds notes, reports and works on defects (see defect book).
+- Maintenance administrators: aircraft and templates (CRUD), create/edit/delete tasks, "Aus Vorlagen anlegen" (dialog `components/maintenance/template-import.vue`: the admin picks templates, nothing preselected; `POST /aircraft/{id}/import-templates` with `{ workshopId, templateIds }` creates a task per chosen template on that board, skips templates already on it, `400` for templates not applying to the aircraft type; templates with no aircraft types apply to all), sign off and withdraw sign-off, delete any note, assign/sign off/edit/delete any defect.
 - Status: `OPEN → IN_PROGRESS → DONE`. The checklist drives it: the first tick starts the task, the last tick finishes it, unticking a done task reopens it. The other way round, finishing a task (button or drag to `DONE`) and signing it off tick all remaining steps (`completeChecklist`); reopening leaves them ticked. Signed off tasks are locked (`409`) for everything except withdrawing the sign-off and deleting.
 - Cards are moved between the board columns by drag and drop (native HTML5 DnD, `PUT /maintenance/tasks/{id}/status`). Jumps over a column are logged as the single steps (OPEN → DONE = `STARTED` + `FINISHED`).
 - History is append-only and stores an action enum (`TaskHistoryAction`); the UI translates it (`maintenance.task.actions.*`).
 - Editing a task's checklist keeps ticked steps whose text is unchanged; items are updated in place by position (unique `(task_id, position)`).
-- Notes: authors delete their own, maintenance administrators all. Defects: reporters and maintenance administrators edit/delete. Responses carry `deletable`/`editable` so the UI does not duplicate those rules.
+- Notes: authors delete their own, maintenance administrators all. Responses carry `deletable`/`editable` so the UI does not duplicate those rules.
 - A task resolves at most one defect of the same aircraft, a defect is linked to at most one task.
 - People are returned as `{ id, name }`, name = participant full name if one exists for the username, else the username.
 
@@ -83,6 +83,17 @@ Workshop schedule (`/maintenance/workshop`, page `pages/maintenance/schedule.vue
 - Maintenance administrators plan periods (`maintenance_workshop_slot`, dates inclusive) – an aircraft any number of times, periods of different aircraft may overlap, periods of the same aircraft must not (`409`). Everybody sees the chart.
 - A click on a bar opens a dropdown below it (`components/maintenance/workshop-slot-panel.vue` in a `UPopover`): period, progress and a link to the board of that visit (`/maintenance/{aircraftId}?visit={slotId}`); maintenance administrators change dates/note or delete there. The modal `workshop-slot-form.vue` is only used for new periods and the edit button in the list.
 - `WorkshopSlotResponse` carries the progress of its board: `taskCount`/`doneCount`/`signedCount` and `stepCount`/`stepDoneCount` (checklist steps; a task without checklist counts as one step, done when the task is `DONE`). Every bar shows its own progress; the row header and the overview card show `AircraftResponse.workshop` (the period running today or else the next one). `AircraftResponse.unscheduledTaskCount` counts the tasks without period.
+
+Defect book (`/maintenance/defects`, page `pages/maintenance/defects.vue`, components `defect-detail.vue`/`defect-form.vue`, menu entry "Mängelbuch"):
+
+- A defect belongs to an aircraft or other equipment (a winch is just a `maintenance_aircraft` with type "Winde"), never to a workshop visit. The board page only links to the book (`?aircraft=<id>`); "Aufgabe erstellen" in the detail opens the task form on the board via `?newTaskFor=<defectId>`.
+- `GET /maintenance/defects` (optional `?aircraftId=`) lists all; the page filters client side by aircraft, status (Offen = `OPEN`/`IN_PROGRESS`, Abnahme offen = `DONE`/`REJECTED` not signed, Abgenommen, Alle) and "nur mir zugewiesene". Filters and the open defect live in the URL (`?aircraft=&status=&mine=1&defect=`).
+- Everybody works on every defect: `PUT /defects/{id}/status` with `OPEN`/`IN_PROGRESS`/`DONE`. Only maintenance admins reject (`REJECTED`, needs a `comment`, else `400`) and take a rejection back (`403` for others). Everybody comments (`POST/DELETE /defects/{id}/comments`, authors and maintenance admins delete). Reporters, assignees and maintenance admins edit title/description/priority; only maintenance admins change assignees (`assigneeIds` in the request, `null` = unchanged) and list `GET /defects/assignable-users`. Reporters delete until sign-off, maintenance admins always.
+- Only maintenance admins sign off (`POST /defects/{id}/sign`, only `DONE`/`REJECTED`, else `409`) and withdraw (`DELETE`). Signed off defects are locked (`409`) for everything except withdrawing and deleting.
+- Activity log `maintenance_defect_event` (append-only, action enum `DefectEventAction`, translated as `maintenance.defect.actions.*`; only `COMMENTED` entries can be deleted). Write endpoints answer with `DefectDetail` `{ defect, events }`.
+- `openDefectCount` counts `OPEN` + `IN_PROGRESS`.
+
+Notifications (package `notification`, table `user_notification`, `components/notification-bell.vue` next to the account menu): assigning a defect notifies the assignee (not oneself); taking the assignment back removes the unread notification; deleting the defect removes them all. `GET /notifications` (latest 30 + `unreadCount`), `PUT /notifications/{id}/read` (own only, else `404`), `PUT /notifications/read-all`. The bell refreshes on open, on route change and every minute; a click marks read and opens `/maintenance/defects?defect=<id>`.
 
 Inventory (`/maintenance/inventory`, page `pages/maintenance/inventory.vue`), modelled on the "Inventur" of vereins-wartung:
 

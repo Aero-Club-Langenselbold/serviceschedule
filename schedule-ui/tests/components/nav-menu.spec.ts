@@ -120,3 +120,12 @@ it ('Shows the maintenance menu to every signed in user', async () => {
   await login({username: "testalarmadmin", password: "howwouldiknow"})
   expect((await mountSuspended(NavMenu)).html()).toContain('Maintenance')
 })
+
+it ('Offers the defect book in the maintenance menu and the notifications to every signed in user', async () => {
+  await login({ username: 'testuser', password: 'howwouldiknow' })
+  const navMenu = await mountSuspended(NavMenu)
+
+  expect(navMenu.find('[data-notification-bell]').exists()).toBe(true)
+  const maintenance = navMenu.findAll('button').find(button => button.text().includes('Maintenance'))
+  expect(maintenance).toBeDefined()
+})

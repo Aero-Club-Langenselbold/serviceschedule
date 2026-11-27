@@ -65,3 +65,17 @@ it ('Lets maintenance administrators choose the templates for a visit', async ()
   expect(submit.textContent).toContain('Create 1 task')
   page.unmount()
 })
+
+it ('Links to the defect book of the aircraft instead of keeping defects per visit', async () => {
+  const page = await mountBoard()
+  const link = page.find('[data-defect-book]')
+  expect(link.attributes('href')).toBe('/maintenance/defects?aircraft=a1')
+  // d1 is open, d3 done
+  expect(link.text()).toContain('1')
+  expect(page.html()).not.toContain('Defects & findings')
+})
+
+it ('Opens the task form for a defect coming from the defect book', async () => {
+  await mountBoard('testmaintenanceadmin', '/maintenance/a1?newTaskFor=d1')
+  await vi.waitFor(() => expect((document.body.querySelector('input[placeholder]') as HTMLInputElement | null)?.value).toBe('Riss in der Haube'))
+})

@@ -53,6 +53,18 @@ public class UserController {
         return ResponseEntity.ok(userService.updatePermissions(id, permissions, currentUser.getUsername()));
     }
 
+    @GetMapping("/roles")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<UserRole>> getRoles() {
+        return ResponseEntity.ok(UserRole.assignable());
+    }
+
+    @PutMapping("/{id}/roles")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserOverview> updateRoles(@PathVariable String id, @RequestBody Set<UserRole> roles, @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        return ResponseEntity.ok(userService.updateRoles(id, roles, currentUser.getUsername()));
+    }
+
     @PostMapping("/{id}/impersonate")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<JwtResponse> impersonate(@PathVariable String id, @AuthenticationPrincipal UserDetailsImpl currentUser) {

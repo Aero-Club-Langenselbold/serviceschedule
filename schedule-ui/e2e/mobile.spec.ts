@@ -7,6 +7,7 @@ const pages: [Role, string][] = [
   ['user', '/plan/availabilities/me/plan-open'],
   ['user', '/plan/generated/plan-published'],
   ['user', '/request/list'],
+  ['user', '/maintenance/defects'],
   ['admin', '/plan/list'],
   ['admin', '/plan/add'],
   ['admin', '/plan/details/plan-open'],

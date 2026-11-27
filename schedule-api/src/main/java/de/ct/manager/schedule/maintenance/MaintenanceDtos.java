@@ -175,15 +175,21 @@ public final class MaintenanceDtos {
     public record NoteRequest(@NotBlank @Size(max = 5000) String content) {
     }
 
-    // --- defects
+    // --- defects (defect book)
 
+    /** assigneeIds: null keeps the assignees; only maintenance administrators change them. */
     public record DefectRequest(
             @NotBlank @Size(max = 255) String title,
             @Size(max = 5000) String description,
-            @NotNull DefectPriority priority) {
+            @NotNull DefectPriority priority,
+            Set<@NotBlank @Size(max = 36) String> assigneeIds) {
     }
 
-    public record DefectStatusRequest(@NotNull DefectStatus status) {
+    /** comment: optional reason, required for REJECTED. */
+    public record DefectStatusRequest(@NotNull DefectStatus status, @Size(max = 5000) String comment) {
+    }
+
+    public record DefectCommentRequest(@NotBlank @Size(max = 5000) String content) {
     }
 
     public record TaskRef(String id, String title, TaskStatus status) {
@@ -192,16 +198,33 @@ public final class MaintenanceDtos {
     public record DefectResponse(
             String id,
             String aircraftId,
+            /** Registration and type of the aircraft or equipment, for lists across all of them. */
+            String aircraftLabel,
             String title,
             String description,
             DefectPriority priority,
             DefectStatus status,
             Person reportedBy,
             Instant reportedAt,
+            /** Who closed the defect (DONE or REJECTED). */
             Person doneBy,
             Instant doneAt,
+            Person signedBy,
+            Instant signedAt,
+            List<Person> assignees,
+            boolean assignedToMe,
+            long commentCount,
             TaskRef task,
-            boolean editable) {
+            /** Title, description and priority may be changed by the caller. */
+            boolean editable,
+            boolean deletable) {
+    }
+
+    public record DefectEventResponse(String id, DefectEventAction action, String content, Person actor, Person subject, Instant createdAt,
+            boolean deletable) {
+    }
+
+    public record DefectDetail(DefectResponse defect, List<DefectEventResponse> events) {
     }
 
     // --- inventory

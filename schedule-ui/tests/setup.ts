@@ -14,6 +14,31 @@ const workshopSlots = () => [
     { id: 's2', aircraftId: 'a2', startDate: dayFromToday(5), endDate: dayFromToday(30), note: 'Lackierung', taskCount: 0, doneCount: 0, signedCount: 0, stepCount: 0, stepDoneCount: 0 }
 ]
 
+// Defect book: an open defect assigned to the signed in user, one in progress on the winch, one waiting for sign-off and a signed off one.
+const defects = () => {
+    const base = { description: null, priority: 'NORMAL', reportedBy: { id: 'u1', name: 'Albers, Anna' }, reportedAt: '2026-11-10T10:00:00Z', doneBy: null, doneAt: null, signedBy: null, signedAt: null, assignees: [], assignedToMe: false, commentCount: 0, task: null, editable: false, deletable: false }
+    return [
+        { ...base, id: 'd1', aircraftId: 'a1', aircraftLabel: 'D-1234 · ASK 21', title: 'Riss in der Haube', priority: 'HIGH', status: 'OPEN', assignees: [{ id: '1', name: 'testuser' }], assignedToMe: true, commentCount: 1, editable: true },
+        { ...base, id: 'd2', aircraftId: 'w1', aircraftLabel: 'Winde 1 · Winde', title: 'Seil ausgefranst', priority: 'LOW', status: 'IN_PROGRESS', assignees: [{ id: 'u3', name: 'Becker, Ben' }] },
+        { ...base, id: 'd3', aircraftId: 'a1', aircraftLabel: 'D-1234 · ASK 21', title: 'Reifen platt', status: 'DONE', doneBy: { id: 'u3', name: 'Becker, Ben' }, doneAt: '2026-11-12T10:00:00Z' },
+        { ...base, id: 'd4', aircraftId: 'a2', aircraftLabel: 'D-5678 · LS 8', title: 'Kratzer', priority: 'VERY_LOW', status: 'REJECTED', doneBy: { id: 'u3', name: 'Becker, Ben' }, doneAt: '2026-11-12T10:00:00Z', signedBy: { id: 'u2', name: 'testadmin' }, signedAt: '2026-11-13T10:00:00Z' }
+    ]
+}
+const defectEvents = (defect: { id: string, reportedBy: unknown, reportedAt: string }) => [
+    { id: `${defect.id}-e1`, action: 'REPORTED', content: null, actor: defect.reportedBy, subject: null, createdAt: defect.reportedAt, deletable: false },
+    ...(defect.id === 'd1' ? [
+        { id: 'd1-e2', action: 'ASSIGNED', content: null, actor: { id: 'u2', name: 'testadmin' }, subject: { id: '1', name: 'testuser' }, createdAt: '2026-11-10T11:00:00Z', deletable: false },
+        { id: 'd1-e3', action: 'COMMENTED', content: 'Bitte vor dem Wochenende anschauen', actor: { id: 'u2', name: 'testadmin' }, subject: null, createdAt: '2026-11-10T12:00:00Z', deletable: false }
+    ] : [])
+]
+const notifications = () => ({
+    unreadCount: 1,
+    items: [
+        { id: 'n1', type: 'DEFECT_ASSIGNED', createdAt: '2026-11-10T11:00:00Z', read: false, actor: { id: 'u2', name: 'testadmin' }, defect: { id: 'd1', title: 'Riss in der Haube', aircraftId: 'a1', aircraftLabel: 'D-1234', status: 'OPEN' } },
+        { id: 'n0', type: 'DEFECT_ASSIGNED', createdAt: '2026-11-01T11:00:00Z', read: true, actor: null, defect: { id: 'd2', title: 'Seil ausgefranst', aircraftId: 'w1', aircraftLabel: 'Winde 1', status: 'IN_PROGRESS' } }
+    ]
+})
+
 mockNuxtImport('useAPI', () => {
     return async (url: string, options: any) => {
         if (url === '/auth/signin') {
@@ -62,6 +87,15 @@ mockNuxtImport('useAPI', () => {
                 ], totalElements: 2 } },
                 error: {}
             }
+        } else if (url === '/user/roles') {
+            return { data: { value: ['ROLE_ADMIN', 'ROLE_ALARM_ADMIN', 'ROLE_SCHEDULE_ADMIN', 'ROLE_MAINTENANCE_ADMIN'] }, error: {} }
+        } else if (/^\/user\/[^/]+\/roles$/.test(url)) {
+            // the base role stays, as in the backend
+            return { data: { value: { roles: ['ROLE_USER', ...options.body] } }, error: {} }
+        } else if (url === '/notifications') {
+            return { data: { value: notifications() }, error: {} }
+        } else if (/^\/notifications\/(read-all|[^/]+\/read)$/.test(url)) {
+            return { data: { value: null }, error: {} }
         } else if (url === '/user/permissions') {
             return { data: { value: ['PERMISSION_SCHEDULE_MANAGE', 'PERMISSION_ALARM_MANAGE'] }, error: {} }
         } else if (/^\/user\/[^/]+\/permissions$/.test(url)) {
@@ -142,7 +176,30 @@ mockNuxtImport('useAPI', () => {
                 { ...task, id: 'k2', title: 'Haube polieren', templateId: 't2', fromTemplate: true, status: 'DONE', signedBy: { id: 'u2', name: 'testadmin' }, signedAt: '2026-11-10T10:00:00Z' }
             ] }, error: {} }
         } else if (url === '/maintenance/aircraft/a1/defects') {
-            return { data: { value: [] }, error: {} }
+            return { data: { value: defects().filter(defect => defect.aircraftId === 'a1') }, error: {} }
+        } else if (url === '/maintenance/defects') {
+            return { data: { value: defects() }, error: {} }
+        } else if (url === '/maintenance/defects/assignable-users') {
+            return { data: { value: [{ id: 'u1', name: 'Albers, Anna' }, { id: 'u3', name: 'Becker, Ben' }] }, error: {} }
+        } else if (url === '/maintenance/defects/missing') {
+            return { data: { value: null }, error: { value: Object.assign(new Error('not found'), { statusCode: 404 }) } }
+        } else if (/^\/maintenance\/defects\/[^/]+$/.test(url) && options.method === 'GET') {
+            const defect = defects().find(candidate => candidate.id === url.split('/')[3])
+            return { data: { value: { defect, events: defectEvents(defect!) } }, error: {} }
+        } else if (/^\/maintenance\/defects\/[^/]+\/status$/.test(url)) {
+            const defect = defects().find(candidate => candidate.id === url.split('/')[3])!
+            const closed = options.body.status === 'DONE' || options.body.status === 'REJECTED'
+            const updated = { ...defect, status: options.body.status, doneBy: closed ? { id: '1', name: 'testuser' } : null, doneAt: closed ? '2026-11-20T10:00:00Z' : null }
+            const event = { id: 'ev-status', action: { OPEN: 'REOPENED', IN_PROGRESS: 'STARTED', DONE: 'DONE', REJECTED: 'REJECTED' }[options.body.status as string], content: options.body.comment, actor: { id: '1', name: 'testuser' }, subject: null, createdAt: '2026-11-20T10:00:00Z', deletable: false }
+            return { data: { value: { defect: updated, events: [...defectEvents(defect), event] } }, error: {} }
+        } else if (/^\/maintenance\/defects\/[^/]+\/sign$/.test(url)) {
+            const defect = defects().find(candidate => candidate.id === url.split('/')[3])!
+            const signed = options.method === 'POST'
+            return { data: { value: { defect: { ...defect, signedBy: signed ? { id: 'u2', name: 'testadmin' } : null, signedAt: signed ? '2026-11-21T10:00:00Z' : null }, events: defectEvents(defect) } }, error: {} }
+        } else if (/^\/maintenance\/defects\/[^/]+\/comments$/.test(url)) {
+            const defect = defects().find(candidate => candidate.id === url.split('/')[3])!
+            const comment = { id: 'ev-new', action: 'COMMENTED', content: options.body.content, actor: { id: '1', name: 'testuser' }, subject: null, createdAt: '2026-11-20T11:00:00Z', deletable: true }
+            return { data: { value: { defect: { ...defect, commentCount: defect.commentCount + 1 }, events: [...defectEvents(defect), comment] } }, error: {} }
         } else if (/^\/maintenance\/tasks\/[^/]+\/status$/.test(url)) {
             return { data: { value: { id: url.split('/')[3], status: options.body.status } }, error: {} }
         } else if (url === '/maintenance/workshop') {

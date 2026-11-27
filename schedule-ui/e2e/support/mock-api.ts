@@ -121,11 +121,31 @@ function createState() {
       { id: 'u-user', username: 'user@example.org', fullname: 'User, Uta', roles: ['ROLE_USER'], permissions: ['PERMISSION_ALARM_MANAGE'] },
       { id: 'u-ben', username: 'ben@example.org', fullname: 'Becker, Ben', roles: ['ROLE_USER'], permissions: [] },
     ] as any[],
+    // maintenance: an aircraft and the winch, with the defect book and the notification about an assignment
+    aircraft: [
+      { id: 'a1', type: 'ASK 21', registration: 'D-1234', workshop: null, unscheduledTaskCount: 0, openDefectCount: 1 },
+      { id: 'w1', type: 'Winde', registration: 'Winde 1', workshop: null, unscheduledTaskCount: 0, openDefectCount: 1 },
+    ] as any[],
+    defects: [
+      defect({ id: 'd1', aircraftId: 'a1', aircraftLabel: 'D-1234 · ASK 21', title: 'Riss in der Haube', priority: 'HIGH', assignees: [{ id: 'u-user', name: 'User, Uta' }], assignedToMe: true }),
+      defect({ id: 'd2', aircraftId: 'w1', aircraftLabel: 'Winde 1 · Winde', title: 'Seil ausgefranst', status: 'IN_PROGRESS' }),
+      defect({ id: 'd3', aircraftId: 'a1', aircraftLabel: 'D-1234 · ASK 21', title: 'Reifen platt', status: 'DONE', doneBy: { id: 'u-ben', name: 'Becker, Ben' }, doneAt: time('2026-11-12', '10:00') }),
+    ] as any[],
+    defectEvents: {} as Record<string, any[]>,
+    notifications: [
+      { id: 'n1', type: 'DEFECT_ASSIGNED', createdAt: time('2026-11-10', '11:00'), read: false, actor: { id: 'u-admin', name: 'admin@example.org' }, defect: { id: 'd1', title: 'Riss in der Haube', aircraftId: 'a1', aircraftLabel: 'D-1234', status: 'OPEN' } },
+    ] as any[],
     comments: {
       r1: [{ id: 'c1', content: 'Tritt bei mir auch auf.', createdAt: time('2026-11-03', '09:30'), author: 'Becker, Ben' }],
     } as Record<string, any[]>,
   }
 }
+
+const defect = (values: Record<string, any>) => ({
+  description: null, priority: 'NORMAL', status: 'OPEN', reportedBy: { id: 'u-ben', name: 'Becker, Ben' }, reportedAt: time('2026-11-10', '10:00'),
+  doneBy: null, doneAt: null, signedBy: null, signedAt: null, assignees: [], assignedToMe: false, commentCount: 0, task: null,
+  editable: true, deletable: false, ...values,
+})
 
 const page_ = <T>(items: T[], query: URLSearchParams) => {
   const page = Number(query.get('page') ?? 0)
@@ -336,6 +356,74 @@ export class MockApi {
     }
     if (key === 'POST /user/impersonation/stop') {
       return { id: 'u-admin', username: 'admin@example.org', roles: ['ROLE_ADMIN'], permissions: [], impersonator: null, token: 'token-admin', type: 'Bearer' }
+    }
+
+    if (key === 'GET /user/roles') return ['ROLE_ADMIN', 'ROLE_ALARM_ADMIN', 'ROLE_SCHEDULE_ADMIN', 'ROLE_MAINTENANCE_ADMIN']
+    if ((m = path.match(/^\/user\/([^/]+)\/roles$/)) && method === 'PUT') {
+      const target = s.users.find(u => u.id === m![1])
+      if (!target) return new HttpError(404)
+      if (target.id === 'u-admin' && !body.includes('ROLE_ADMIN')) return new HttpError(400)
+      target.roles = [...target.roles.filter((role: string) => role === 'ROLE_USER'), ...body]
+      return target
+    }
+
+    // notifications of the signed in user
+    if (key === 'GET /notifications') return { unreadCount: s.notifications.filter(n => !n.read).length, items: s.notifications }
+    if (key === 'PUT /notifications/read-all') {
+      s.notifications.forEach((n) => { n.read = true })
+      return null
+    }
+    if ((m = path.match(/^\/notifications\/([^/]+)\/read$/)) && method === 'PUT') {
+      const target = s.notifications.find(n => n.id === m![1])
+      if (!target) return new HttpError(404)
+      target.read = true
+      return null
+    }
+
+    // maintenance: the defect book
+    if (key === 'GET /maintenance/aircraft') return s.aircraft
+    if (key === 'GET /maintenance/defects') return s.defects
+    if (key === 'GET /maintenance/defects/assignable-users') return s.users.map(u => ({ id: u.id, name: u.fullname ?? u.username }))
+    const detail = (d: any) => ({ defect: d, events: s.defectEvents[d.id] ??= [{ id: `${d.id}-reported`, action: 'REPORTED', content: null, actor: d.reportedBy, subject: null, createdAt: d.reportedAt, deletable: false }] })
+    const log = (d: any, action: string, content: string | null = null) =>
+      detail(d).events.push({ id: `${d.id}-${detail(d).events.length}`, action, content, actor: { id: 'u-user', name: 'User, Uta' }, subject: null, createdAt: time('2026-11-20', '10:00'), deletable: action === 'COMMENTED' })
+    if ((m = path.match(/^\/maintenance\/aircraft\/([^/]+)\/defects$/)) && method === 'POST') {
+      const aircraft = s.aircraft.find(a => a.id === m![1])
+      if (!aircraft) return new HttpError(404)
+      const users = s.users.filter(u => (body.assigneeIds ?? []).includes(u.id))
+      const created = defect({ id: `d${s.defects.length + 1}`, aircraftId: aircraft.id, aircraftLabel: `${aircraft.registration} · ${aircraft.type}`,
+        title: body.title, description: body.description || null, priority: body.priority, reportedBy: { id: 'u-admin', name: 'admin@example.org' },
+        assignees: users.map(u => ({ id: u.id, name: u.fullname ?? u.username })), deletable: true })
+      s.defects.unshift(created)
+      return detail(created)
+    }
+    if ((m = path.match(/^\/maintenance\/defects\/([^/]+)(\/.*)?$/))) {
+      const target = s.defects.find(d => d.id === m![1])
+      if (!target) return new HttpError(404)
+      const action = `${method} ${m[2] ?? ''}`
+      if (action === 'GET ') return detail(target)
+      if (action === 'PUT /status') {
+        if (body.status === 'REJECTED' && !body.comment?.trim()) return new HttpError(400)
+        const closed = body.status === 'DONE' || body.status === 'REJECTED'
+        Object.assign(target, { status: body.status, doneBy: closed ? { id: 'u-user', name: 'User, Uta' } : null, doneAt: closed ? time('2026-11-20', '10:00') : null })
+        log(target, { OPEN: 'REOPENED', IN_PROGRESS: 'STARTED', DONE: 'DONE', REJECTED: 'REJECTED' }[body.status as string]!, body.comment)
+        return detail(target)
+      }
+      if (action === 'POST /comments') {
+        target.commentCount++
+        log(target, 'COMMENTED', body.content)
+        return detail(target)
+      }
+      if (action === 'POST /sign') {
+        Object.assign(target, { signedBy: { id: 'u-admin', name: 'admin@example.org' }, signedAt: time('2026-11-21', '10:00') })
+        log(target, 'SIGNED')
+        return detail(target)
+      }
+      if (action === 'DELETE /sign') {
+        Object.assign(target, { signedBy: null, signedAt: null })
+        log(target, 'UNSIGNED')
+        return detail(target)
+      }
     }
 
     // alarm system

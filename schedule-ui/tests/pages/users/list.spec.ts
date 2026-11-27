@@ -37,7 +37,7 @@ describe('Users Page', () => {
         expect(wrapper.html()).toContain('Already included in the role')
 
         const adminRow = wrapper.findAll('tr').find(row => row.text().includes('testadmin'))!
-        const checkboxes = adminRow.findAll('button[role="checkbox"]')
+        const checkboxes = adminRow.findAll('button[data-permission]')
         expect(checkboxes).toHaveLength(2)
         checkboxes.forEach(checkbox => expect(checkbox.attributes('disabled')).toBeDefined())
     })
@@ -45,7 +45,7 @@ describe('Users Page', () => {
     it('grants a further right on top of the existing one', async () => {
         const wrapper = await mountPage()
         const annaRow = wrapper.findAll('tr').find(row => row.text().includes('anna@example.org'))!
-        const [scheduleRight, alarmRight] = annaRow.findAll('button[role="checkbox"]')
+        const [scheduleRight, alarmRight] = annaRow.findAll('button[data-permission]')
         expect(scheduleRight!.attributes('data-state')).toBe('unchecked')
         expect(alarmRight!.attributes('data-state')).toBe('checked')
 
@@ -59,12 +59,57 @@ describe('Users Page', () => {
     it('revokes a right', async () => {
         const wrapper = await mountPage()
         const annaRow = wrapper.findAll('tr').find(row => row.text().includes('anna@example.org'))!
-        const alarmRight = annaRow.findAll('button[role="checkbox"]')[1]!
+        const alarmRight = annaRow.findAll('button[data-permission]')[1]!
 
         await alarmRight.trigger('click')
         await flushPromises()
 
         expect(alarmRight.attributes('data-state')).toBe('unchecked')
+    })
+
+    it('offers the assignable roles as checkboxes and keeps the base role as a badge', async () => {
+        const wrapper = await mountPage()
+        const annaRow = wrapper.findAll('tr').find(row => row.text().includes('anna@example.org'))!
+        expect(annaRow.text()).toContain('User')
+        const roles = annaRow.findAll('button[data-role]')
+        expect(roles).toHaveLength(4)
+        roles.forEach(role => expect(role.attributes('data-state')).toBe('unchecked'))
+    })
+
+    it('makes a user an administrator, which includes every right', async () => {
+        const wrapper = await mountPage()
+        const annaRow = () => wrapper.findAll('tr').find(row => row.text().includes('anna@example.org'))!
+        const adminRole = annaRow().find('button[data-role="ROLE_ADMIN"]')
+
+        await adminRole.trigger('click')
+        await flushPromises()
+
+        expect(annaRow().find('button[data-role="ROLE_ADMIN"]').attributes('data-state')).toBe('checked')
+        annaRow().findAll('button[data-permission]').forEach(right => expect(right.attributes('disabled')).toBeDefined())
+        expect(useUserStore().user?.username).toBe('testadmin')
+    })
+
+    it('takes the administrator role away from another user', async () => {
+        const wrapper = await mountPage()
+        const annaRow = () => wrapper.findAll('tr').find(row => row.text().includes('anna@example.org'))!
+        await annaRow().find('button[data-role="ROLE_ADMIN"]').trigger('click')
+        await flushPromises()
+
+        await annaRow().find('button[data-role="ROLE_ADMIN"]').trigger('click')
+        await flushPromises()
+
+        expect(annaRow().find('button[data-role="ROLE_ADMIN"]').attributes('data-state')).toBe('unchecked')
+    })
+
+    it('does not let administrators revoke their own administrator role', async () => {
+        const wrapper = await mountPage()
+        const adminRow = wrapper.findAll('tr').find(row => row.text().includes('testadmin'))!
+        const ownAdmin = adminRow.find('button[data-role="ROLE_ADMIN"]')
+        expect(ownAdmin.attributes('data-state')).toBe('checked')
+        expect(ownAdmin.attributes('disabled')).toBeDefined()
+        expect(adminRow.text()).toContain('You cannot revoke your own administrator role')
+        // further roles of their own they may change
+        expect(adminRow.find('button[data-role="ROLE_ALARM_ADMIN"]').attributes('disabled')).toBeUndefined()
     })
 
     it('does not offer to impersonate administrators', async () => {

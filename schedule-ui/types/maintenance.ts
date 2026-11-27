@@ -1,7 +1,8 @@
 type SkillLevel = 'BEGINNER' | 'EXPERIENCED' | 'WORKSHOP_LEAD'
 type TaskStatus = 'OPEN' | 'IN_PROGRESS' | 'DONE'
 type DefectPriority = 'VERY_LOW' | 'LOW' | 'NORMAL' | 'HIGH'
-type DefectStatus = 'OPEN' | 'DONE'
+type DefectStatus = 'OPEN' | 'IN_PROGRESS' | 'DONE' | 'REJECTED'
+type DefectEventAction = 'REPORTED' | 'UPDATED' | 'COMMENTED' | 'STARTED' | 'DONE' | 'REJECTED' | 'REOPENED' | 'ASSIGNED' | 'UNASSIGNED' | 'SIGNED' | 'UNSIGNED'
 type TaskHistoryAction = 'CREATED' | 'UPDATED' | 'STARTED' | 'RESET' | 'FINISHED' | 'REOPENED' | 'SIGNED' | 'UNSIGNED' | 'NOTE_ADDED' | 'NOTE_DELETED'
 
 /** A user as the API names them: participant name if known, otherwise the username. */
@@ -150,25 +151,53 @@ type TaskInput = {
     checklist: string[]
 }
 
+/** Entry of the defect book; belongs to an aircraft or other equipment, not to a workshop visit. */
 type Defect = {
     id: string
     aircraftId: string
+    /** Registration and type, for lists across all aircraft. */
+    aircraftLabel: string
     title: string
     description: string | null
     priority: DefectPriority
     status: DefectStatus
     reportedBy: Person | null
     reportedAt: string
+    /** Who closed it (DONE or REJECTED). */
     doneBy: Person | null
     doneAt: string | null
+    signedBy: Person | null
+    signedAt: string | null
+    assignees: Person[]
+    assignedToMe: boolean
+    commentCount: number
     task: { id: string, title: string, status: TaskStatus } | null
     editable: boolean
+    deletable: boolean
+}
+
+type DefectEvent = {
+    id: string
+    action: DefectEventAction
+    content: string | null
+    actor: Person | null
+    /** The user an assignment is about. */
+    subject: Person | null
+    createdAt: string
+    deletable: boolean
+}
+
+type DefectDetail = {
+    defect: Defect
+    events: DefectEvent[]
 }
 
 type DefectInput = {
     title: string
     description: string | null
     priority: DefectPriority
+    /** null keeps the assignees; only maintenance administrators change them. */
+    assigneeIds: string[] | null
 }
 
 export type {
@@ -176,5 +205,5 @@ export type {
     Aircraft, AircraftInput, WorkshopSlot, WorkshopSlotInput,
     InventoryKind, InventoryCounting, InventoryStockStatus, InventoryHistoryAction, InventoryItem, InventoryItemInput, InventoryHistoryEntry,
     TaskTemplate, TaskTemplateInput, TaskSummary, ChecklistItem, TaskNote, TaskHistoryEntry,
-    TaskDetail, TaskInput, Defect, DefectInput
+    TaskDetail, TaskInput, Defect, DefectInput, DefectEventAction, DefectEvent, DefectDetail
 }

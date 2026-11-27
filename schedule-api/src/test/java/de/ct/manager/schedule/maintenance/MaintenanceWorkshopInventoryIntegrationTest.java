@@ -21,6 +21,7 @@ import de.ct.manager.schedule.util.AbstractIntegrationTest;
 @SuppressWarnings("null") // null warnings in assertions are false-positives
 @Sql(statements = {
     "DELETE FROM maintenance_inventory_history", "DELETE FROM maintenance_inventory_item_aircraft_type", "DELETE FROM maintenance_inventory_item",
+    "DELETE FROM user_notification", "DELETE FROM maintenance_defect_event", "DELETE FROM maintenance_defect_assignee", "DELETE FROM maintenance_defect",
     "DELETE FROM maintenance_task_history", "DELETE FROM maintenance_task_checklist_item", "DELETE FROM maintenance_task",
     "DELETE FROM maintenance_template_checklist_item", "DELETE FROM maintenance_template_aircraft_type", "DELETE FROM maintenance_template",
     "DELETE FROM maintenance_workshop_slot", "DELETE FROM maintenance_aircraft"

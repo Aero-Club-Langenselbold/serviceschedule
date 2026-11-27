@@ -106,7 +106,7 @@ watch(open, (isOpen) => {
 const defectItems = computed(() => [
   { label: t('maintenance.task.noDefect'), value: NO_SELECTION },
   ...props.defects
-    .filter(defect => defect.id === form.value.defectId || (defect.status === 'OPEN' && !defect.task))
+    .filter(defect => defect.id === form.value.defectId || ((defect.status === 'OPEN' || defect.status === 'IN_PROGRESS') && !defect.signedAt && !defect.task))
     .map(defect => ({ label: defect.title, value: defect.id }))
 ])
 

@@ -87,6 +87,58 @@ test.describe('Rechte', () => {
   })
 })
 
+test.describe('Rollen', () => {
+  const role = (page: Page, user: string, name: string) => row(page, user).getByRole('checkbox', { name, exact: true })
+  const right = (page: Page, user: string, name: string) => row(page, user).getByRole('checkbox', { name })
+
+  test('macht einen Benutzer zum Administrator und entzieht es wieder', async ({ page, api, loginAs }) => {
+    await loginAs('admin')
+    await page.goto('/users/list')
+    await expect(role(page, 'ben@example.org', 'Administrator')).not.toBeChecked()
+
+    await role(page, 'ben@example.org', 'Administrator').click()
+    await expect(toast(page, 'Rollen aktualisiert')).toBeVisible()
+    await expect(role(page, 'ben@example.org', 'Administrator')).toBeChecked()
+    // als Administrator hat er alle Rechte
+    await expect(right(page, 'ben@example.org', 'Dienstpläne verwalten')).toBeDisabled()
+    expect(api.sent('PUT', '/user/u-ben/roles')[0]!.body).toEqual(['ROLE_ADMIN'])
+
+    await role(page, 'ben@example.org', 'Administrator').click()
+    await expect(role(page, 'ben@example.org', 'Administrator')).not.toBeChecked()
+    await expect(right(page, 'ben@example.org', 'Dienstpläne verwalten')).toBeEnabled()
+    expect(api.sent('PUT', '/user/u-ben/roles')[1]!.body).toEqual([])
+  })
+
+  test('vergibt Modul-Rollen neben der Basisrolle', async ({ page, api, loginAs }) => {
+    await loginAs('admin')
+    await page.goto('/users/list')
+
+    await role(page, 'user@example.org', 'Wartungs-Administrator').click()
+    await expect(role(page, 'user@example.org', 'Wartungs-Administrator')).toBeChecked()
+    await expect(row(page, 'user@example.org')).toContainText('Benutzer')
+    expect(api.sent('PUT', '/user/u-user/roles')[0]!.body).toEqual(['ROLE_MAINTENANCE_ADMIN'])
+  })
+
+  test('lässt Administratoren den eigenen Administrator-Status nicht entziehen', async ({ page, loginAs }) => {
+    await loginAs('admin')
+    await page.goto('/users/list')
+
+    await expect(role(page, 'admin@example.org', 'Administrator')).toBeChecked()
+    await expect(role(page, 'admin@example.org', 'Administrator')).toBeDisabled()
+    await expect(row(page, 'admin@example.org')).toContainText('Den eigenen Administrator-Status kannst du nicht entziehen')
+  })
+
+  test('behält den Stand, wenn das Speichern fehlschlägt', async ({ page, api, loginAs }) => {
+    await loginAs('admin')
+    api.fail('PUT', /^\/user\/u-ben\/roles$/)
+    await page.goto('/users/list')
+
+    await role(page, 'ben@example.org', 'Administrator').click()
+    await expect(toast(page, 'Rollen konnten nicht geändert werden')).toBeVisible()
+    await expect(role(page, 'ben@example.org', 'Administrator')).not.toBeChecked()
+  })
+})
+
 test.describe('Impersonierung', () => {
   const impersonate = (page: Page, user: string) => row(page, user).getByRole('button', { name: 'Impersonieren' })
 
