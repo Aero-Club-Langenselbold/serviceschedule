@@ -100,6 +100,18 @@ mockNuxtImport('useAPI', () => {
                 },
                 error: {}
             }
+        } else if (url === '/auth/kiosk/signin') {
+            // PIN 123456 signs in, 999999 stands for a locked account, everything else is wrong
+            if (options.body.pin === '999999') {
+                return { data: {}, error: { value: Object.assign(new Error('locked'), { statusCode: 429 }) } }
+            }
+            if (options.body.pin !== '123456') {
+                return { data: {}, error: { value: Object.assign(new Error('invalid'), { statusCode: 401 }) } }
+            }
+            return {
+                data: { value: { id: '1', username: options.body.username, roles: ['ROLE_USER'], permissions: [], kiosk: true, token: 'kiosktoken', type: 'Bearer' } },
+                error: {}
+            }
         } else if (url === '/user/failing/impersonate' || url === '/request/failing/comments') {
             return { data: {}, error: { value: new Error('failed') } }
         } else if (/^\/user\/[^/]+\/impersonate$/.test(url)) {

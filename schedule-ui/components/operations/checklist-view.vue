@@ -84,15 +84,15 @@
       <p v-if="detail.editable && !detail.submittable" class="text-sm text-muted sm:mr-auto">{{ $t('operations.checklist.submitHint') }}</p>
       <UButton
         v-if="detail.reopenable" color="neutral" variant="outline" icon="i-lucide-undo-2" :label="$t('operations.checklist.reopen')"
-        :loading="busy" data-reopen @click="act('reopen')"
+        :loading="busy" class="shrink-0" data-reopen @click="act('reopen')"
       />
       <UButton
         v-if="detail.editable" icon="i-lucide-send" :label="$t('operations.checklist.submit')" :disabled="!detail.submittable"
-        :loading="busy" data-submit @click="act('submit')"
+        :loading="busy" class="shrink-0" data-submit @click="act('submit')"
       />
       <UButton
         v-if="detail.approvable" color="success" icon="i-lucide-badge-check" :label="$t('operations.checklist.approve')"
-        :loading="busy" data-approve @click="act('approve')"
+        :loading="busy" class="shrink-0" data-approve @click="act('approve')"
       />
     </div>
 

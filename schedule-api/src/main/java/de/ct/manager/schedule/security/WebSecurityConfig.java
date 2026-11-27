@@ -17,6 +17,9 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authorization.AuthenticatedAuthorizationManager;
+import org.springframework.security.authorization.AuthorityAuthorizationManager;
+import org.springframework.security.authorization.AuthorizationManagers;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -36,6 +39,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 import de.ct.manager.schedule.settings.CommonSettingsRepository;
+import de.ct.manager.schedule.user.UserDetailsImpl;
 import jakarta.servlet.DispatcherType;
 
 @Configuration
@@ -143,7 +147,11 @@ public class WebSecurityConfig {
                     .requestMatchers("/settings/common-setting/*").permitAll()
                     .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
                     .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                    .anyRequest().authenticated()
+                    // kiosk sessions (shared tablet) reach only maintenance and operations, every other API is closed to them
+                    .requestMatchers("/maintenance/**", "/operations/**").authenticated()
+                    .anyRequest().access(AuthorizationManagers.allOf(
+                        AuthenticatedAuthorizationManager.authenticated(),
+                        AuthorizationManagers.not(AuthorityAuthorizationManager.hasAuthority(UserDetailsImpl.KIOSK))))
             );
 
         http.authenticationProvider(authenticationProvider());

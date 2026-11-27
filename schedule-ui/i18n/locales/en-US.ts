@@ -45,7 +45,34 @@ export default defineI18nLocale(async locale => {
         register: 'Register',
         forgot: 'Forgot password?',
         authSecret: 'Authentication Secret (if 2FA is enabled)',
-        securityAnswer: 'Antwort auf Sicherheitsfrage'
+        securityAnswer: 'Antwort auf Sicherheitsfrage',
+        modes: {
+          regular: 'Regular',
+          kiosk: 'Kiosk'
+        },
+        kiosk: {
+          hint: 'Sign in on the shared tablet with your e-mail address and kiosk PIN. You set the PIN under "My settings" after a regular sign in.',
+          username: 'E-mail address',
+          pin: 'Kiosk PIN',
+          submit: 'Sign in to kiosk mode',
+          invalid: 'Wrong e-mail address or PIN – or no kiosk PIN is set for this account.',
+          locked: 'Too many failed attempts. The kiosk sign in of this account is locked for 15 minutes.'
+        }
+      },
+      kiosk: {
+        title: 'Kiosk',
+        description: 'Signed in as {user}. Choose an area.',
+        home: 'Kiosk start page',
+        badge: 'Kiosk',
+        logout: 'Log out',
+        navigation: 'Areas',
+        hints: {
+          checklists: 'Tick off the start and end of operations',
+          maintenance: 'Aircraft, equipment and maintenance tasks',
+          defects: 'Report and work on defects',
+          schedule: 'See the workshop periods',
+          inventory: 'Count the stock'
+        }
       },
       register: {
         title: 'Register to the schedule manager',

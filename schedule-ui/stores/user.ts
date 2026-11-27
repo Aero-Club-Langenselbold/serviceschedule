@@ -6,11 +6,19 @@ interface User {
     roles: string[]
     permissions?: string[]
     impersonator?: string | null
+    // signed in through the kiosk mode (e-mail + PIN on a shared tablet): plain member, maintenance and operations only
+    kiosk?: boolean
 }
 
 interface Session {
     token: string
     type: string
+}
+
+export class KioskLoginError extends Error {
+    constructor(readonly reason: 'invalid' | 'locked') {
+        super(`Kiosk login failed: ${reason}`)
+    }
 }
 
 export const useUserStore = defineStore('user', () => {
@@ -20,6 +28,7 @@ export const useUserStore = defineStore('user', () => {
     const isLoggedIn = computed(() => session !== null && session?.value?.token !== undefined)
 
     const isImpersonating = computed(() => !!user.value?.impersonator)
+    const isKiosk = computed(() => !!user.value?.kiosk)
 
     const hasRole = (...roles: string[]) => roles.some(role => user.value?.roles?.includes(role))
     const hasPermission = (permission: string) => !!user.value?.permissions?.includes(permission)
@@ -40,7 +49,8 @@ export const useUserStore = defineStore('user', () => {
             id: data.id,
             roles: data.roles,
             permissions: data.permissions ?? [],
-            impersonator: data.impersonator ?? null
+            impersonator: data.impersonator ?? null,
+            kiosk: !!data.kiosk
         }
         session.value = {
             token: data.token,
@@ -58,6 +68,17 @@ export const useUserStore = defineStore('user', () => {
 
         if (response.error?.value) {
             throw new Error('Invalid credentials')
+        }
+
+        storeAuthentication(response.data.value as User & Session)
+    }
+
+    // Kiosk sign in with e-mail address and PIN. Throws KioskLoginError with 'locked' after too many failed attempts.
+    async function loginKiosk(credentials: { username: string, pin: string }) {
+        const response = await useAPI('/auth/kiosk/signin', { method: 'POST', body: credentials })
+
+        if (response.error?.value) {
+            throw new KioskLoginError(response.error.value.statusCode === 429 ? 'locked' : 'invalid')
         }
 
         storeAuthentication(response.data.value as User & Session)
@@ -104,5 +125,5 @@ export const useUserStore = defineStore('user', () => {
         session.value = null
     }
 
-    return { user, session, isLoggedIn, isImpersonating, isAdmin, canManageSchedule, canManageAlarm, canManageMaintenance, canManageOperations, canManageChecklists, hasRole, hasPermission, login, impersonate, stopImpersonation, logout, validate }
+    return { user, session, isLoggedIn, isImpersonating, isKiosk, isAdmin, canManageSchedule, canManageAlarm, canManageMaintenance, canManageOperations, canManageChecklists, hasRole, hasPermission, login, loginKiosk, impersonate, stopImpersonation, logout, validate }
 })

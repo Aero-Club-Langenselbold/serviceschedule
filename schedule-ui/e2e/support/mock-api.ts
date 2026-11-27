@@ -234,9 +234,15 @@ export class MockApi {
       return route.fulfill({ status: failure.status, headers, json: failure.body })
     }
 
-    // who is calling, from the token of sessionFor (token-<role>)
-    const token = (request.headers()['authorization'] ?? '').replace(/^Bearer token-/, '')
+    // who is calling, from the token of sessionFor (token-<role>) or of a kiosk sign in (kiosk-<role>)
+    const authorization = request.headers()['authorization'] ?? ''
+    const kiosk = authorization.startsWith('Bearer kiosk-')
+    const token = authorization.replace(/^Bearer (token|kiosk)-/, '')
     this.caller = token ? `${token}@example.org` : ''
+    // like the backend: kiosk sessions reach only maintenance and operations
+    if (kiosk && !/^\/(maintenance|operations|featureflag|auth)(\/|$)/.test(path)) {
+      return route.fulfill({ status: 403, headers, json: { error: 'Forbidden' } })
+    }
     const answer = this.respond(request.method(), path, url.searchParams, body)
     if (answer === undefined) {
       return route.fulfill({ status: 404, headers, json: { message: `Kein Mock für ${request.method()} ${path}` } })
@@ -260,6 +266,13 @@ export class MockApi {
       const roles = ROLES[body.username]
       if (!roles || body.password === 'wrong') return new HttpError(401)
       return { id: `u-${body.username}`, username: body.username, roles, token: 'token', type: 'Bearer' }
+    }
+    // kiosk: PIN 123456 for every known user except nobody (no PIN set), 999999 stands for a locked account
+    if (key === 'POST /auth/kiosk/signin') {
+      if (body.pin === '999999') return new HttpError(429)
+      if (!ROLES[body.username] || body.username === 'nobody@example.org' || body.pin !== '123456') return new HttpError(401)
+      const role = body.username.split('@')[0]
+      return { id: `u-${role}`, username: body.username, roles: ['ROLE_USER'], permissions: [], kiosk: true, token: `kiosk-${role}`, type: 'Bearer' }
     }
     if (key === 'POST /auth/signup') return { message: 'ok' }
 

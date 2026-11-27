@@ -188,3 +188,39 @@ describe('User Store', () => {
         expect(userStore.canManageMaintenance).toBe(true)
     })
 })
+
+describe('User Store kiosk mode', () => {
+    beforeEach(async () => {
+        await useUserStore().logout()
+    })
+
+    it('signs in with e-mail and PIN as a plain member in kiosk mode', async () => {
+        const userStore = useUserStore()
+        await userStore.loginKiosk({ username: 'anna@example.org', pin: '123456' })
+        expect(userStore.isKiosk).toBe(true)
+        expect(userStore.isLoggedIn).toBe(true)
+        expect(userStore.session?.token).toBe('kiosktoken')
+        expect(userStore.isAdmin).toBe(false)
+        expect(userStore.canManageMaintenance).toBe(false)
+        expect(JSON.parse(localStorage.getItem('user')!).kiosk).toBe(true)
+    })
+
+    it('rejects wrong PINs and reports locked accounts', async () => {
+        const userStore = useUserStore()
+        const { KioskLoginError } = await import('~/stores/user')
+        await expect(userStore.loginKiosk({ username: 'anna@example.org', pin: '000000' })).rejects.toMatchObject({ reason: 'invalid' })
+        await expect(userStore.loginKiosk({ username: 'anna@example.org', pin: '999999' })).rejects.toBeInstanceOf(KioskLoginError)
+        await expect(userStore.loginKiosk({ username: 'anna@example.org', pin: '999999' })).rejects.toMatchObject({ reason: 'locked' })
+        expect(userStore.isLoggedIn).toBe(false)
+    })
+
+    it('regular sign ins and logging out end the kiosk mode', async () => {
+        const userStore = useUserStore()
+        await userStore.login({ username: 'testuser', password: 'password' })
+        expect(userStore.isKiosk).toBe(false)
+
+        await userStore.loginKiosk({ username: 'anna@example.org', pin: '123456' })
+        await userStore.logout()
+        expect(userStore.isKiosk).toBe(false)
+    })
+})

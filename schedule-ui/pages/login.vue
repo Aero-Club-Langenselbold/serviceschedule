@@ -2,7 +2,38 @@
   <div class="flex justify-center px-4 py-10 sm:py-16">
     <UCard class="w-full max-w-md" :ui="{ root: 'rounded-2xl', body: 'sm:p-8' }">
       <h1 class="mb-6 text-2xl font-semibold tracking-tight text-highlighted">{{ $t('login.title') }}</h1>
-      <form class="space-y-5" @submit.prevent="onSubmit">
+      <!-- the choice is remembered on this device, a kiosk tablet keeps showing the PIN sign in -->
+      <UTabs
+        v-model="mode"
+        :items="modes"
+        :content="false"
+        size="lg"
+        class="mb-6"
+        :ui="{ trigger: 'flex-1' }"
+        data-login-mode
+      />
+      <form v-if="mode === 'kiosk'" class="space-y-5" data-kiosk-login @submit.prevent="onKioskSubmit">
+        <Messages :errorMessage="loginError" :successMessage="successMessage" />
+        <p class="text-sm text-muted">{{ $t('login.kiosk.hint') }}</p>
+        <UFormField :label="$t('login.kiosk.username')">
+          <UInput v-model="kioskCredentials.username" type="email" autocomplete="username" trailing-icon="i-lucide-at-sign" size="xl" class="w-full" data-kiosk-username />
+        </UFormField>
+        <UFormField :label="$t('login.kiosk.pin')">
+          <UPinInput
+            v-model="pin"
+            :length="6"
+            type="number"
+            mask
+            otp
+            size="xl"
+            :aria-label="$t('login.kiosk.pin')"
+            data-kiosk-pin
+            @complete="onKioskSubmit"
+          />
+        </UFormField>
+        <UButton block size="xl" icon="i-lucide-tablet-smartphone" :label="$t('login.kiosk.submit')" type="submit" :loading="working" :disabled="!kioskComplete" />
+      </form>
+      <form v-else class="space-y-5" @submit.prevent="onSubmit">
         <Messages :errorMessage="loginError" :successMessage="successMessage" />
         <UFormField :label="$t('login.username')">
           <UInput v-model="credentials.username" type="email" autocomplete="username" trailing-icon="i-lucide-at-sign" class="w-full" />
@@ -48,8 +79,13 @@
 </template>
 
 <script setup lang="ts">
+import { KioskLoginError } from '~/stores/user'
+import type { LoginMode } from '~/composables/useKiosk'
+
+const { t } = useI18n()
+const loginError = ref<string | null>(null)
 const userStore = useUserStore()
-const { login } = userStore
+const { login, loginKiosk } = userStore
 const featureStore = useFeatureStore()
 const { validateFeatures, features } = featureStore
 const { isLoggedIn } = storeToRefs(userStore)
@@ -92,10 +128,42 @@ const onSubmit = async () => {
   working.value = false
 }
 
+// Kiosk mode: e-mail address and PIN only, no password, security question or Vereinsflieger 2FA code; the PIN is
+// checked locally, so it works with and without the Vereinsflieger login.
+const mode = ref<LoginMode>(storedLoginMode())
+watch(mode, (value) => {
+  storeLoginMode(value)
+  loginError.value = null
+})
+const modes = computed(() => [
+  { label: t('login.modes.regular'), value: 'regular', icon: 'i-lucide-log-in' },
+  { label: t('login.modes.kiosk'), value: 'kiosk', icon: 'i-lucide-tablet-smartphone' }
+])
+
+const kioskCredentials = reactive({ username: '' })
+// digits as the number pin input reports them; empty fields are undefined
+const pin = ref<(number | undefined)[]>([])
+const pinValue = computed(() => pin.value.map(digit => digit ?? '').join(''))
+const kioskComplete = computed(() => !!kioskCredentials.username.trim() && /^\d{6}$/.test(pinValue.value))
+
+const onKioskSubmit = async () => {
+  if (!kioskComplete.value || working.value) {
+    return
+  }
+  working.value = true
+  try {
+    await loginKiosk({ username: kioskCredentials.username.trim(), pin: pinValue.value })
+    await navigateTo(KIOSK_HOME)
+  } catch (error) {
+    loginError.value = error instanceof KioskLoginError && error.reason === 'locked' ? t('login.kiosk.locked') : t('login.kiosk.invalid')
+    pin.value = []
+  } finally {
+    working.value = false
+  }
+}
+
 const working = ref(false)
 const show = ref(false)
-const { t } = useI18n()
-const loginError = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
 
 watchEffect(() => {

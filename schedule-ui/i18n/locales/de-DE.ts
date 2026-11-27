@@ -45,7 +45,34 @@ export default defineI18nLocale(async locale => {
         register: 'Registrieren',
         forgot: 'Passwort vergessen?',
         authSecret: 'Sicherheitscode (bei aktivierter 2FA)',
-        securityAnswer: 'Antwort auf Sicherheitsfrage'
+        securityAnswer: 'Antwort auf Sicherheitsfrage',
+        modes: {
+          regular: 'Regulär',
+          kiosk: 'Kiosk'
+        },
+        kiosk: {
+          hint: 'Anmeldung am gemeinsamen Tablet mit E-Mail-Adresse und Kiosk-PIN. Die PIN legst du nach einer regulären Anmeldung unter „Meine Einstellungen“ fest.',
+          username: 'E-Mail-Adresse',
+          pin: 'Kiosk-PIN',
+          submit: 'Im Kiosk-Modus anmelden',
+          invalid: 'E-Mail-Adresse oder PIN falsch – oder für dieses Konto ist keine Kiosk-PIN festgelegt.',
+          locked: 'Zu viele Fehlversuche. Die Kiosk-Anmeldung ist für dieses Konto für 15 Minuten gesperrt.'
+        }
+      },
+      kiosk: {
+        title: 'Kiosk',
+        description: 'Angemeldet als {user}. Wähle einen Bereich.',
+        home: 'Kiosk-Startseite',
+        badge: 'Kiosk',
+        logout: 'Abmelden',
+        navigation: 'Bereiche',
+        hints: {
+          checklists: 'Betriebsbeginn und Betriebsende abhaken',
+          maintenance: 'Flugzeuge, Geräte und Wartungsaufgaben',
+          defects: 'Mängel melden und bearbeiten',
+          schedule: 'Werkstattzeiträume ansehen',
+          inventory: 'Bestände zählen'
+        }
       },
       register: {
         title: 'Registrieren beim Dienstplanmanager',

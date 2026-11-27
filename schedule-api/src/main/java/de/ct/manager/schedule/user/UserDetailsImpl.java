@@ -15,7 +15,10 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class UserDetailsImpl implements UserDetails {
-private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
+
+    /** Authority of sessions opened through the kiosk mode. */
+    public static final String KIOSK = "KIOSK";
 
     private String id;
     private String username;
@@ -31,6 +34,28 @@ private static final long serialVersionUID = 1L;
                 user.getUsername(),
                 user.getPassword(),
                 authoritiesOf(user));
+    }
+
+    /**
+     * The same user signed in through the kiosk mode (name + PIN on a shared tablet): a plain member, rights and the
+     * administrator role are ignored. {@link #KIOSK} marks the session, the security configuration limits it to the
+     * maintenance and operations API.
+     */
+    public static UserDetailsImpl kiosk(UserDetailsImpl user) {
+        return kiosk(user.getId(), user.getUsername(), user.getPassword());
+    }
+
+    public static UserDetailsImpl kiosk(User user) {
+        return kiosk(user.getId(), user.getUsername(), user.getPassword());
+    }
+
+    private static UserDetailsImpl kiosk(String id, String username, String password) {
+        return new UserDetailsImpl(id, username, password,
+                List.of(new SimpleGrantedAuthority(UserRole.ROLE_USER.name()), new SimpleGrantedAuthority(KIOSK)));
+    }
+
+    public boolean isKiosk() {
+        return authorities.stream().anyMatch(authority -> KIOSK.equals(authority.getAuthority()));
     }
 
     public static List<GrantedAuthority> authoritiesOf(User user) {

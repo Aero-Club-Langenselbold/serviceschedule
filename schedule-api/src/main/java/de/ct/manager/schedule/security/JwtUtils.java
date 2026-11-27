@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class JwtUtils {
     private static final String IMPERSONATOR_CLAIM = "impersonator";
+    private static final String KIOSK_CLAIM = "kiosk";
 
     @Value("${app.jwtSecret}")
     private String jwtSecret;
@@ -32,6 +33,9 @@ public class JwtUtils {
 
     @Value("${app.jwtImpersonationExpirationMs:3600000}")
     private int jwtImpersonationExpirationMs;
+
+    @Value("${app.jwtKioskExpirationMs:28800000}")
+    private int jwtKioskExpirationMs;
 
     public String generateJwtToken(Authentication authentication) {
         return generateJwtToken((UserDetailsImpl) authentication.getPrincipal());
@@ -54,6 +58,21 @@ public class JwtUtils {
                 .expiration(new Date((new Date()).getTime() + jwtImpersonationExpirationMs))
                 .signWith(getSecretKey())
                 .compact();
+    }
+
+    // Kiosk sessions run on shared tablets, so they expire sooner than regular ones.
+    public String generateKioskToken(UserDetailsImpl user) {
+        return Jwts.builder()
+                .subject(user.getUsername())
+                .claim(KIOSK_CLAIM, true)
+                .issuedAt(new Date())
+                .expiration(new Date((new Date()).getTime() + jwtKioskExpirationMs))
+                .signWith(getSecretKey())
+                .compact();
+    }
+
+    public boolean isKioskToken(String token) {
+        return Boolean.TRUE.equals(parseClaims(token).get(KIOSK_CLAIM, Boolean.class));
     }
 
     private Key getSecretKey() {

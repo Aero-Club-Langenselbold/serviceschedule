@@ -115,7 +115,15 @@ Backend package `operations` (`OperationsChecklistService`, API under `/api/v1/o
 
 ## Personal settings
 
-`pages/profile.vue`, opened from the username in the account menu. `GET /user/me/settings`, `PUT /user/me/kiosk-pin` (`{ pin }`, exactly 6 digits, else `400`), `DELETE /user/me/kiosk-pin`. The PIN is BCrypt hashed (`auth_user.kiosk_pin`, `V3.9__kiosk_pin.sql`, `@NotAudited`) and never returned, only `kioskPinSet`. `UserService#matchesKioskPin` is for the coming kiosk mode (name + PIN).
+`pages/profile.vue`, opened from the username in the account menu. `GET /user/me/settings`, `PUT /user/me/kiosk-pin` (`{ pin }`, exactly 6 digits, else `400`), `DELETE /user/me/kiosk-pin`. The PIN is BCrypt hashed (`auth_user.kiosk_pin`, `V3.9__kiosk_pin.sql`, `@NotAudited`) and never returned, only `kioskPinSet`; `UserService#matchesKioskPin` checks it.
+
+## Kiosk mode
+
+Members sign in on a shared tablet with e-mail address and PIN (`POST /auth/kiosk/signin` `{ username, pin }`, `KioskAuthService`). The PIN is checked locally, so it works with and without `vfLoginFeature`; no password, security answer or 2FA code. Unknown user, no PIN set and wrong PIN all answer `401`; after 5 failures an account is locked out of the kiosk sign in for 15 minutes (`429`, in memory).
+
+- The token carries the claim `kiosk` and expires after `app.jwtKioskExpirationMs` (default 8 h). `AuthTokenFilter` turns such a session into `UserDetailsImpl.kiosk(...)`: authorities `ROLE_USER` + `KIOSK` only, so administrator role and rights are ignored. `WebSecurityConfig` admits `KIOSK` sessions only to `/maintenance/**` and `/operations/**` (plus the public endpoints), everything else is `403` (bug list, notifications, personal settings, schedules …). `JwtResponse.kiosk` tells the UI.
+- Login page: tabs "Regulär"/"Kiosk", the choice is kept on the device (`localStorage.loginMode`, `composables/useKiosk.ts`); the PIN submits itself when complete. A kiosk session opens `/kiosk` (tiles).
+- Frontend: `stores/user.ts` `isKiosk`/`loginKiosk`; `middleware/kiosk.global.ts` sends kiosk sessions from every page outside `isKioskPath` to `/kiosk` (and regular sessions away from it). `layouts/default.vue` renders `components/kiosk-header.vue` instead of `NavMenu` (areas, sign out, no bell/account menu), sets `html[data-kiosk]` for the tablet styles in `assets/css/main.css` (larger text, touch sizes on every width). There is no automatic sign out on inactivity, the session ends with the token (8 h) or the sign out button.
 
 ## Frontend conventions
 

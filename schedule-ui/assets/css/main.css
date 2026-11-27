@@ -47,3 +47,32 @@ body {
     hyphens: auto;
   }
 }
+
+/*
+ * Kiosk mode (shared tablet, see layouts/default.vue): everything a bit larger and touch-friendly sizes on every
+ * width, also on landscape tablets that already count as desktop (lg). No pull-to-refresh or text selection by
+ * accident; inputs stay selectable.
+ */
+html[data-kiosk] {
+  font-size: 112.5%;
+}
+
+html[data-kiosk] body {
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html[data-kiosk] :is(input, textarea, [contenteditable="true"]) {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+html[data-kiosk] :is(button, a[data-slot="base"], input, textarea, [role="combobox"]):not([role="checkbox"], [role="switch"], [role="radio"], [type="checkbox"], [type="radio"]) {
+  min-height: 2.75rem;
+}
+
+html[data-kiosk] button:is([role="checkbox"], [role="switch"]) {
+  min-width: 1.25rem;
+  min-height: 1.25rem;
+}
