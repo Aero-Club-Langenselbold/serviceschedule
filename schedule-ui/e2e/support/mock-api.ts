@@ -145,6 +145,22 @@ function createState() {
       { id: 'ct1', aircraftId: 'a1', kind: 'START', items: ['Haube reinigen', 'Reifendruck prüfen'], updatedAt: time('2026-11-01', '10:00') },
     ] as any[],
     checklists: [] as any[],
+    // winch book: two ropes, the usual incidents and one earlier day in May of this year
+    winch: {
+      ropes: [
+        { id: 'r1', name: 'Seil 1', position: 0, active: true },
+        { id: 'r2', name: 'Seil 2', position: 1, active: true },
+      ] as any[],
+      incidentTypes: ['Seilriss', 'Sollbruchstellenriss', 'Vorseilriss', 'Schlaufe', 'Sonstiges']
+        .map((name, position) => ({ id: `t${position + 1}`, name, position, active: true })) as any[],
+      days: {
+        [`${new Date().getFullYear()}-05-01`]: {
+          remark: 'Böiger Westwind', remarkVersion: 0, remarkUpdatedBy: { id: 'u-ben', name: 'Becker, Ben' },
+          ropeRemarks: {} as Record<string, any>, drivers: [{ id: 'u-ben', name: 'Becker, Ben' }], photos: [] as any[],
+          incidents: [{ id: 'wi-old', ropeId: 'r1', typeId: 't1', driver: { id: 'u-ben', name: 'Becker, Ben' }, createdAt: `${new Date().getFullYear()}-05-01T12:00:00Z`, comment: null }],
+        },
+      } as Record<string, any>,
+    },
     kioskPinSet: false,
     comments: {
       r1: [{ id: 'c1', content: 'Tritt bei mir auch auf.', createdAt: time('2026-11-03', '09:30'), author: 'Becker, Ben' }],
@@ -193,6 +209,7 @@ export class MockApi {
   requests: RecordedRequest[] = []
   private failures: { method: string, path: RegExp, status: number, body: any }[] = []
   private caller = ''
+  private kiosk = false
 
   /** Makes matching requests answer with the given error until the test ends. */
   fail(method: string, path: RegExp, status = 500, body: any = { message: 'Serverfehler' }) {
@@ -239,6 +256,7 @@ export class MockApi {
     const kiosk = authorization.startsWith('Bearer kiosk-')
     const token = authorization.replace(/^Bearer (token|kiosk)-/, '')
     this.caller = token ? `${token}@example.org` : ''
+    this.kiosk = kiosk
     // like the backend: kiosk sessions reach only maintenance and operations
     if (kiosk && !/^\/(maintenance|operations|featureflag|auth)(\/|$)/.test(path)) {
       return route.fulfill({ status: 403, headers, json: { error: 'Forbidden' } })
@@ -498,6 +516,9 @@ export class MockApi {
         return checklistDetail(checklist, this.caller)
       }
     }
+    // winch book
+    if (path.startsWith('/maintenance/winch/')) return this.winch(method, path, query, body)
+
     // personal settings
     if (key === 'GET /user/me/settings') return { username: this.caller, kioskPinSet: s.kioskPinSet }
     if (key === 'PUT /user/me/kiosk-pin') {
@@ -572,6 +593,124 @@ export class MockApi {
     // alarm system
     if (key === 'GET /alarm/page') return page_(s.alarms, query)
 
+    return undefined
+  }
+
+  /** The winch book, with the rules of the backend in short: today for everybody, earlier days for maintenance administrators. */
+  private winch(method: string, path: string, query: URLSearchParams, body: any): any {
+    const w = this.state.winch
+    const key = `${method} ${path.replace('/maintenance/winch', '')}`
+    const manage = !this.kiosk && (!!ROLES[this.caller]?.includes('ROLE_ADMIN') || !!PERMISSIONS[this.caller]?.includes('PERMISSION_MAINTENANCE_MANAGE'))
+    const me = person(this.caller)
+    const used = (kind: string, id: string) => Object.values(w.days).some((day: any) => kind === 'ropes'
+      ? day.incidents.some((i: any) => i.ropeId === id) || day.photos.some((p: any) => p.ropeId === id) || !!day.ropeRemarks[id]
+      : day.incidents.some((i: any) => i.typeId === id))
+    const settings = () => ({
+      ropes: [...w.ropes].sort((a, b) => a.position - b.position).map(o => ({ ...o, used: used('ropes', o.id) })),
+      incidentTypes: [...w.incidentTypes].sort((a, b) => a.position - b.position).map(o => ({ ...o, used: used('incident-types', o.id) })),
+    })
+    const ref = (o: any) => ({ id: o.id, name: o.name, active: o.active })
+    const remark = (text: string | null, version: number | null, by: any) => ({ text, version: text ? version : null, updatedBy: text ? by : null, updatedAt: text ? new Date().toISOString() : null })
+    const touch = (date: string) => {
+      const day = w.days[date] ??= { remark: null, remarkVersion: 0, remarkUpdatedBy: null, ropeRemarks: {}, drivers: [], photos: [], incidents: [] }
+      if (!day.drivers.some((d: any) => d.id === me.id)) day.drivers.push(me)
+      return day
+    }
+    const detail = (date: string) => {
+      const day = w.days[date]
+      const isToday = date === today()
+      const mine = (p: any) => manage || (isToday && p?.id === me.id)
+      const ropes = w.ropes.filter((r: any) => (isToday && r.active) || (day && (day.incidents.some((i: any) => i.ropeId === r.id)
+        || day.photos.some((p: any) => p.ropeId === r.id) || day.ropeRemarks[r.id]))).sort((a: any, b: any) => a.position - b.position)
+      return {
+        date, today: isToday, exists: !!day,
+        remark: remark(day?.remark ?? null, day?.remarkVersion ?? null, day?.remarkUpdatedBy),
+        drivers: day?.drivers ?? [],
+        ropes: ropes.map((r: any) => ({
+          rope: ref(r),
+          remark: remark(day?.ropeRemarks[r.id]?.text ?? null, day?.ropeRemarks[r.id]?.version ?? null, day?.ropeRemarks[r.id]?.by),
+          incidents: (day?.incidents ?? []).filter((i: any) => i.ropeId === r.id).map((i: any) => ({
+            id: i.id, type: ref(w.incidentTypes.find((t: any) => t.id === i.typeId)), driver: i.driver, createdAt: i.createdAt, comment: i.comment, deletable: mine(i.driver) })),
+          photos: (day?.photos ?? []).filter((p: any) => p.ropeId === r.id).map((p: any) => ({ ...p, deletable: mine(p.uploadedBy) })),
+        })),
+        incidentTypes: isToday ? w.incidentTypes.filter((t: any) => t.active).sort((a: any, b: any) => a.position - b.position).map(ref) : [],
+        editable: isToday,
+        remarksEditable: isToday || (manage && !!day),
+      }
+    }
+    let m: RegExpMatchArray | null
+
+    if (key === 'GET /settings') return settings()
+    if ((m = key.match(/^(POST|PUT|DELETE) \/settings\/(ropes|incident-types)(?:\/([^/]+))?$/))) {
+      if (!manage) return new HttpError(403)
+      const list = m[2] === 'ropes' ? w.ropes : w.incidentTypes
+      if (m[1] === 'POST') {
+        if (list.some((o: any) => o.name.toLowerCase() === body.name.trim().toLowerCase())) return new HttpError(409)
+        list.push({ id: `${m[2]}-${list.length + 1}`, name: body.name.trim(), position: list.length, active: true })
+      } else if (m[3] === 'order') {
+        list.forEach((o: any) => { o.position = body.ids.indexOf(o.id) })
+      } else if (m[1] === 'PUT') {
+        Object.assign(list.find((o: any) => o.id === m![3]), { name: body.name, active: body.active })
+      } else {
+        const index = list.findIndex((o: any) => o.id === m![3])
+        if (used(m[2]!, m[3]!)) list[index].active = false
+        else list.splice(index, 1)
+      }
+      return settings()
+    }
+    if (key === 'GET /years') return [...new Set([new Date().getFullYear(), ...Object.keys(w.days).map(d => Number(d.slice(0, 4)))])].sort((a, b) => b - a)
+    if (key === 'GET /days') {
+      const year = query.get('year') ?? String(new Date().getFullYear())
+      const days = Object.keys(w.days).filter(d => d.startsWith(`${year}-`)).sort().reverse().map((date) => {
+        const day = w.days[date]
+        const incidents = w.incidentTypes.map((t: any) => ({ typeId: t.id, name: t.name, count: day.incidents.filter((i: any) => i.typeId === t.id).length })).filter((c: any) => c.count)
+        return { date, drivers: day.drivers, incidents, incidentCount: day.incidents.length, photoCount: day.photos.length,
+          hasRemarks: !!day.remark || Object.keys(day.ropeRemarks).length > 0 }
+      })
+      return page_(days, query)
+    }
+    if (key === 'GET /days/today') return detail(today())
+    if ((m = key.match(/^GET \/days\/(\d{4}-\d{2}-\d{2})$/))) return w.days[m[1]!] || m[1] === today() ? detail(m[1]!) : new HttpError(404)
+    if ((m = key.match(/^PUT \/days\/(\d{4}-\d{2}-\d{2})(?:\/ropes\/([^/]+))?\/remark$/))) {
+      const date = m[1]!
+      if (date !== today() && (!manage || !w.days[date])) return new HttpError(date !== today() && !manage ? 403 : 404)
+      const day = date === today() ? touch(date) : w.days[date]
+      const text = body.text?.trim() || null
+      if (m[2]) {
+        const current = day.ropeRemarks[m[2]]
+        if (current && current.version !== body.version) return new HttpError(409)
+        if (text) day.ropeRemarks[m[2]] = { text, version: (current?.version ?? -1) + 1, by: me }
+        else delete day.ropeRemarks[m[2]]
+      } else {
+        if (day.remark && day.remarkVersion !== body.version) return new HttpError(409)
+        Object.assign(day, { remark: text, remarkVersion: day.remarkVersion + 1, remarkUpdatedBy: me })
+      }
+      return detail(date)
+    }
+    if (key === 'POST /incidents') {
+      touch(today()).incidents.push({ id: `wi-${Date.now()}`, ropeId: body.ropeId, typeId: body.typeId, driver: me, createdAt: new Date().toISOString(), comment: body.comment })
+      return detail(today())
+    }
+    if ((m = key.match(/^DELETE \/(incidents|photos)\/([^/]+)$/))) {
+      const kind = m[1]!
+      for (const [date, day] of Object.entries<any>(w.days)) {
+        const index = day[kind].findIndex((e: any) => e.id === m![2])
+        if (index < 0) continue
+        const author = kind === 'incidents' ? day[kind][index].driver : day[kind][index].uploadedBy
+        if (!manage && (date !== today() || author?.id !== me.id)) return new HttpError(403)
+        day[kind].splice(index, 1)
+        return detail(date)
+      }
+      return new HttpError(404)
+    }
+    if ((m = key.match(/^POST \/ropes\/([^/]+)\/photos$/))) {
+      const filename = String(body ?? '').match(/filename="([^"]+)"/)?.[1] ?? null
+      touch(today()).photos.push({ id: `wp-${Date.now()}`, ropeId: m[1], filename, contentType: 'image/jpeg', size: 100, uploadedBy: me, uploadedAt: new Date().toISOString() })
+      return detail(today())
+    }
+    if ((m = key.match(/^GET \/photos\/([^/]+)$/))) {
+      return new RawResponse('image/svg+xml', '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect width="40" height="40" fill="#0d9488"/></svg>')
+    }
     return undefined
   }
 }

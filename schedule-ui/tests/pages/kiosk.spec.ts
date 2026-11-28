@@ -8,7 +8,7 @@ it ('Shows large tiles for the areas of the kiosk mode', async () => {
 
   expect(page.text()).toContain('anna@example.org')
   const tiles = page.findAll('[data-kiosk-tiles] a').map(tile => tile.attributes('href'))
-  expect(tiles).toEqual(['/operations', '/maintenance', '/maintenance/defects', '/maintenance/schedule', '/maintenance/inventory'])
+  expect(tiles).toEqual(['/operations', '/maintenance', '/maintenance/defects', '/maintenance/schedule', '/maintenance/inventory', '/maintenance/winch'])
   expect(page.text()).toContain('Checklists')
   expect(page.text()).toContain('Report and work on defects')
   expect(page.html()).not.toContain('/request/list')

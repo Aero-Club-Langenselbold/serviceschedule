@@ -71,7 +71,8 @@ export default defineI18nLocale(async locale => {
           maintenance: 'Aircraft, equipment and maintenance tasks',
           defects: 'Report and work on defects',
           schedule: 'See the workshop periods',
-          inventory: 'Count the stock'
+          inventory: 'Count the stock',
+          winch: 'Record rope breaks and winch remarks'
         }
       },
       register: {
@@ -130,7 +131,9 @@ export default defineI18nLocale(async locale => {
           templates: 'Task templates',
           schedule: 'Workshop schedule',
           inventory: 'Inventory',
-          defects: 'Defect book'
+          defects: 'Defect book',
+          winch: 'Winch book',
+          winchSettings: 'Winch book settings'
         },
         operations: {
           menu: 'Operations',
@@ -724,6 +727,86 @@ export default defineI18nLocale(async locale => {
           aircraftTypesHint: 'Leave empty so the template applies to every aircraft.',
           allAircraft: 'All aircraft',
           steps: 'No steps | 1 step | {count} steps'
+        }
+      },
+      winch: {
+        title: 'Winch book',
+        description: 'Incidents, photos and remarks on the ropes of the winch. Entries are always made for today, with you as winch driver.',
+        loadError: 'The winch book could not be loaded.',
+        saveError: 'The change could not be saved.',
+        conflict: 'Somebody else changed the entry in the meantime. The current version has been loaded.',
+        notFound: 'There is no winch book entry for this day.',
+        today: 'Today',
+        dayTitle: 'Winch book of {date}',
+        openToday: 'Edit today',
+        drivers: 'Winch drivers',
+        noDrivers: 'Nobody yet',
+        driver: 'Winch driver: {name}',
+        unknownUser: 'Unknown',
+        recordHint: 'Whoever records something today is listed as winch driver of the day.',
+        inactive: 'No longer in use',
+        dayRemark: 'Remarks on the winch',
+        dayRemarkPlaceholder: 'e.g. number of launches, anything unusual, refuelling …',
+        ropeRemark: 'Remarks on the rope',
+        ropeRemarkOf: 'Remarks on {rope}',
+        ropeRemarkPlaceholder: 'e.g. condition, spliced, shortened …',
+        noRemark: 'No remarks.',
+        remarkBy: 'Last changed by {name} on {when}',
+        noRopesConfigured: 'No ropes have been set up for the winch yet. Maintenance administrators add them in the winch book settings.',
+        noRopeEntries: 'Nothing was recorded for any rope on this day.',
+        addIncident: 'Record an incident',
+        incidentTitle: 'Record {type} on {rope}',
+        incidentHint: 'Recorded with today\'s date, the current time and you as winch driver.',
+        comment: 'Comment (optional)',
+        commentPlaceholder: 'e.g. location, cause',
+        record: 'Record',
+        recorded: '{type} recorded.',
+        noIncidents: 'No incidents.',
+        deleteIncident: 'Delete incident',
+        deleteIncidentConfirm: 'Delete this incident?',
+        photos: {
+          title: 'Photos',
+          photo: 'Photo',
+          add: 'Add photo',
+          none: 'No photos.',
+          open: 'Enlarge photo',
+          delete: 'Delete photo',
+          deleteConfirm: 'Delete this photo?',
+          uploadedBy: 'Uploaded by {name} on {when}',
+          tooLarge: 'The photo is too large (10 MB at most).',
+          notAccepted: '{name} cannot be uploaded: only JPEG, PNG, WebP and GIF images up to 10 MB.'
+        },
+        history: {
+          open: 'Earlier entries',
+          title: 'Earlier entries',
+          description: 'Every day in the winch book, newest first.',
+          year: 'Year',
+          date: 'Date',
+          incidents: 'Incidents',
+          noIncidents: 'No incidents',
+          extras: 'Photos & remarks',
+          remarks: 'Remarks',
+          openDay: 'View'
+        },
+        settings: {
+          title: 'Winch book settings',
+          description: 'The ropes of the winch and the incidents that can be recorded in the winch book.',
+          ropes: 'Ropes',
+          ropesHint: 'The ropes of the winch, in this order in the winch book.',
+          incidentTypes: 'Incidents',
+          incidentTypesHint: 'What can be recorded for every rope.',
+          newRope: 'New rope, e.g. Rope 3',
+          newIncidentType: 'New incident, e.g. rope wear',
+          add: 'Add',
+          name: 'Name',
+          empty: 'No entries yet.',
+          moveUp: 'Move up',
+          moveDown: 'Move down',
+          activate: 'Use again',
+          deactivate: 'Stop using',
+          deleteConfirm: 'Delete "{name}"?',
+          deactivateConfirm: '"{name}" appears in entries and is therefore only hidden. The entries are kept.',
+          duplicate: 'This name already exists.'
         }
       },
       operations: {

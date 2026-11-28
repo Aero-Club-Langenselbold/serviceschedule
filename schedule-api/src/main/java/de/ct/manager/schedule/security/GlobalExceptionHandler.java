@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.ct.manager.schedule.alarm.AlarmDuplicateException;
@@ -67,6 +70,22 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleBadRequest(Exception ex) {
         Map<String, String> errors = new HashMap<>();
         errors.put("error", "Malformed request");
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
+
+    /** Uploads beyond spring.servlet.multipart.max-file-size (photos of the winch book). */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, String>> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", "The file is too large");
+        return new ResponseEntity<>(errors, HttpStatus.PAYLOAD_TOO_LARGE);
+    }
+
+    /** Multipart requests without the expected file. */
+    @ExceptionHandler({ MissingServletRequestPartException.class, MultipartException.class })
+    public ResponseEntity<Map<String, String>> handleMissingPart(Exception ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", "File missing");
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 

@@ -62,6 +62,36 @@ const operationsOverview = () => ({
         { aircraftId: 'a2', registration: 'D-5678', aircraftType: 'LS 8', startTemplate: null, endTemplate: null, todayStart: null, todayEnd: null }
     ]
 })
+// Winch book: two ropes; today Seil 1 has a rope break of the signed in user and a photo, earlier days are read only.
+const winchTypes = () => [{ id: 'wt1', name: 'Seilriss', active: true }, { id: 'wt2', name: 'Schlaufe', active: true }]
+const winchRemark = (text: string | null, version: number | null = text ? 3 : null) =>
+    ({ text, version, updatedBy: text ? { id: 'u1', name: 'Albers, Anna' } : null, updatedAt: text ? '2026-11-27T09:00:00Z' : null })
+const winchDay = (overrides: Record<string, unknown> = {}) => ({
+    date: dayFromToday(0), today: true, exists: true,
+    remark: winchRemark('Winde läuft rund'),
+    drivers: [{ id: 'u1', name: 'Albers, Anna' }, { id: '1', name: 'testuser' }],
+    ropes: [
+        { rope: { id: 'r1', name: 'Seil 1', active: true }, remark: winchRemark(null),
+          incidents: [{ id: 'wi1', type: winchTypes()[0], driver: { id: '1', name: 'testuser' }, createdAt: '2026-11-27T10:15:00Z', comment: 'am Startplatz', deletable: true }],
+          photos: [{ id: 'wp1', filename: 'seil.jpg', contentType: 'image/jpeg', size: 1234, uploadedBy: { id: 'u1', name: 'Albers, Anna' }, uploadedAt: '2026-11-27T10:20:00Z', deletable: false }] },
+        { rope: { id: 'r2', name: 'Seil 2', active: true }, remark: winchRemark('Kausch aufgeraut', 1), incidents: [], photos: [] }
+    ],
+    incidentTypes: winchTypes(),
+    editable: true,
+    remarksEditable: true,
+    ...overrides
+})
+const winchSettings = () => ({
+    ropes: [
+        { id: 'r1', name: 'Seil 1', position: 0, active: true, used: true },
+        { id: 'r2', name: 'Seil 2', position: 1, active: true, used: false },
+        { id: 'r0', name: 'Altes Seil', position: 2, active: false, used: true }
+    ],
+    incidentTypes: [
+        { id: 'wt1', name: 'Seilriss', position: 0, active: true, used: true },
+        { id: 'wt2', name: 'Schlaufe', position: 1, active: true, used: false }
+    ]
+})
 const recordedCalls = (): { url: string, options: any }[] => ((globalThis as any).__apiCalls ??= [])
 const notifications = () => ({
     unreadCount: 1,
@@ -311,6 +341,72 @@ mockNuxtImport('useAPI', () => {
         } else if (url.startsWith('/operations/checklists?')) {
             const past = { ...checklistDetail().checklist, id: 'c0', date: '2026-11-20', status: 'APPROVED', checkedCount: 2, notOkCount: 1 }
             return { data: { value: { content: [checklistDetail().checklist, past], totalElements: 2 } }, error: {} }
+        } else if (url === '/maintenance/winch/days/today') {
+            return { data: { value: winchDay() }, error: {} }
+        } else if (url === '/maintenance/winch/days/2026-11-20') {
+            // an earlier day as a member sees it
+            return { data: { value: winchDay({ date: '2026-11-20', today: false, editable: false, remarksEditable: false, incidentTypes: [],
+                ropes: [{ ...winchDay().ropes[0], incidents: [{ ...winchDay().ropes[0]!.incidents[0], deletable: false }] }] }) }, error: {} }
+        } else if (url === '/maintenance/winch/days/2026-11-21') {
+            // an earlier day as a maintenance administrator sees it
+            return { data: { value: winchDay({ date: '2026-11-21', today: false, editable: false, remarksEditable: true, incidentTypes: [] }) }, error: {} }
+        } else if (/^\/maintenance\/winch\/days\/\d{4}-\d{2}-\d{2}$/.test(url)) {
+            return { data: { value: null }, error: { value: Object.assign(new Error('not found'), { statusCode: 404 }) } }
+        } else if (/^\/maintenance\/winch\/days\/[^/]+(\/ropes\/[^/]+)?\/remark$/.test(url)) {
+            if (options.body.text === 'Konflikt') {
+                return { data: { value: null }, error: { value: Object.assign(new Error('conflict'), { statusCode: 409 }) } }
+            }
+            const ropeId = url.split('/')[6]
+            const day = winchDay()
+            const remark = { ...winchRemark(options.body.text, 4), updatedBy: { id: '1', name: 'testuser' } }
+            return { data: { value: ropeId
+                ? { ...day, ropes: day.ropes.map(rope => rope.rope.id === ropeId ? { ...rope, remark } : rope) }
+                : { ...day, remark } }, error: {} }
+        } else if (url === '/maintenance/winch/incidents') {
+            const day = winchDay()
+            const incident = { id: 'wi-new', type: winchTypes().find(type => type.id === options.body.typeId), driver: { id: '1', name: 'testuser' },
+                createdAt: '2026-11-27T11:00:00Z', comment: options.body.comment, deletable: true }
+            return { data: { value: { ...day, ropes: day.ropes.map(rope => rope.rope.id === options.body.ropeId ? { ...rope, incidents: [...rope.incidents, incident] } : rope) } }, error: {} }
+        } else if (/^\/maintenance\/winch\/incidents\/[^/]+$/.test(url)) {
+            const day = winchDay()
+            return { data: { value: { ...day, ropes: day.ropes.map(rope => ({ ...rope, incidents: rope.incidents.filter(incident => incident.id !== url.split('/')[4]) })) } }, error: {} }
+        } else if (/^\/maintenance\/winch\/ropes\/[^/]+\/photos$/.test(url)) {
+            const day = winchDay()
+            const photo = { id: 'wp-new', filename: (options.body.get('file') as File).name, contentType: 'image/jpeg', size: 10, uploadedBy: { id: '1', name: 'testuser' },
+                uploadedAt: '2026-11-27T11:00:00Z', deletable: true }
+            return { data: { value: { ...day, ropes: day.ropes.map(rope => rope.rope.id === url.split('/')[4] ? { ...rope, photos: [...rope.photos, photo] } : rope) } }, error: {} }
+        } else if (/^\/maintenance\/winch\/photos\/[^/]+$/.test(url)) {
+            return { data: { value: options.method === 'GET' ? new Blob(['jpeg'], { type: 'image/jpeg' }) : winchDay() }, error: {} }
+        } else if (url.startsWith('/maintenance/winch/days?')) {
+            const query = new URLSearchParams(url.split('?')[1])
+            const days = query.get('year') === '2024'
+                ? [{ date: '2024-05-01', drivers: [{ id: 'u3', name: 'Becker, Ben' }], incidents: [{ typeId: 'wt2', name: 'Schlaufe', count: 1 }], incidentCount: 1, photoCount: 0, hasRemarks: false }]
+                : [
+                    { date: dayFromToday(0), drivers: [{ id: 'u1', name: 'Albers, Anna' }, { id: '1', name: 'testuser' }], incidents: [{ typeId: 'wt1', name: 'Seilriss', count: 2 }], incidentCount: 2, photoCount: 1, hasRemarks: true },
+                    { date: '2026-11-20', drivers: [{ id: '1', name: 'testuser' }], incidents: [], incidentCount: 0, photoCount: 0, hasRemarks: true }
+                ]
+            return { data: { value: { content: days, totalElements: days.length } }, error: {} }
+        } else if (url === '/maintenance/winch/years') {
+            return { data: { value: [new Date().getFullYear(), 2024] }, error: {} }
+        } else if (url === '/maintenance/winch/settings') {
+            return { data: { value: winchSettings() }, error: {} }
+        } else if (url.startsWith('/maintenance/winch/settings/')) {
+            const [, , , , kind, id] = url.split('/')
+            const settings = winchSettings()
+            const key = kind === 'ropes' ? 'ropes' : 'incidentTypes'
+            if (options.method === 'POST') {
+                if (settings[key].some(option => option.name.toLowerCase() === options.body.name.toLowerCase())) {
+                    return { data: { value: null }, error: { value: Object.assign(new Error('conflict'), { statusCode: 409 }) } }
+                }
+                settings[key].push({ id: 'new', name: options.body.name, position: settings[key].length, active: true, used: false })
+            } else if (id === 'order') {
+                settings[key].sort((a, b) => options.body.ids.indexOf(a.id) - options.body.ids.indexOf(b.id))
+            } else if (options.method === 'PUT') {
+                settings[key] = settings[key].map(option => option.id === id ? { ...option, name: options.body.name, active: options.body.active } : option)
+            } else if (options.method === 'DELETE') {
+                settings[key] = settings[key].flatMap(option => option.id !== id ? [option] : option.used ? [{ ...option, active: false }] : [])
+            }
+            return { data: { value: settings }, error: {} }
         } else if (url === '/maintenance/aircraft/types') {
             return { data: { value: ['ASK 21', 'LS 8'] }, error: {} }
         }

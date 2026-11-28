@@ -18,7 +18,7 @@ docker compose -f docker-compose-local-db.yml up -d
 
 cd schedule-api
 ./mvnw spring-boot:run          # http://localhost:8080/api/v1, Swagger UI under /api/v1/swagger-ui/index.html
-./mvnw test                     # H2 in memory, ~290 tests (unit + @SpringBootTest integration)
+./mvnw test                     # H2 in memory, ~300 tests (unit + @SpringBootTest integration)
 ./mvnw -Dtest=MaintenanceIntegrationTest test
 
 cd schedule-ui
@@ -99,6 +99,13 @@ Inventory (`/maintenance/inventory`, page `pages/maintenance/inventory.vue`), mo
 
 - Items are consumables or spare parts (spare parts list the aircraft types they fit, none = all), counted as `COUNT` (units, optional unit and minimum stock) or `LEVEL` (0 = empty, 1 = low, 2 = enough). The stock status `OK`/`LOW`/`EMPTY` is derived (`MaintenanceInventoryItem#getStatus`).
 - Every signed in user counts (`PUT /maintenance/inventory/{id}/quantity`); maintenance administrators create, edit (incl. comment) and delete items. History is kept per item; counts of the same user within 15 minutes are merged into one entry, so a stepper does not flood it.
+
+Winch book ("Windenbuch", package `winch`, API under `/maintenance/winch` so kiosk sessions reach it, migration `V3.11__winch_book.sql`, pages `pages/maintenance/winch/` (today, `history`, `days/[date]`, `settings`), components `components/maintenance/winch-*.vue`, `types/winch.ts`, `composables/useWinch.ts`):
+
+- One global book for the club's winch, independent of `maintenance_aircraft` and the defect book. Maintenance administrators maintain the ropes (`winch_rope`, default "Seil 1"/"Seil 2") and incident types (`winch_incident_type`, defaults Seilriss, Sollbruchstellenriss, Vorseilriss, Schlaufe, Sonstiges) under `/settings/{ropes|incident-types}` (create, rename/(de)activate, `order`). Names are unique ignoring case (`409`). `DELETE` deletes unused options and only deactivates used ones; inactive ones stay in the entries but can no longer be chosen (`400`).
+- `winch_day` is the page of one day (unique date, general remark), created with its first entry and removed once nothing is left on it. Everybody who writes into the page of today becomes a winch driver of the day (`winch_day_driver`, excluded from optimistic locking).
+- Every member (also kiosk) writes into today only: incidents (`POST /incidents`, any number, driver = caller, optional comment), photos per rope (`POST /ropes/{id}/photos` multipart `file`, JPEG/PNG/WebP/GIF up to 10 MB, `413` above; stored as `bytea` in `winch_photo_content`; the UI scales them to 1600 px JPEG first and loads them as blob with the token), remarks of the day and per rope (`PUT /days/{date}/remark`, `/days/{date}/ropes/{id}/remark`, `{ text, version }`; a remark changed by somebody else since loading answers `409`, blank removes it). Members delete their own incidents/photos of today.
+- Earlier days: everybody reads them (`GET /days/{date}`, only the ropes with entries), maintenance administrators correct remarks and delete incidents/photos, nobody adds incidents or photos. `GET /days?year=` (default current year, paged, newest first) lists `DaySummary` (drivers, counts per type, photos, remarks), `GET /years` the years with entries.
 
 Not ported from vereins-wartung (possible follow-ups): seasons/archive, leads per workshop day, documents and file/photo uploads, deadlines and the Vereinsflieger sync, the order list of the inventory, FAQ, offline sync.
 

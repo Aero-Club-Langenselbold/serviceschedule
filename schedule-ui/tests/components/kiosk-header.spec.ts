@@ -13,7 +13,7 @@ beforeEach(async () => {
 it ('Offers only maintenance and operations, no bug list, notifications or personal settings', async () => {
   const header = await mountSuspended(KioskHeader, { route: '/maintenance/defects' })
   const links = header.findAll('nav a').map(link => link.attributes('href'))
-  expect(links).toEqual(['/operations', '/maintenance', '/maintenance/defects', '/maintenance/schedule', '/maintenance/inventory'])
+  expect(links).toEqual(['/operations', '/maintenance', '/maintenance/defects', '/maintenance/schedule', '/maintenance/inventory', '/maintenance/winch'])
   expect(header.html()).not.toContain('/request/list')
   expect(header.html()).not.toContain('/profile')
   expect(header.html()).not.toContain('/maintenance/templates')

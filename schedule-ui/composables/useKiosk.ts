@@ -15,11 +15,13 @@ const KIOSK_PATHS: RegExp[] = [
   /^\/permission-denied$/,
   /^\/maintenance$/,
   /^\/maintenance\/(defects|schedule|inventory)$/,
+  /^\/maintenance\/winch(\/history|\/days\/[^/]+)?$/,
   /^\/operations$/,
   /^\/operations\/checklist\/[^/]+\/[^/]+$/,
   /^\/operations\/checklists\/[^/]+$/
 ]
-// the maintenance board of an aircraft, but not the administration pages next to it
+// the maintenance board of an aircraft, but not the administration pages next to it (the winch book settings have a
+// path of their own and are not listed above)
 const KIOSK_EXCLUDED = /^\/maintenance\/templates$/
 
 export function isKioskPath(path: string) {
@@ -56,7 +58,8 @@ export const KIOSK_DESTINATIONS = [
   { to: '/maintenance', icon: 'i-lucide-plane', label: 'nav.maintenance.overview', hint: 'kiosk.hints.maintenance' },
   { to: '/maintenance/defects', icon: 'i-lucide-triangle-alert', label: 'nav.maintenance.defects', hint: 'kiosk.hints.defects' },
   { to: '/maintenance/schedule', icon: 'i-lucide-chart-gantt', label: 'nav.maintenance.schedule', hint: 'kiosk.hints.schedule' },
-  { to: '/maintenance/inventory', icon: 'i-lucide-package', label: 'nav.maintenance.inventory', hint: 'kiosk.hints.inventory' }
+  { to: '/maintenance/inventory', icon: 'i-lucide-package', label: 'nav.maintenance.inventory', hint: 'kiosk.hints.inventory' },
+  { to: '/maintenance/winch', icon: 'i-lucide-truck', label: 'nav.maintenance.winch', hint: 'kiosk.hints.winch' }
 ] as const
 
 /** The destination a path belongs to: the longest matching one (an aircraft board belongs to the maintenance overview). */

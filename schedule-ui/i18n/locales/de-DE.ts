@@ -71,7 +71,8 @@ export default defineI18nLocale(async locale => {
           maintenance: 'Flugzeuge, Geräte und Wartungsaufgaben',
           defects: 'Mängel melden und bearbeiten',
           schedule: 'Werkstattzeiträume ansehen',
-          inventory: 'Bestände zählen'
+          inventory: 'Bestände zählen',
+          winch: 'Seilrisse und Bemerkungen zur Winde eintragen'
         }
       },
       register: {
@@ -130,7 +131,9 @@ export default defineI18nLocale(async locale => {
           templates: 'Aufgaben-Vorlagen',
           schedule: 'Werkstattplan',
           inventory: 'Inventar',
-          defects: 'Mängelbuch'
+          defects: 'Mängelbuch',
+          winch: 'Windenbuch',
+          winchSettings: 'Windenbuch-Einstellungen'
         },
         operations: {
           menu: 'Betrieb',
@@ -724,6 +727,86 @@ export default defineI18nLocale(async locale => {
           aircraftTypesHint: 'Leer lassen, damit die Vorlage für alle Flugzeuge gilt.',
           allAircraft: 'Alle Flugzeuge',
           steps: 'Keine Schritte | 1 Schritt | {count} Schritte'
+        }
+      },
+      winch: {
+        title: 'Windenbuch',
+        description: 'Vorfälle, Fotos und Bemerkungen zu den Seilen der Winde. Eingetragen wird immer für heute, du stehst als Windenfahrer drin.',
+        loadError: 'Das Windenbuch konnte nicht geladen werden.',
+        saveError: 'Die Änderung konnte nicht gespeichert werden.',
+        conflict: 'Jemand anderes hat den Eintrag inzwischen geändert. Die aktuelle Fassung wurde geladen.',
+        notFound: 'Für diesen Tag gibt es keinen Eintrag im Windenbuch.',
+        today: 'Heute',
+        dayTitle: 'Windenbuch vom {date}',
+        openToday: 'Heute bearbeiten',
+        drivers: 'Windenfahrer',
+        noDrivers: 'Noch niemand',
+        driver: 'Windenfahrer: {name}',
+        unknownUser: 'Unbekannt',
+        recordHint: 'Wer heute etwas einträgt, wird als Windenfahrer des Tages erfasst.',
+        inactive: 'Nicht mehr in Gebrauch',
+        dayRemark: 'Bemerkungen zur Winde',
+        dayRemarkPlaceholder: 'z. B. Anzahl Starts, Auffälligkeiten, Betankung …',
+        ropeRemark: 'Bemerkungen zum Seil',
+        ropeRemarkOf: 'Bemerkungen zu {rope}',
+        ropeRemarkPlaceholder: 'z. B. Zustand, gespleißt, gekürzt …',
+        noRemark: 'Keine Bemerkungen.',
+        remarkBy: 'Zuletzt geändert von {name} am {when}',
+        noRopesConfigured: 'Für die Winde sind noch keine Seile angelegt. Wartungs-Admins legen sie in den Windenbuch-Einstellungen an.',
+        noRopeEntries: 'An diesem Tag wurde zu keinem Seil etwas eingetragen.',
+        addIncident: 'Vorfall erfassen',
+        incidentTitle: '{type} an {rope} erfassen',
+        incidentHint: 'Erfasst mit heutigem Datum, der aktuellen Uhrzeit und dir als Windenfahrer.',
+        comment: 'Kommentar (optional)',
+        commentPlaceholder: 'z. B. Ort, Ursache',
+        record: 'Erfassen',
+        recorded: '{type} erfasst.',
+        noIncidents: 'Keine Vorfälle.',
+        deleteIncident: 'Vorfall löschen',
+        deleteIncidentConfirm: 'Diesen Vorfall löschen?',
+        photos: {
+          title: 'Fotos',
+          photo: 'Foto',
+          add: 'Foto hinzufügen',
+          none: 'Keine Fotos.',
+          open: 'Foto vergrößern',
+          delete: 'Foto löschen',
+          deleteConfirm: 'Dieses Foto löschen?',
+          uploadedBy: 'Hochgeladen von {name} am {when}',
+          tooLarge: 'Das Foto ist zu groß (höchstens 10 MB).',
+          notAccepted: '{name} kann nicht hochgeladen werden: nur JPEG-, PNG-, WebP- und GIF-Bilder bis 10 MB.'
+        },
+        history: {
+          open: 'Vorige Einträge',
+          title: 'Vorige Einträge',
+          description: 'Alle Tage im Windenbuch, die neuesten zuerst.',
+          year: 'Jahr',
+          date: 'Datum',
+          incidents: 'Vorfälle',
+          noIncidents: 'Keine Vorfälle',
+          extras: 'Fotos & Bemerkungen',
+          remarks: 'Bemerkungen',
+          openDay: 'Ansehen'
+        },
+        settings: {
+          title: 'Windenbuch-Einstellungen',
+          description: 'Seile der Winde und die Vorfälle, die im Windenbuch erfasst werden können.',
+          ropes: 'Seile',
+          ropesHint: 'Die Seile der Winde, in dieser Reihenfolge im Windenbuch.',
+          incidentTypes: 'Vorfälle',
+          incidentTypesHint: 'Was zu jedem Seil erfasst werden kann.',
+          newRope: 'Neues Seil, z. B. Seil 3',
+          newIncidentType: 'Neuer Vorfall, z. B. Seilverschleiß',
+          add: 'Hinzufügen',
+          name: 'Bezeichnung',
+          empty: 'Noch keine Einträge.',
+          moveUp: 'Nach oben',
+          moveDown: 'Nach unten',
+          activate: 'Wieder verwenden',
+          deactivate: 'Nicht mehr verwenden',
+          deleteConfirm: '„{name}“ löschen?',
+          deactivateConfirm: '„{name}“ kommt in Einträgen vor und wird deshalb nur ausgeblendet. Die Einträge bleiben erhalten.',
+          duplicate: 'Diese Bezeichnung gibt es schon.'
         }
       },
       operations: {

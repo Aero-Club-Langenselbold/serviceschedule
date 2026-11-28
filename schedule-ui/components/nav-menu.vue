@@ -94,7 +94,8 @@ const menu = computed(() => {
       children: schedules
     })
   }
-  // Every signed in user works on maintenance tasks and defects and counts the inventory, the templates are for administrators.
+  // Every signed in user works on maintenance tasks and defects, counts the inventory and writes the winch book;
+  // the templates and the winch book settings are for maintenance administrators.
   items.push({
     label: t('nav.maintenance.menu'),
     icon: 'i-lucide-wrench',
@@ -104,7 +105,11 @@ const menu = computed(() => {
       { label: t('nav.maintenance.defects'), icon: 'i-lucide-triangle-alert', to: '/maintenance/defects' },
       { label: t('nav.maintenance.schedule'), icon: 'i-lucide-chart-gantt', to: '/maintenance/schedule' },
       { label: t('nav.maintenance.inventory'), icon: 'i-lucide-package', to: '/maintenance/inventory' },
-      ...(canManageMaintenance.value ? [{ label: t('nav.maintenance.templates'), icon: 'i-lucide-copy', to: '/maintenance/templates' }] : [])
+      { label: t('nav.maintenance.winch'), icon: 'i-lucide-truck', to: '/maintenance/winch' },
+      ...(canManageMaintenance.value ? [
+        { label: t('nav.maintenance.templates'), icon: 'i-lucide-copy', to: '/maintenance/templates' },
+        { label: t('nav.maintenance.winchSettings'), icon: 'i-lucide-sliders-horizontal', to: '/maintenance/winch/settings' }
+      ] : [])
     ]
   })
   // Every signed in user fills in the start/end of operations checklists, operations administrators search the archive.
